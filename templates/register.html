@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Club Registration</title>
+</head>
+
+<body>
+    <h2>VIP Registration</h2>
+    <form method="POST">
+        <label>Email:</label><br>
+        <input type="email" name="email" required><br><br>
+
+        <label>Set a Password:</label><br>
+        <input type="password" name="password" required><br><br>
+
+        <label>Confirm Password:</label><br>
+        <input type="password" name="confirm_password" required><br><br>
+
+        <label>Mobile Number:</label><br>
+        <input type="text" name="mobile" required><br>
+
+        <label>Full Name:</label><br>
+        <input type="text" name="fullname" required><br>
+
+        <label>Username:</label><br>
+        <input type="text" name="username" required><br>
+
+        <label>Age:</label><br>
+        <input type="number" name="age" required><br>
+
+        <label>Gender:</label><br>
+        <select name="gender" id="genderDropdown" onchange="toggleGenderInput()">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Non-binary">Non-binary</option>
+            <option value="Other">Other</option>
+        </select><br>
+
+        <div id="customGenderBox" style="display: none; margin-top: 10px;">
+            <label>Please specify your gender:</label><br>
+            <input type="text" name="gender_other">
+        </div><br>
+
+        <label>Travel Experience:</label><br>
+        <select name="travel">
+            <option value="Frequent">Frequent traveler</option>
+            <option value="Occasional">Occasional traveler</option>
+            <option value="Rarely">Rarely travels</option>
+        </select><br>
+
+        <label>Income Tier:</label><br>
+        <select name="income">
+            <option value="Tier 1">Under $50k</option>
+            <option value="Tier 2">$50k - $250k</option>
+            <option value="Tier 3">$250k - $1M</option>
+            <option value="Tier 4">$1M+</option>
+        </select><br>
+
+        <label>Medical Conditions (Optional):</label><br>
+        <textarea name="medical"></textarea><br><br>
+
+        <input type="submit" value="Register">
+    </form>
+
+    <script>
+        function toggleGenderInput() {
+            var dropdown = document.getElementById("genderDropdown");
+            var customBox = document.getElementById("customGenderBox");
+            if (dropdown.value === "Other") {
+                customBox.style.display = "block";
+            } else {
+                customBox.style.display = "none";
+            }
+        }
+    </script>
+</body>
+
+</html>

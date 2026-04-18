@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Member Dashboard</title>
+    <style>
+        body { margin: 0; font-family: sans-serif; display: flex; height: 100vh; }
+        .sidebar { width: 250px; background-color: #333; color: white; padding: 20px; display: flex; flex-direction: column; }
+        .sidebar a { color: white; text-decoration: none; padding: 10px 0; margin-bottom: 5px; }
+        .sidebar a:hover { background-color: #555; padding-left: 5px; transition: 0.3s; }
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
+        .vip-lounge { padding: 20px; border: 2px dashed gold; text-align: center; margin-top: 20px; background-color: #fffdf0; }
+        table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>Menu</h2>
+        <a href="/profile">Profile</a>
+        <a href="/support">Upload Data</a>
+        <a href="/support">Chat with Admin</a>
+        <a href="/support">Book Meeting</a>
+        <hr style="width: 100%;">
+        <a href="/logout" style="color: #ff6b6b;">Logout</a>
+    </div>
+
+    <div class="main-content">
+        <h2>Welcome, {{ fullname }}!</h2>
+        
+        <div style="background-color: #f0f0f0; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
+            <h3>Club Information & Announcements</h3>
+            <p>[Placeholder for club information and weekly slideshows]</p>
+        </div>
+
+        {% if membership_tier == 'Regular' %}
+            <form action="/dashboard/request_vip" method="POST" style="margin-bottom: 20px;">
+                <button type="submit" style="padding: 10px 20px; background-color: gold; border: none; font-weight: bold; cursor: pointer;">Request VIP Subscription</button>
+            </form>
+        {% elif membership_tier == 'Pending Request' %}
+            <div style="padding: 15px; border: 1px solid orange; background-color: #fff3e0; margin-bottom: 20px;">
+                <strong>Request Pending:</strong> You have requested to join the VIP Club. Please wait for an Admin to review your request and send payment instructions.
+            </div>
+        {% elif membership_tier == 'Awaiting Payment' %}
+            <div style="padding: 15px; border: 1px solid blue; background-color: #e0f7fa; margin-bottom: 20px;">
+                <strong>Admin Instructions:</strong><br>
+                <em>{{ vip_admin_reply }}</em>
+                <hr>
+                <h4>Upload Proof of Payment</h4>
+                <form action="/dashboard/submit_proof" method="POST" enctype="multipart/form-data">
+                    <label>Reference Details / Link:</label><br>
+                    <input type="text" name="proof_text" style="width: 100%;"><br><br>
+                    
+                    <label>Or Upload Screenshot:</label><br>
+                    <input type="file" name="proof_file"><br><br>
+                    
+                    <button type="submit" style="padding: 10px; background-color: #4CAF50; color: white; border: none;">Submit Proof</button>
+                </form>
+            </div>
+        {% elif membership_tier == 'Payment Received' %}
+             <div style="padding: 15px; border: 1px solid purple; background-color: #f3e5f5; margin-bottom: 20px;">
+                <strong>Proof Uploaded:</strong> Our admins are reviewing your payment verification. You will be granted VIP access shortly!
+                <br><em>Your Submission: {{ vip_user_proof }}</em>
+            </div>
+        {% elif membership_tier == 'VIP' %}
+            <div class="vip-lounge">
+                <a href="#" style="font-size: 1.2em; font-weight: bold; color: #b8860b;">Enter VIP Lounge</a>
+                <p>Welcome to the True VIP Lounge exclusive area.</p>
+            </div>
+        {% endif %}
+
+        <hr>
+
+        <h3>Make a Donation</h3>
+        <form action="/dashboard" method="POST">
+            <label>Amount:</label><br>
+            <input type="number" step="0.01" name="amount" required><br><br>
+            
+            <label>Visibility Preference:</label><br>
+            <select name="visibility_preference">
+                <option value="Public">Make Public</option>
+                <option value="Anonymous">Keep Anonymous</option>
+            </select><br><br>
+            
+            <button type="submit">Submit Donation</button>
+        </form>
+        
+        <br>
+        
+        <h3>Your Past Donations</h3>
+        <table>
+            <tr>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Admin Reply</th>
+            </tr>
+            {% for d in donations %}
+            <tr>
+                <td>${{ "%.2f"|format(d[0]) }}</td>
+                <td>{{ d[1] }}</td>
+                <td>{{ d[2] if d[2] else 'Waiting for admin...' }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+</body>
+</html>

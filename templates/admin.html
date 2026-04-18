@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>VIP Admin Dashboard</title>
+    <style>
+        table,
+        th,
+        td {
+            border: 1px solid black;
+            border-collapse: collapse;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>VIP Club - Member Roster</h2>
+    <a href="/logout">Lock Vault & Logout</a><br><br>
+
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Email</th>
+            <th>Mobile</th>
+            <th>Full Name</th>
+            <th>Username</th>
+            <th>Age</th>
+            <th>Gender</th>
+            <th>Travel</th>
+            <th>Income Tier</th>
+            <th>Medical Notes</th>
+            <th>Membership Tier</th>
+            <th>Actions</th>
+        </tr>
+        {% for member in members %}
+        <tr>
+            <td>{{ member[0] }}</td>
+            <td>{{ member[1] }}</td>
+            <td>{{ member[2] }}</td>
+            <td>{{ member[3] }}</td>
+            <td>{{ member[4] }}</td>
+            <td>{{ member[5] }}</td>
+            <td>{{ member[6] }}</td>
+            <td>{{ member[7] }}</td>
+            <td>{{ member[8] }}</td>
+            <td>{{ member[9] }}</td>
+            <td>{{ member[11] }}</td>
+            <td>
+                <form method="POST" action="/admin/reset/{{ member[0] }}" style="display:inline;">
+                    <button type="submit">Reset Password</button>
+                </form>
+                <hr>
+                {% if member[11] == 'Regular' %}
+                <!-- Nothing else for Regular, they just exist -->
+                {% elif member[11] == 'Pending Request' %}
+                <form method="POST" action="/admin/send_instructions/{{ member[0] }}" style="display:inline;">
+                    <input type="text" name="admin_instructions" required placeholder="Payment instructions">
+                    <button type="submit" style="background-color: lightblue;">Send Instructions</button>
+                </form>
+                {% elif member[11] == 'Awaiting Payment' %}
+                <span style="color: gray;">Awaiting User Payment</span>
+                {% elif member[11] == 'Payment Received' %}
+                {% if member[13] %}
+                <a href="{{ member[13] }}" target="_blank">View Proof</a><br>
+                {% endif %}
+                <form method="POST" action="/admin/finalize_vip/{{ member[0] }}" style="display:inline;">
+                    <button type="submit" style="background-color: lightgreen;">Verify & Approve VIP</button>
+                </form>
+                {% elif member[11] == 'VIP' %}
+                <form method="POST" action="/admin/demote/{{ member[0] }}" style="display:inline;">
+                    <button type="submit" style="background-color: lightcoral;">Remove VIP</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <br><br>
+    <h2>Donations Manager</h2>
+    <table>
+        <tr>
+            <th>Donation ID</th>
+            <th>Member ID</th>
+            <th>Amount</th>
+            <th>Visibility</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+        {% for donation in donations %}
+        <tr>
+            <td>{{ donation[0] }}</td>
+            <td>{{ donation[1] }}</td>
+            <td>${{ "%.2f"|format(donation[2]) }}</td>
+            <td>{{ donation[3] }}</td>
+            <td>{{ donation[4] }}</td>
+            <td>
+                {% if donation[4] == 'Pending' %}
+                <form method="POST" action="/admin/donation_reply/{{ donation[0] }}" style="display:inline;">
+                    <input type="text" name="admin_reply" required placeholder="Reply instructions...">
+                    <button type="submit">Approve & Reply</button>
+                </form>
+                {% else %}
+                    {{ donation[5] }}
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+
+</html>

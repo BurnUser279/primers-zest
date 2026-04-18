@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Unified Support Ticketing</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #f4f4f4; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 500px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #333; }
+        label { font-weight: bold; display: block; margin-top: 15px; }
+        select, textarea, input[type="file"] { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
+        button { margin-top: 20px; padding: 10px 15px; width: 100%; background: #4CAF50; color: white; border: none; font-size: 16px; cursor: pointer; border-radius: 4px; }
+        button:hover { background: #45a049; }
+        a { display: block; text-align: center; margin-top: 10px; color: #333; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Submit a Ticket</h2>
+        <form action="/support" method="POST" enctype="multipart/form-data">
+            <label>Category:</label>
+            <select name="category" required>
+                <option value="Meeting Request">Meeting Request</option>
+                <option value="Payment Issue">Payment Issue</option>
+                <option value="Feature Suggestion">Feature Suggestion</option>
+                <option value="Bug Report">Bug Report</option>
+                <option value="General Inquiry">General Inquiry</option>
+            </select>
+
+            <label>Message:</label>
+            <textarea name="message" rows="5" required></textarea>
+
+            <label>Attachment (Optional):</label>
+            <input type="file" name="attachment">
+
+            <button type="submit">Submit Ticket</button>
+        </form>
+        <a href="/dashboard">Back to Dashboard</a>
+    </div>
+</body>
+</html>
