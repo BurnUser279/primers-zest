@@ -2,7 +2,14 @@
 <html>
 <head>
     <title>Unified Support Ticketing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        @media screen and (max-width: 768px) {
+            body { padding: 10px; }
+            .container { width: 100%; padding: 15px; box-sizing: border-box; }
+            button[type="submit"], a { padding: 15px; width: 100%; text-align: center; box-sizing: border-box; font-size: 18px; display: block; margin-top: 10px; }
+            select, textarea, input { font-size: 16px; }
+        }
         body { font-family: sans-serif; padding: 20px; background-color: #f4f4f4; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 500px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
         h2 { text-align: center; color: #333; }

@@ -2,7 +2,17 @@
 <html>
 <head>
     <title>Member Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        @media screen and (max-width: 768px) {
+            body { flex-direction: column; height: auto; }
+            .sidebar { width: 100%; padding: 15px; box-sizing: border-box; }
+            .sidebar a { padding: 15px; font-size: 18px; }
+            .main-content { padding: 15px; width: 100%; box-sizing: border-box; }
+            table { display: block; overflow-x: auto; width: 100%; }
+            button[type="submit"] { padding: 15px !important; font-size: 16px; width: 100%; margin-top: 10px; }
+            form, input, select { width: 100%; box-sizing: border-box; }
+        }
         body { margin: 0; font-family: sans-serif; display: flex; height: 100vh; }
         .sidebar { width: 250px; background-color: #333; color: white; padding: 20px; display: flex; flex-direction: column; }
         .sidebar a { color: white; text-decoration: none; padding: 10px 0; margin-bottom: 5px; }
