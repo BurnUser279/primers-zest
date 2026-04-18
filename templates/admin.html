@@ -49,7 +49,13 @@
             <td>{{ member[6] }}</td>
             <td>{{ member[7] }}</td>
             <td>{{ member[8] }}</td>
-            <td>{{ member[9] }}</td>
+            <td>
+                {{ member[9] }}
+                {% if member[9] %}
+                <br>
+                {% endif %}
+                <a href="/admin/reply/{{ member[0] }}" style="display:inline-block; padding: 5px 10px; background-color: #2196F3; color: white; text-decoration: none; border: 1px solid #0b7dda; border-radius: 3px; font-size: 12px; margin-top: 5px;">Reply to Member</a>
+            </td>
             <td>{{ member[11] }}</td>
             <td>
                 <form method="POST" action="/admin/reset/{{ member[0] }}" style="display:inline;">
