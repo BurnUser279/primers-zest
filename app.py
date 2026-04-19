@@ -49,6 +49,7 @@ def init_db():
                   message TEXT NOT NULL,
                   attachment TEXT,
                   status TEXT DEFAULT 'Open',
+                  admin_reply TEXT,
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                   FOREIGN KEY(user_id) REFERENCES members(id))''')
     conn.commit()
@@ -135,6 +136,9 @@ def member_dashboard():
     c.execute("SELECT amount, status, admin_reply FROM donations WHERE member_id = %s", (session['member_id'],))
     my_donations = c.fetchall()
     
+    c.execute("SELECT id, category, message, attachment, status, admin_reply FROM tickets WHERE user_id = %s ORDER BY created_at DESC", (session['member_id'],))
+    my_tickets = c.fetchall()
+    
     c.execute("SELECT membership_tier, vip_admin_reply, vip_user_proof FROM members WHERE id = %s", (session['member_id'],))
     status_row = c.fetchone()
     current_tier = status_row[0] if status_row else 'Regular'
@@ -142,7 +146,7 @@ def member_dashboard():
     user_proof = status_row[2] if status_row else None
     conn.close()
         
-    return render_template('dashboard.html', fullname=session.get('member_fullname'), donations=my_donations, membership_tier=current_tier, vip_admin_reply=admin_reply, vip_user_proof=user_proof)
+    return render_template('dashboard.html', fullname=session.get('member_fullname'), donations=my_donations, tickets=my_tickets, membership_tier=current_tier, vip_admin_reply=admin_reply, vip_user_proof=user_proof)
 
 @app.route('/dashboard/request_vip', methods=['POST'])
 def dashboard_request_vip():
@@ -281,6 +285,28 @@ def admin_donation_reply(donation_id):
     conn.close()
     
     return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/reply/<int:member_id>', methods=['GET', 'POST'])
+def admin_reply_member(member_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+        
+    if request.method == 'POST':
+        admin_reply_text = request.form.get('admin_reply_text')
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        c = conn.cursor()
+        # Update the most recent open ticket for this member
+        c.execute("UPDATE tickets SET admin_reply = %s, status = 'Replied' WHERE user_id = %s AND status = 'Open' AND id = (SELECT id FROM tickets WHERE user_id = %s AND status = 'Open' ORDER BY created_at DESC LIMIT 1)", (admin_reply_text, member_id, member_id))
+        
+        # If no open ticket was found, update the most recent one anyway
+        if c.rowcount == 0:
+            c.execute("UPDATE tickets SET admin_reply = %s, status = 'Replied' WHERE user_id = %s AND id = (SELECT id FROM tickets WHERE user_id = %s ORDER BY created_at DESC LIMIT 1)", (admin_reply_text, member_id, member_id))
+            
+        conn.commit()
+        conn.close()
+        return redirect(url_for('admin_dashboard'))
+        
+    return render_template('admin_reply.html', member_id=member_id)
 
 @app.route('/admin/send_instructions/<int:member_id>', methods=['POST'])
 def admin_send_instructions(member_id):

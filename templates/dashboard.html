@@ -28,6 +28,7 @@
     <div class="sidebar">
         <h2>Menu</h2>
         <a href="/profile">Profile</a>
+        <a href="/support">Support Center (Chat & Upload)</a>
         <hr style="width: 100%;">
         <a href="/logout" style="color: #ff6b6b;">Logout</a>
     </div>
@@ -106,6 +107,31 @@
                 <td>${{ "%.2f"|format(d[0]) }}</td>
                 <td>{{ d[1] }}</td>
                 <td>{{ d[2] if d[2] else 'Waiting for admin...' }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <br>
+        
+        <h3>Your Support Tickets</h3>
+        <table>
+            <tr>
+                <th>Category</th>
+                <th>Message</th>
+                <th>Status</th>
+            </tr>
+            {% for ticket in tickets %}
+            <tr>
+                <td>{{ ticket[1] }}</td>
+                <td>
+                    {{ ticket[2] }}
+                    {% if ticket[5] %}
+                        <div style="margin-top: 10px; padding: 10px; background-color: #f1f8e9; border-left: 4px solid #4CAF50;">
+                            <strong>Admin Reply:</strong> {{ ticket[5] }}
+                        </div>
+                    {% endif %}
+                </td>
+                <td>{{ ticket[4] }}</td>
             </tr>
             {% endfor %}
         </table>
