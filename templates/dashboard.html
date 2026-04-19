@@ -34,6 +34,15 @@
     </div>
 
     <div class="main-content">
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <div style="padding: 10px; margin-bottom: 20px; color: #155724; background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px;">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
         <h2>Welcome, {{ fullname }}!</h2>
         
         <div style="background-color: #f0f0f0; padding: 15px; margin-bottom: 20px; border-radius: 5px;">

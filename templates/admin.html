@@ -61,6 +61,11 @@
                 {% if member[9] %}
                 <br>
                 {% endif %}
+                {% if member[14] %}
+                <div style="background-color: #f9f9f9; padding: 5px; border: 1px solid #ddd; margin-top: 5px; font-size: 13px; color: #333;">
+                    <strong>Latest Ticket:</strong> {{ member[14] }}
+                </div>
+                {% endif %}
                 <a href="/admin/reply/{{ member[0] }}" style="display:inline-block; padding: 5px 10px; background-color: #2196F3; color: white; text-decoration: none; border: 1px solid #0b7dda; border-radius: 3px; font-size: 12px; margin-top: 5px;">Reply to Member</a>
             </td>
             <td>{{ member[11] }}</td>

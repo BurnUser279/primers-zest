@@ -22,6 +22,15 @@
 </head>
 <body>
     <div class="container">
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <div style="padding: 10px; margin-bottom: 20px; color: #155724; background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; text-align: center;">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
         <h2>Submit a Ticket</h2>
         <form action="/support" method="POST" enctype="multipart/form-data">
             <label>Category:</label>

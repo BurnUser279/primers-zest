@@ -3,7 +3,7 @@ import psycopg2
 import psycopg2.extras
 from dotenv import load_dotenv
 load_dotenv()
-from flask import Flask, render_template, request, session, redirect, url_for
+from flask import Flask, render_template, request, session, redirect, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
@@ -217,7 +217,7 @@ def support():
                   (session['member_id'], category, message, attachment_path))
         conn.commit()
         conn.close()
-        
+        flash('Message sent successfully')
         return redirect(url_for('member_dashboard'))
         
     return render_template('support.html')
@@ -240,7 +240,11 @@ def admin_dashboard():
 
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor()
-    c.execute("SELECT * FROM members")
+    c.execute("""
+        SELECT m.*, 
+        (SELECT message FROM tickets t WHERE t.user_id = m.id ORDER BY created_at DESC LIMIT 1) as latest_ticket 
+        FROM members m
+    """)
     all_members = c.fetchall()
     
     c.execute("SELECT * FROM donations")
@@ -316,7 +320,14 @@ def admin_reply_member(member_id):
         conn.close()
         return redirect(url_for('admin_dashboard'))
         
-    return render_template('admin_reply.html', member_id=member_id)
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    c.execute("SELECT message FROM tickets WHERE user_id = %s ORDER BY created_at DESC LIMIT 1", (member_id,))
+    ticket_msg = c.fetchone()
+    ticket_text = ticket_msg[0] if ticket_msg else "No ticket messages found."
+    conn.close()
+
+    return render_template('admin_reply.html', member_id=member_id, ticket_text=ticket_text)
 
 @app.route('/admin/send_instructions/<int:member_id>', methods=['POST'])
 def admin_send_instructions(member_id):
