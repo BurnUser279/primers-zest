@@ -17,9 +17,13 @@
 <body>
     <div class="container">
         <h2>Reply to Member (ID: {{ member_id }})</h2>
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
             <label><strong>Your Reply:</strong></label>
             <textarea name="admin_reply_text" rows="5" required></textarea>
+            
+            <label style="display:block; margin-top:10px;"><strong>Attach Media (Optional):</strong></label>
+            <input type="file" name="admin_media" accept="image/*, .doc, .docx, .pdf" style="margin-top:5px; margin-bottom:15px;">
+            
             <button type="submit">Send Reply</button>
         </form>
         <br>

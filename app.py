@@ -50,6 +50,7 @@ def init_db():
                   attachment TEXT,
                   status TEXT DEFAULT 'Open',
                   admin_reply TEXT,
+                  admin_media TEXT,
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                   FOREIGN KEY(user_id) REFERENCES members(id))''')
     conn.commit()
@@ -136,7 +137,7 @@ def member_dashboard():
     c.execute("SELECT amount, status, admin_reply FROM donations WHERE member_id = %s", (session['member_id'],))
     my_donations = c.fetchall()
     
-    c.execute("SELECT id, category, message, attachment, status, admin_reply FROM tickets WHERE user_id = %s ORDER BY created_at DESC", (session['member_id'],))
+    c.execute("SELECT id, category, message, attachment, status, admin_reply, admin_media FROM tickets WHERE user_id = %s ORDER BY created_at DESC", (session['member_id'],))
     my_tickets = c.fetchall()
     
     c.execute("SELECT membership_tier, vip_admin_reply, vip_user_proof FROM members WHERE id = %s", (session['member_id'],))
@@ -293,14 +294,23 @@ def admin_reply_member(member_id):
         
     if request.method == 'POST':
         admin_reply_text = request.form.get('admin_reply_text')
+        
+        media_file = request.files.get('admin_media')
+        media_path = None
+        if media_file and media_file.filename != '':
+            filename = secure_filename(media_file.filename)
+            filename = f"admin_reply_m{member_id}_{filename}"
+            media_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            media_path = f"/static/uploads/{filename}"
+            
         conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
         c = conn.cursor()
         # Update the most recent open ticket for this member
-        c.execute("UPDATE tickets SET admin_reply = %s, status = 'Replied' WHERE user_id = %s AND status = 'Open' AND id = (SELECT id FROM tickets WHERE user_id = %s AND status = 'Open' ORDER BY created_at DESC LIMIT 1)", (admin_reply_text, member_id, member_id))
+        c.execute("UPDATE tickets SET admin_reply = %s, admin_media = %s, status = 'Replied' WHERE user_id = %s AND status = 'Open' AND id = (SELECT id FROM tickets WHERE user_id = %s AND status = 'Open' ORDER BY created_at DESC LIMIT 1)", (admin_reply_text, media_path, member_id, member_id))
         
         # If no open ticket was found, update the most recent one anyway
         if c.rowcount == 0:
-            c.execute("UPDATE tickets SET admin_reply = %s, status = 'Replied' WHERE user_id = %s AND id = (SELECT id FROM tickets WHERE user_id = %s ORDER BY created_at DESC LIMIT 1)", (admin_reply_text, member_id, member_id))
+            c.execute("UPDATE tickets SET admin_reply = %s, admin_media = %s, status = 'Replied' WHERE user_id = %s AND id = (SELECT id FROM tickets WHERE user_id = %s ORDER BY created_at DESC LIMIT 1)", (admin_reply_text, media_path, member_id, member_id))
             
         conn.commit()
         conn.close()

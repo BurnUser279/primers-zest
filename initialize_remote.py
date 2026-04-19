@@ -15,6 +15,19 @@ try:
     db_url = os.environ.get('DATABASE_URL')
     conn = psycopg2.connect(db_url)
     c = conn.cursor()
+    
+    try:
+        c.execute("ALTER TABLE tickets ADD COLUMN admin_reply TEXT;")
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+
+    try:
+        c.execute("ALTER TABLE tickets ADD COLUMN admin_media TEXT;")
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+
     c.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';")
     tables = c.fetchall()
     conn.close()

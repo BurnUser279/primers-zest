@@ -125,9 +125,15 @@
                 <td>{{ ticket[1] }}</td>
                 <td>
                     {{ ticket[2] }}
-                    {% if ticket[5] %}
+                    {% if ticket[5] or ticket[6] %}
                         <div style="margin-top: 10px; padding: 10px; background-color: #f1f8e9; border-left: 4px solid #4CAF50;">
-                            <strong>Admin Reply:</strong> {{ ticket[5] }}
+                            <strong>Admin Reply:</strong> {{ ticket[5] if ticket[5] else '' }}
+                            {% if ticket[6] %}
+                                <div style="margin-top: 10px;">
+                                    <strong>Attached Media:</strong><br>
+                                    <a href="{{ ticket[6] }}" target="_blank">View File</a>
+                                </div>
+                            {% endif %}
                         </div>
                     {% endif %}
                 </td>
