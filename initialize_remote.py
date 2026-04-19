@@ -28,6 +28,30 @@ try:
     except Exception as e:
         conn.rollback()
 
+    try:
+        c.execute('''CREATE TABLE IF NOT EXISTS attachments
+                     (id SERIAL PRIMARY KEY,
+                      ticket_id INTEGER NOT NULL,
+                      file_path TEXT NOT NULL,
+                      uploaded_by_admin BOOLEAN DEFAULT FALSE,
+                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                      FOREIGN KEY(ticket_id) REFERENCES tickets(id))''')
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+
+    try:
+        c.execute('''CREATE TABLE IF NOT EXISTS secure_tokens
+                     (id SERIAL PRIMARY KEY,
+                      attachment_id INTEGER NOT NULL,
+                      token_string TEXT UNIQUE NOT NULL,
+                      expires_at TIMESTAMP NOT NULL,
+                      is_used BOOLEAN DEFAULT FALSE,
+                      FOREIGN KEY(attachment_id) REFERENCES attachments(id))''')
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+
     c.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';")
     tables = c.fetchall()
     conn.close()
