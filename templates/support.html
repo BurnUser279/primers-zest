@@ -45,8 +45,17 @@
             <label>Message:</label>
             <textarea name="message" rows="5" required></textarea>
 
-            <label>Attachment (Optional):</label>
-            <input type="file" name="attachment">
+            <label>Attachment (Max 5, Optional):</label>
+            <input type="file" name="attachment" id="attachment" multiple>
+            
+            <script>
+                document.getElementById('attachment').addEventListener('change', function() {
+                    if (this.files.length > 5) {
+                        alert("You can only upload a maximum of 5 files.");
+                        this.value = "";
+                    }
+                });
+            </script>
 
             <button type="submit">Submit Ticket</button>
         </form>

@@ -53,6 +53,14 @@ def init_db():
                   admin_media TEXT,
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                   FOREIGN KEY(user_id) REFERENCES members(id))''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS attachments
+                 (id SERIAL PRIMARY KEY,
+                  ticket_id INTEGER NOT NULL,
+                  file_path TEXT NOT NULL,
+                  uploaded_by_admin BOOLEAN DEFAULT FALSE,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  FOREIGN KEY(ticket_id) REFERENCES tickets(id))''')
     conn.commit()
     conn.close()
 
@@ -202,19 +210,27 @@ def support():
     if request.method == 'POST':
         category = request.form.get('category')
         message = request.form.get('message')
-        attachment = request.files.get('attachment')
-        attachment_path = None
+        attachments = request.files.getlist('attachment')
         
-        if attachment and attachment.filename != '':
-            filename = secure_filename(attachment.filename)
-            filename = f"ticket_m{session['member_id']}_{filename}"
-            attachment.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            attachment_path = f"/static/uploads/{filename}"
-            
         conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
         c = conn.cursor()
-        c.execute("INSERT INTO tickets (user_id, category, message, attachment) VALUES (%s, %s, %s, %s)",
-                  (session['member_id'], category, message, attachment_path))
+        
+        # Insert ticket first to get ticket_id
+        c.execute("INSERT INTO tickets (user_id, category, message) VALUES (%s, %s, %s) RETURNING id",
+                  (session['member_id'], category, message))
+        ticket_id = c.fetchone()[0]
+        
+        for file in attachments:
+            if file and file.filename != '':
+                filename = secure_filename(file.filename)
+                filename = f"ticket_t{ticket_id}_m{session['member_id']}_{filename}"
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                file_path = f"/static/uploads/{filename}"
+                
+                # Insert into attachments table
+                c.execute("INSERT INTO attachments (ticket_id, file_path) VALUES (%s, %s)",
+                          (ticket_id, file_path))
+        
         conn.commit()
         conn.close()
         flash('Message sent successfully')
@@ -298,36 +314,55 @@ def admin_reply_member(member_id):
         
     if request.method == 'POST':
         admin_reply_text = request.form.get('admin_reply_text')
+        media_files = request.files.getlist('admin_media')
         
-        media_file = request.files.get('admin_media')
-        media_path = None
-        if media_file and media_file.filename != '':
-            filename = secure_filename(media_file.filename)
-            filename = f"admin_reply_m{member_id}_{filename}"
-            media_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            media_path = f"/static/uploads/{filename}"
-            
         conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
         c = conn.cursor()
-        # Update the most recent open ticket for this member
-        c.execute("UPDATE tickets SET admin_reply = %s, admin_media = %s, status = 'Replied' WHERE user_id = %s AND status = 'Open' AND id = (SELECT id FROM tickets WHERE user_id = %s AND status = 'Open' ORDER BY created_at DESC LIMIT 1)", (admin_reply_text, media_path, member_id, member_id))
         
-        # If no open ticket was found, update the most recent one anyway
-        if c.rowcount == 0:
-            c.execute("UPDATE tickets SET admin_reply = %s, admin_media = %s, status = 'Replied' WHERE user_id = %s AND id = (SELECT id FROM tickets WHERE user_id = %s ORDER BY created_at DESC LIMIT 1)", (admin_reply_text, media_path, member_id, member_id))
+        # Determine which ticket we are replying to
+        c.execute("SELECT id FROM tickets WHERE user_id = %s AND status = 'Open' ORDER BY created_at DESC LIMIT 1", (member_id,))
+        ticket_row = c.fetchone()
+        
+        if not ticket_row:
+            c.execute("SELECT id FROM tickets WHERE user_id = %s ORDER BY created_at DESC LIMIT 1", (member_id,))
+            ticket_row = c.fetchone()
             
+        if ticket_row:
+            ticket_id = ticket_row[0]
+            # Update ticket status and reply text
+            c.execute("UPDATE tickets SET admin_reply = %s, status = 'Replied' WHERE id = %s", (admin_reply_text, ticket_id))
+            
+            # Save admin media attachments
+            for file in media_files:
+                if file and file.filename != '':
+                    filename = secure_filename(file.filename)
+                    filename = f"admin_reply_t{ticket_id}_m{member_id}_{filename}"
+                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    media_path = f"/static/uploads/{filename}"
+                    
+                    c.execute("INSERT INTO attachments (ticket_id, file_path, uploaded_by_admin) VALUES (%s, %s, TRUE)",
+                              (ticket_id, media_path))
+                              
         conn.commit()
         conn.close()
         return redirect(url_for('admin_dashboard'))
         
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor()
-    c.execute("SELECT message FROM tickets WHERE user_id = %s ORDER BY created_at DESC LIMIT 1", (member_id,))
+    c.execute("SELECT id, message FROM tickets WHERE user_id = %s ORDER BY created_at DESC LIMIT 1", (member_id,))
     ticket_msg = c.fetchone()
-    ticket_text = ticket_msg[0] if ticket_msg else "No ticket messages found."
+    ticket_id = ticket_msg[0] if ticket_msg else None
+    ticket_text = ticket_msg[1] if ticket_msg else "No ticket messages found."
+    
+    # Fetch attachments for this ticket
+    attachments = []
+    if ticket_id:
+        c.execute("SELECT file_path FROM attachments WHERE ticket_id = %s AND uploaded_by_admin = FALSE", (ticket_id,))
+        attachments = [row[0] for row in c.fetchall()]
+        
     conn.close()
 
-    return render_template('admin_reply.html', member_id=member_id, ticket_text=ticket_text)
+    return render_template('admin_reply.html', member_id=member_id, ticket_text=ticket_text, attachments=attachments)
 
 @app.route('/admin/send_instructions/<int:member_id>', methods=['POST'])
 def admin_send_instructions(member_id):

@@ -20,13 +20,30 @@
         <div style="background-color: #f0f0f0; padding: 15px; margin-bottom: 20px; border-radius: 5px; border-left: 5px solid #2196F3;">
             <strong>Member's Original Message:</strong><br>
             <p>{{ ticket_text }}</p>
+            {% if attachments %}
+                <div style="margin-top: 10px;">
+                    <strong>Original Attachments:</strong><br>
+                    {% for file in attachments %}
+                        <a href="{{ file }}" target="_blank" style="display:inline-block; margin-right:10px; margin-top:5px; color:#2196F3;">View File {{ loop.index }}</a>
+                    {% endfor %}
+                </div>
+            {% endif %}
         </div>
-        <form method="POST" enctype="multipart/form-data">
+        <form id="replyForm" method="POST" enctype="multipart/form-data">
             <label><strong>Your Reply:</strong></label>
             <textarea name="admin_reply_text" rows="5" required></textarea>
             
-            <label style="display:block; margin-top:10px;"><strong>Attach Media (Optional):</strong></label>
-            <input type="file" name="admin_media" accept="image/*, .doc, .docx, .pdf" style="margin-top:5px; margin-bottom:15px;">
+            <label style="display:block; margin-top:10px;"><strong>Attach Media (Max 5, Optional):</strong></label>
+            <input type="file" name="admin_media" id="admin_media" multiple accept="image/*, .doc, .docx, .pdf" style="margin-top:5px; margin-bottom:15px;">
+            
+            <script>
+                document.getElementById('admin_media').addEventListener('change', function() {
+                    if (this.files.length > 5) {
+                        alert("You can only upload a maximum of 5 files.");
+                        this.value = "";
+                    }
+                });
+            </script>
             
             <button type="submit">Send Reply</button>
         </form>
