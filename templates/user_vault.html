@@ -34,9 +34,32 @@
             <span>Audit Vault: {{ member_name }}</span>
             <span class="member-id">Member #{{ member_id }}</span>
         </h1>
+
+        <div style="background-color: #333; padding: 20px; border: 2px solid #fbbc04; border-radius: 8px; margin-bottom: 40px; color: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+            <h2 style="color: #fbbc04; margin-top: 0;">Send New Message to Member</h2>
+            <form action="/admin/vault/{{ member_id }}" method="POST">
+                <input type="hidden" name="admin_new_message" value="true">
+                <label style="font-weight: bold; display: block; margin-top: 15px; color: #fbbc04;">Select Category:</label>
+                <select name="category_new" required style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 4px; border: 1px solid #555; background: #444; color: #fff;">
+                    <option value="Proactive Outreach">Proactive Outreach</option>
+                    <option value="Payment Instruction">Payment Instruction</option>
+                    <option value="Meeting Set-up">Meeting Set-up</option>
+                    <option value="Account Alert">Account Alert</option>
+                </select>
+
+                <label style="font-weight: bold; display: block; margin-top: 15px; color: #fbbc04;">Admin Message Body:</label>
+                <textarea name="message_new" rows="4" required style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 4px; border: 1px solid #555; background: #444; color: #fff;" placeholder="Enter the official admin message here..."></textarea>
+
+                <button type="submit" style="margin-top: 20px; padding: 12px 20px; width: 100%; background: #fbbc04; color: #000; border: none; font-size: 16px; cursor: pointer; border-radius: 4px; font-weight: bold;">Initialize & Dispatch New Message</button>
+            </form>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #444; margin: 40px 0;">
+
+        <h3>Conversation & Message Audit History</h3>
         
         {% if not vault_history %}
-            <p style="text-align: center; color: #777; margin-top: 50px;">This member has no historical chats or uploads in the system.</p>
+            <p style="text-align: center; color: #777; margin-top: 50px;">This member has no historical messages or uploads in the system.</p>
         {% endif %}
 
         {% for ticket in vault_history %}

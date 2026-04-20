@@ -128,17 +128,44 @@ def member_dashboard():
         return redirect(url_for('member_login'))
         
     if request.method == 'POST':
-        amount = request.form.get('amount')
-        visibility = request.form.get('visibility_preference')
+        form_type = request.form.get('form_type')
         
-        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
-        c = conn.cursor()
-        c.execute("INSERT INTO donations (member_id, amount, visibility_preference, status) VALUES (%s, %s, %s, 'Pending')",
-                  (session['member_id'], amount, visibility))
-        conn.commit()
-        conn.close()
-        
-        return redirect(url_for('member_dashboard'))
+        if form_type == 'new_message':
+            category = request.form.get('category')
+            message = request.form.get('message')
+            attachments = request.files.getlist('attachment')
+            
+            conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+            c = conn.cursor()
+            c.execute("INSERT INTO tickets (user_id, category, message) VALUES (%s, %s, %s) RETURNING id",
+                      (session['member_id'], category, message))
+            ticket_id = c.fetchone()[0]
+            
+            for file in attachments:
+                if file and file.filename != '':
+                    filename = secure_filename(file.filename)
+                    filename = f"dash_new_m{session['member_id']}_t{ticket_id}_{filename}"
+                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    file_path = f"/static/uploads/{filename}"
+                    c.execute("INSERT INTO attachments (ticket_id, file_path) VALUES (%s, %s)",
+                              (ticket_id, file_path))
+            
+            conn.commit()
+            conn.close()
+            flash('Message successfully sent.')
+            return redirect(url_for('member_dashboard'))
+            
+        else: # Default donation form
+            amount = request.form.get('amount')
+            visibility = request.form.get('visibility_preference')
+            
+            conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+            c = conn.cursor()
+            c.execute("INSERT INTO donations (member_id, amount, visibility_preference, status) VALUES (%s, %s, %s, 'Pending')",
+                      (session['member_id'], amount, visibility))
+            conn.commit()
+            conn.close()
+            return redirect(url_for('member_dashboard'))
         
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor()
@@ -151,6 +178,7 @@ def member_dashboard():
         LEFT JOIN attachments a ON t.id = a.ticket_id 
         WHERE t.user_id = %s 
         ORDER BY t.created_at DESC
+        LIMIT 3
     """, (session['member_id'],))
     
     rows = c.fetchall()
@@ -500,37 +528,54 @@ def admin_user_vault(member_id):
         return redirect(url_for('admin_login'))
         
     if request.method == 'POST':
-        admin_reply_text = request.form.get('admin_reply_text')
-        media_files = request.files.getlist('admin_media')
+        admin_new_message = request.form.get('admin_new_message')
         
-        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
-        c = conn.cursor()
-        
-        # Find the most recent open ticket for this member
-        c.execute("SELECT id FROM tickets WHERE user_id = %s AND status = 'Open' ORDER BY created_at DESC LIMIT 1", (member_id,))
-        ticket_row = c.fetchone()
-        
-        if not ticket_row:
-            c.execute("SELECT id FROM tickets WHERE user_id = %s ORDER BY created_at DESC LIMIT 1", (member_id,))
+        if admin_new_message:
+            category = request.form.get('category_new')
+            content = request.form.get('message_new')
+            
+            conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+            c = conn.cursor()
+            # Create a brand new ticket (message) initiated by the admin
+            c.execute("INSERT INTO tickets (user_id, category, message, status, admin_reply) VALUES (%s, %s, %s, 'Replied', %s) RETURNING id",
+                      (member_id, category, '[PROACTIVE ADMIN MESSAGE]', content))
+            conn.commit()
+            conn.close()
+            flash('Proactive message dispatched.')
+            return redirect(url_for('admin_user_vault', member_id=member_id))
+            
+        else: # Standard Quick Reply to existing ticket
+            admin_reply_text = request.form.get('admin_reply_text')
+            media_files = request.files.getlist('admin_media')
+            
+            conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+            c = conn.cursor()
+            
+            # Find the most recent open ticket for this member
+            c.execute("SELECT id FROM tickets WHERE user_id = %s AND status = 'Open' ORDER BY created_at DESC LIMIT 1", (member_id,))
             ticket_row = c.fetchone()
             
-        if ticket_row:
-            ticket_id = ticket_row[0]
-            c.execute("UPDATE tickets SET admin_reply = %s, status = 'Replied' WHERE id = %s", (admin_reply_text, ticket_id))
-            
-            for file in media_files:
-                if file and file.filename != '':
-                    filename = secure_filename(file.filename)
-                    filename = f"vault_reply_t{ticket_id}_m{member_id}_{filename}"
-                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                    media_path = f"/static/uploads/{filename}"
-                    c.execute("INSERT INTO attachments (ticket_id, file_path, uploaded_by_admin) VALUES (%s, %s, TRUE)",
-                              (ticket_id, media_path))
-                              
-        conn.commit()
-        conn.close()
-        flash('Reply successfully dispatched to member history.')
-        return redirect(url_for('admin_user_vault', member_id=member_id))
+            if not ticket_row:
+                c.execute("SELECT id FROM tickets WHERE user_id = %s ORDER BY created_at DESC LIMIT 1", (member_id,))
+                ticket_row = c.fetchone()
+                
+            if ticket_row:
+                ticket_id = ticket_row[0]
+                c.execute("UPDATE tickets SET admin_reply = %s, status = 'Replied' WHERE id = %s", (admin_reply_text, ticket_id))
+                
+                for file in media_files:
+                    if file and file.filename != '':
+                        filename = secure_filename(file.filename)
+                        filename = f"vault_reply_t{ticket_id}_m{member_id}_{filename}"
+                        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                        media_path = f"/static/uploads/{filename}"
+                        c.execute("INSERT INTO attachments (ticket_id, file_path, uploaded_by_admin) VALUES (%s, %s, TRUE)",
+                                  (ticket_id, media_path))
+                                  
+            conn.commit()
+            conn.close()
+            flash('Reply successfully dispatched to member history.')
+            return redirect(url_for('admin_user_vault', member_id=member_id))
 
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor()

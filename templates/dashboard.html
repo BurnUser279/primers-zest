@@ -123,11 +123,45 @@
 
         <br>
         
-        <h3>Your Support Tickets</h3>
+        <div style="background-color: #fff; padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+            <h3>Start New Message / Support Request</h3>
+            <form action="/dashboard" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="form_type" value="new_message">
+                <label style="font-weight: bold; display: block; margin-top: 15px;">Category:</label>
+                <select name="category" required style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 4px; border: 1px solid #ddd;">
+                    <option value="Meeting Request">Meeting Request</option>
+                    <option value="Payment Issue">Payment Issue</option>
+                    <option value="Feature Suggestion">Feature Suggestion</option>
+                    <option value="Bug Report">Bug Report</option>
+                    <option value="General Inquiry">General Inquiry</option>
+                </select>
+
+                <label style="font-weight: bold; display: block; margin-top: 15px;">Message Content:</label>
+                <textarea name="message" rows="4" required style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 4px; border: 1px solid #ddd;"></textarea>
+
+                <label style="font-weight: bold; display: block; margin-top: 15px;">Attachment (Max 5, Optional):</label>
+                <input type="file" name="attachment" id="attachment" multiple style="width: 100%; margin-top: 5px;">
+                
+                <script>
+                    document.getElementById('attachment').addEventListener('change', function() {
+                        if (this.files.length > 5) {
+                            alert("You can only upload a maximum of 5 files.");
+                            this.value = "";
+                        }
+                    });
+                </script>
+
+                <button type="submit" style="margin-top: 20px; padding: 12px 20px; width: 100%; background: #4CAF50; color: white; border: none; font-size: 16px; cursor: pointer; border-radius: 4px; font-weight: bold;">Dispatch Message</button>
+            </form>
+        </div>
+
+        <hr>
+
+        <h3>Your Recent Messages (Recent 3)</h3>
         <table>
             <tr>
                 <th>Category</th>
-                <th>Message</th>
+                <th>Message History</th>
                 <th>Status</th>
             </tr>
             {% for ticket in tickets %}
@@ -137,7 +171,7 @@
                     {{ ticket.message }}
                     {% if ticket.admin_reply or ticket.admin_attachments %}
                         <div style="margin-top: 10px; padding: 10px; background-color: #f1f8e9; border-left: 4px solid #4CAF50;">
-                            <strong>Admin Reply:</strong> {{ ticket.admin_reply if ticket.admin_reply else 'See attachments below' }}
+                            <strong>Admin Response:</strong> {{ ticket.admin_reply if ticket.admin_reply else 'See attachments below' }}
                             {% if ticket.admin_attachments %}
                                 <div style="margin-top: 10px;">
                                     <strong>Attached Media (Secure):</strong><br>
@@ -153,6 +187,7 @@
             </tr>
             {% endfor %}
         </table>
+        <p style="text-align: center; margin-top: 15px;"><a href="/history" style="color: #4CAF50; text-decoration: underline; font-weight: bold;">View Full Message History &larr;</a></p>
     </div>
 
 </body>

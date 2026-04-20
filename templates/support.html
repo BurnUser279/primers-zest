@@ -31,7 +31,7 @@
             {% endfor %}
           {% endif %}
         {% endwith %}
-        <h2>Submit a Ticket</h2>
+        <h2>Send a Message</h2>
         <form action="/support" method="POST" enctype="multipart/form-data">
             <label>Category:</label>
             <select name="category" required>
@@ -42,7 +42,7 @@
                 <option value="General Inquiry">General Inquiry</option>
             </select>
 
-            <label>Message:</label>
+            <label>Message Content:</label>
             <textarea name="message" rows="5" required></textarea>
 
             <label>Attachment (Max 5, Optional):</label>
@@ -57,7 +57,7 @@
                 });
             </script>
 
-            <button type="submit">Submit Ticket</button>
+            <button type="submit">Dispatch Message</button>
         </form>
         <a href="/dashboard">Back to Dashboard</a>
     </div>
