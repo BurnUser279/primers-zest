@@ -49,6 +49,27 @@ try:
                       is_used BOOLEAN DEFAULT FALSE,
                       FOREIGN KEY(attachment_id) REFERENCES attachments(id))''')
         conn.commit()
+    try:
+        c.execute('''CREATE TABLE IF NOT EXISTS chatrooms
+                     (id SERIAL PRIMARY KEY,
+                      room_name TEXT NOT NULL,
+                      created_by_admin_id INTEGER,
+                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+        c.execute("INSERT INTO chatrooms (room_name) SELECT 'VIP Lounge' WHERE NOT EXISTS (SELECT 1 FROM chatrooms WHERE room_name = 'VIP Lounge');")
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+
+    try:
+        c.execute('''CREATE TABLE IF NOT EXISTS chatroom_messages
+                     (id SERIAL PRIMARY KEY,
+                      room_id INTEGER NOT NULL,
+                      sender_id INTEGER NOT NULL,
+                      message_text TEXT NOT NULL,
+                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                      FOREIGN KEY(room_id) REFERENCES chatrooms(id),
+                      FOREIGN KEY(sender_id) REFERENCES members(id))''')
+        conn.commit()
     except Exception as e:
         conn.rollback()
 
