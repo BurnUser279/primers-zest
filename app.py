@@ -63,6 +63,20 @@ def init_db():
                   uploaded_by_admin BOOLEAN DEFAULT FALSE,
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                   FOREIGN KEY(ticket_id) REFERENCES tickets(id))''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS chatroom_messages
+                 (id SERIAL PRIMARY KEY,
+                  room_id INTEGER NOT NULL,
+                  sender_id INTEGER NOT NULL,
+                  message_text TEXT NOT NULL,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  FOREIGN KEY(room_id) REFERENCES chatrooms(id),
+                  FOREIGN KEY(sender_id) REFERENCES members(id))''')
+                  
+    # Ensure Official Admin Member exists for technical sender identity
+    dummy_hash = generate_password_hash('AdminPostIdentity2026')
+    c.execute("INSERT INTO members (email, mobile, fullname, username, age, gender, travel, income, password_hash, membership_tier) SELECT 'admin@system.local', '0000000000', 'Official Admin', 'AdminMaster', 99, 'System', 'N/A', 'Infinite', %s, 'VIP' WHERE NOT EXISTS (SELECT 1 FROM members WHERE username = 'AdminMaster');", (dummy_hash,))
+    
     conn.commit()
     conn.close()
 
@@ -649,8 +663,14 @@ def vip_lounge():
     room_id = c.fetchone()[0]
 
     if request.method == 'POST':
-        if not member_id:
-            flash("Admins currently have Read-Only access in the Lounge.")
+        selected_sender_id = member_id
+        if not member_id: # Admin is posting
+            c.execute("SELECT id FROM members WHERE username = 'AdminMaster' LIMIT 1")
+            admin_row = c.fetchone()
+            selected_sender_id = admin_row[0] if admin_row else None
+            
+        if not selected_sender_id:
+            flash("System Error: Admin Post Identity not initialized.")
         else:
             msg_text = request.form.get('message_text')
             files = request.files.getlist('attachments')
@@ -665,7 +685,7 @@ def vip_lounge():
                     flash("Collective file size exceeds 200MB.")
                 else:
                     c.execute("INSERT INTO chatroom_messages (room_id, sender_id, message_text) VALUES (%s, %s, %s) RETURNING id",
-                              (room_id, member_id, msg_text))
+                              (room_id, selected_sender_id, msg_text))
                     msg_id = c.fetchone()[0]
                     
                     import time
@@ -677,6 +697,8 @@ def vip_lounge():
                                       (msg_id, f"/static/chatroom_uploads/{filename}", total_size)) 
                     conn.commit()
                     flash("Message dispatched successfully.")
+                    conn.close()
+                    return redirect(url_for('vip_lounge'))
 
     if is_admin:
         c.execute("""
