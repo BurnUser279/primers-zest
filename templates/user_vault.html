@@ -80,6 +80,37 @@
             </div>
         </div>
         {% endfor %}
+
+        <div style="margin-top: 50px; padding-top: 30px; border-top: 2px solid #fbbc04;">
+            <h2 style="color: #333;">Initialize Direct Admin Reply</h2>
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                {% for message in messages %}
+                  <div style="padding: 10px; margin-bottom: 20px; color: #155724; background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; text-align: center;">
+                    {{ message }}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+            <form action="/admin/vault/{{ member_id }}" method="POST" enctype="multipart/form-data">
+                <label style="font-weight: bold; display: block; margin-top: 15px;">Admin Reply Body:</label>
+                <textarea name="admin_reply_text" rows="5" required style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 4px; border: 1px solid #ddd;"></textarea>
+
+                <label style="font-weight: bold; display: block; margin-top: 15px;">Attach Media (Max 5, Optional):</label>
+                <input type="file" name="admin_media" id="admin_media" multiple style="width: 100%; margin-top: 5px;">
+                
+                <script>
+                    document.getElementById('admin_media').addEventListener('change', function() {
+                        if (this.files.length > 5) {
+                            alert("You can only upload a maximum of 5 files.");
+                            this.value = "";
+                        }
+                    });
+                </script>
+
+                <button type="submit" style="margin-top: 20px; padding: 12px 20px; width: 100%; background: #333; color: #fbbc04; border: 1px solid #fbbc04; font-size: 16px; cursor: pointer; border-radius: 4px; font-weight: bold;">Send Official Admin Reply</button>
+            </form>
+        </div>
     </div>
 </body>
 </html>

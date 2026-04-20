@@ -55,7 +55,14 @@
                     </div>
                 {% endif %}
             </div>
-
+            
+            {% if ticket.admin_reply %}
+            <div class="admin-reply">
+                <strong>Admin Reply:</strong><br>
+                <p>{{ ticket.admin_reply }}</p>
+            </div>
+            {% endif %}
+        </div>
         {% endfor %}
 
         <div style="margin-top: 50px; padding-top: 30px; border-top: 2px solid #e8f0fe;">

@@ -494,10 +494,44 @@ def member_history():
             
     return render_template('member_history.html', history=list(history.values()))
 
-@app.route('/admin/vault/<int:member_id>')
+@app.route('/admin/vault/<int:member_id>', methods=['GET', 'POST'])
 def admin_user_vault(member_id):
     if not session.get('is_admin'):
         return redirect(url_for('admin_login'))
+        
+    if request.method == 'POST':
+        admin_reply_text = request.form.get('admin_reply_text')
+        media_files = request.files.getlist('admin_media')
+        
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        c = conn.cursor()
+        
+        # Find the most recent open ticket for this member
+        c.execute("SELECT id FROM tickets WHERE user_id = %s AND status = 'Open' ORDER BY created_at DESC LIMIT 1", (member_id,))
+        ticket_row = c.fetchone()
+        
+        if not ticket_row:
+            c.execute("SELECT id FROM tickets WHERE user_id = %s ORDER BY created_at DESC LIMIT 1", (member_id,))
+            ticket_row = c.fetchone()
+            
+        if ticket_row:
+            ticket_id = ticket_row[0]
+            c.execute("UPDATE tickets SET admin_reply = %s, status = 'Replied' WHERE id = %s", (admin_reply_text, ticket_id))
+            
+            for file in media_files:
+                if file and file.filename != '':
+                    filename = secure_filename(file.filename)
+                    filename = f"vault_reply_t{ticket_id}_m{member_id}_{filename}"
+                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    media_path = f"/static/uploads/{filename}"
+                    c.execute("INSERT INTO attachments (ticket_id, file_path, uploaded_by_admin) VALUES (%s, %s, TRUE)",
+                              (ticket_id, media_path))
+                              
+        conn.commit()
+        conn.close()
+        flash('Reply successfully dispatched to member history.')
+        return redirect(url_for('admin_user_vault', member_id=member_id))
+
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor()
     c.execute("""
