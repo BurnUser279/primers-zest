@@ -10,9 +10,11 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 app.secret_key = 'super_secret_prototype_key' 
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['CHATROOM_UPLOAD_FOLDER'] = 'static/chatroom_uploads'
 
-# Ensure the upload folder exists
+# Ensure the upload folders exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True) 
+os.makedirs(app.config['CHATROOM_UPLOAD_FOLDER'], exist_ok=True)
 
 def init_db():
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
@@ -434,7 +436,7 @@ def admin_finalize_vip(member_id):
         
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor()
-    c.execute("UPDATE members SET membership_tier = 'VIP' WHERE id = %s", (member_id,))
+    c.execute("UPDATE members SET membership_tier = 'VIP', vip_since = CURRENT_TIMESTAMP WHERE id = %s", (member_id,))
     conn.commit()
     conn.close()
     
@@ -617,6 +619,91 @@ def admin_user_vault(member_id):
 def admin_logout():
     session.pop('is_admin', None)
     return redirect(url_for('admin_login'))
+
+@app.route('/vip_lounge', methods=['GET', 'POST'])
+def vip_lounge():
+    is_admin = session.get('is_admin')
+    member_id = session.get('member_id')
+    
+    if not is_admin and not member_id:
+        return redirect(url_for('member_login'))
+    
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    
+    member_data = None
+    if member_id:
+        c.execute("SELECT fullname, membership_tier, vip_since FROM members WHERE id = %s", (member_id,))
+        member_data = c.fetchone()
+        if not member_data or member_data['membership_tier'] != 'VIP':
+            conn.close()
+            return "Unauthorized. VIP Lounge access required."
+            
+        if member_data['vip_since'] is None:
+            c.execute("UPDATE members SET vip_since = CURRENT_TIMESTAMP WHERE id = %s", (member_id,))
+            conn.commit()
+            c.execute("SELECT fullname, membership_tier, vip_since FROM members WHERE id = %s", (member_id,))
+            member_data = c.fetchone()
+
+    c.execute("SELECT id FROM chatrooms WHERE room_name = 'VIP Lounge' LIMIT 1")
+    room_id = c.fetchone()[0]
+
+    if request.method == 'POST':
+        if not member_id:
+            flash("Admins currently have Read-Only access in the Lounge.")
+        else:
+            msg_text = request.form.get('message_text')
+            files = request.files.getlist('attachments')
+            
+            if len(files) > 5:
+                flash("Maximum 5 files allowed.")
+            else:
+                total_size = sum([len(f.read()) for f in files if f.filename != ''])
+                for f in files: f.seek(0)
+                
+                if total_size > 200 * 1024 * 1024:
+                    flash("Collective file size exceeds 200MB.")
+                else:
+                    c.execute("INSERT INTO chatroom_messages (room_id, sender_id, message_text) VALUES (%s, %s, %s) RETURNING id",
+                              (room_id, member_id, msg_text))
+                    msg_id = c.fetchone()[0]
+                    
+                    import time
+                    for f in files:
+                        if f and f.filename != '':
+                            filename = f"{int(time.time())}_{secure_filename(f.filename)}"
+                            f.save(os.path.join(app.config['CHATROOM_UPLOAD_FOLDER'], filename))
+                            c.execute("INSERT INTO chatroom_attachments (message_id, file_path, file_size) VALUES (%s, %s, %s)",
+                                      (msg_id, f"/static/chatroom_uploads/{filename}", total_size)) 
+                    conn.commit()
+                    flash("Message dispatched successfully.")
+
+    if is_admin:
+        c.execute("""
+            SELECT m.fullname, cm.message_text, cm.created_at, cm.id
+            FROM chatroom_messages cm
+            JOIN members m ON cm.sender_id = m.id
+            WHERE cm.room_id = %s
+            ORDER BY cm.created_at ASC
+        """, (room_id,))
+    else:
+        c.execute("""
+            SELECT m.fullname, cm.message_text, cm.created_at, cm.id
+            FROM chatroom_messages cm
+            JOIN members m ON cm.sender_id = m.id
+            WHERE cm.room_id = %s AND cm.created_at >= %s
+            ORDER BY cm.created_at ASC
+        """, (room_id, member_data['vip_since']))
+    
+    msgs = c.fetchall()
+    display_messages = []
+    for m in msgs:
+        c.execute("SELECT file_path FROM chatroom_attachments WHERE message_id = %s", (m['id'],))
+        atts = [r[0] for r in c.fetchall()]
+        display_messages.append({'sender': m['fullname'], 'text': m['message_text'], 'time': m['created_at'], 'attachments': atts})
+        
+    conn.close()
+    return render_template('chatroom.html', messages=display_messages, is_admin=is_admin)
 
 if __name__ == '__main__':
     init_db()

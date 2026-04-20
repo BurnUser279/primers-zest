@@ -61,6 +61,23 @@ try:
         conn.rollback()
 
     try:
+        c.execute("ALTER TABLE members ADD COLUMN IF NOT EXISTS vip_since TIMESTAMP;")
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+
+    try:
+        c.execute('''CREATE TABLE IF NOT EXISTS chatroom_attachments
+                     (id SERIAL PRIMARY KEY,
+                      message_id INTEGER NOT NULL,
+                      file_path TEXT NOT NULL,
+                      file_size BIGINT,
+                      FOREIGN KEY(message_id) REFERENCES chatroom_messages(id))''')
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+
+    try:
         c.execute('''CREATE TABLE IF NOT EXISTS chatroom_messages
                      (id SERIAL PRIMARY KEY,
                       room_id INTEGER NOT NULL,
