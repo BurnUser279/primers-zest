@@ -49,6 +49,9 @@ try:
                       is_used BOOLEAN DEFAULT FALSE,
                       FOREIGN KEY(attachment_id) REFERENCES attachments(id))''')
         conn.commit()
+    except Exception as e:
+        conn.rollback()
+
     try:
         c.execute('''CREATE TABLE IF NOT EXISTS chatrooms
                      (id SERIAL PRIMARY KEY,
