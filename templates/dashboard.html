@@ -29,6 +29,7 @@
         <h2>Menu</h2>
         <a href="/profile">Profile</a>
         <a href="/support">Support Center (Chat & Upload)</a>
+        <a href="/history" style="background-color: #4CAF50; margin-top: 10px; text-align: center; border-radius: 4px;">View Chat History</a>
         <hr style="width: 100%;">
         <a href="/logout" style="color: #ff6b6b;">Logout</a>
     </div>
@@ -131,22 +132,24 @@
             </tr>
             {% for ticket in tickets %}
             <tr>
-                <td>{{ ticket[1] }}</td>
+                <td>{{ ticket.category }}</td>
                 <td>
-                    {{ ticket[2] }}
-                    {% if ticket[5] or ticket[6] %}
+                    {{ ticket.message }}
+                    {% if ticket.admin_reply or ticket.admin_attachments %}
                         <div style="margin-top: 10px; padding: 10px; background-color: #f1f8e9; border-left: 4px solid #4CAF50;">
-                            <strong>Admin Reply:</strong> {{ ticket[5] if ticket[5] else '' }}
-                            {% if ticket[6] %}
+                            <strong>Admin Reply:</strong> {{ ticket.admin_reply if ticket.admin_reply else 'See attachments below' }}
+                            {% if ticket.admin_attachments %}
                                 <div style="margin-top: 10px;">
-                                    <strong>Attached Media:</strong><br>
-                                    <a href="{{ ticket[6] }}" target="_blank">View File</a>
+                                    <strong>Attached Media (Secure):</strong><br>
+                                    {% for file in ticket.admin_attachments %}
+                                        <a href="{{ file }}" target="_blank" style="display:inline-block; margin-right:10px; margin-top:5px; padding:5px 10px; background:#4CAF50; color:white; text-decoration:none; border-radius:3px; font-size:12px;">View File {{ loop.index }}</a>
+                                    {% endfor %}
                                 </div>
                             {% endif %}
                         </div>
                     {% endif %}
                 </td>
-                <td>{{ ticket[4] }}</td>
+                <td>{{ ticket.status }}</td>
             </tr>
             {% endfor %}
         </table>

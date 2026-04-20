@@ -145,8 +145,31 @@ def member_dashboard():
     c.execute("SELECT amount, status, admin_reply FROM donations WHERE member_id = %s", (session['member_id'],))
     my_donations = c.fetchall()
     
-    c.execute("SELECT id, category, message, attachment, status, admin_reply, admin_media FROM tickets WHERE user_id = %s ORDER BY created_at DESC", (session['member_id'],))
-    my_tickets = c.fetchall()
+    c.execute("""
+        SELECT t.id, t.category, t.message, t.status, t.admin_reply, a.file_path, a.uploaded_by_admin 
+        FROM tickets t 
+        LEFT JOIN attachments a ON t.id = a.ticket_id 
+        WHERE t.user_id = %s 
+        ORDER BY t.created_at DESC
+    """, (session['member_id'],))
+    
+    rows = c.fetchall()
+    tickets_dict = {}
+    for row in rows:
+        t_id = row[0]
+        if t_id not in tickets_dict:
+            tickets_dict[t_id] = {
+                'id': row[0],
+                'category': row[1],
+                'message': row[2],
+                'status': row[3],
+                'admin_reply': row[4],
+                'admin_attachments': []
+            }
+        if row[5] and row[6]: # file_path exists and uploaded_by_admin is True
+            tickets_dict[t_id]['admin_attachments'].append(row[5])
+            
+    my_tickets = list(tickets_dict.values())
     
     c.execute("SELECT membership_tier, vip_admin_reply, vip_user_proof FROM members WHERE id = %s", (session['member_id'],))
     status_row = c.fetchone()
@@ -407,6 +430,64 @@ def member_logout():
     session.pop('member_id', None)
     session.pop('member_fullname', None)
     return redirect(url_for('member_login'))
+
+@app.route('/history')
+def member_history():
+    if 'member_id' not in session:
+        return redirect(url_for('member_login'))
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    c.execute("""
+        SELECT t.id, t.category, t.message, t.status, t.admin_reply, a.file_path, a.uploaded_by_admin, t.created_at
+        FROM tickets t 
+        LEFT JOIN attachments a ON t.id = a.ticket_id 
+        WHERE t.user_id = %s 
+        ORDER BY t.created_at DESC
+    """, (session['member_id'],))
+    rows = c.fetchall()
+    conn.close()
+    
+    history = {}
+    for row in rows:
+        t_id = row[0]
+        if t_id not in history:
+            history[t_id] = {
+                'id': row[0],
+                'category': row[1],
+                'message': row[2],
+                'status': row[3],
+                'admin_reply': row[4],
+                'admin_attachments': [],
+                'user_attachments': [],
+                'created_at': row[7]
+            }
+        if row[5]:
+            if row[6]: history[t_id]['admin_attachments'].append(row[5])
+            else: history[t_id]['user_attachments'].append(row[5])
+            
+    return render_template('member_history.html', history=list(history.values()))
+
+@app.route('/admin/vault/<int:member_id>')
+def admin_user_vault(member_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    c.execute("""
+        SELECT a.file_path, t.id, t.category, t.created_at, a.uploaded_by_admin, t.message
+        FROM attachments a 
+        JOIN tickets t ON a.ticket_id = t.id 
+        WHERE t.user_id = %s
+        ORDER BY t.created_at DESC
+    """, (member_id,))
+    vault_items = c.fetchall()
+    
+    c.execute("SELECT fullname FROM members WHERE id = %s", (member_id,))
+    member_row = c.fetchone()
+    member_name = member_row[0] if member_row else "Unknown Member"
+    conn.close()
+    
+    return render_template('user_vault.html', vault_items=vault_items, member_id=member_id, member_name=member_name)
 
 @app.route('/admin/logout')
 def admin_logout():

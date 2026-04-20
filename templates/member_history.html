@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat History - Primer's Zest</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        h1 { color: #1a73e8; border-bottom: 2px solid #e8f0fe; padding-bottom: 10px; margin-bottom: 30px; }
+        .ticket-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 25px; transition: transform 0.2s; background: #fff; }
+        .ticket-card:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.05); }
+        .ticket-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .category { background: #e8f0fe; color: #1a73e8; padding: 5px 12px; border-radius: 20px; font-size: 0.85em; font-weight: bold; }
+        .date { color: #888; font-size: 0.85em; }
+        .message-box { background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #dee2e6; }
+        .admin-reply { background: #e7f3ff; padding: 15px; border-radius: 6px; margin-top: 15px; border-left: 4px solid #1a73e8; }
+        .attachment-section { margin-top: 12px; }
+        .attachment-link { display: inline-block; padding: 6px 12px; background: #34a853; color: white; text-decoration: none; border-radius: 4px; font-size: 0.8em; margin-right: 8px; margin-top: 5px; transition: background 0.3s; }
+        .attachment-link:hover { background: #2d8e47; }
+        .status-badge { padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: bold; }
+        .status-Open { background: #fff3e0; color: #ef6c00; }
+        .status-Replied { background: #e8f5e9; color: #2e7d32; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #1a73e8; text-decoration: none; font-weight: 500; }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/dashboard" class="back-link">&larr; Back to Dashboard</a>
+        <h1>Your Chat & Support History</h1>
+        
+        {% if not history %}
+            <p style="text-align: center; color: #777; margin-top: 50px;">No previous chats found. If you need help, please submit a ticket from the dashboard.</p>
+        {% endif %}
+
+        {% for ticket in history %}
+        <div class="ticket-card">
+            <div class="ticket-header">
+                <div>
+                    <span class="category">{{ ticket.category }}</span>
+                    <span class="status-badge status-{{ ticket.status }}">{{ ticket.status }}</span>
+                </div>
+                <span class="date">{{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+            
+            <div class="message-box">
+                <strong>Your Message:</strong><br>
+                <p>{{ ticket.message }}</p>
+                {% if ticket.user_attachments %}
+                    <div class="attachment-section">
+                        <strong>Your Attachments:</strong><br>
+                        {% for file in ticket.user_attachments %}
+                            <a href="{{ file }}" target="_blank" class="attachment-link">View File {{ loop.index }}</a>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            {% if ticket.admin_reply or ticket.admin_attachments %}
+            <div class="admin-reply">
+                <strong>Admin Reply:</strong><br>
+                <p>{{ ticket.admin_reply if ticket.admin_reply else 'See attachments below.' }}</p>
+                {% if ticket.admin_attachments %}
+                    <div class="attachment-section">
+                        <strong>Admin Attachments:</strong><br>
+                        {% for file in ticket.admin_attachments %}
+                            <a href="{{ file }}" target="_blank" class="attachment-link" style="background: #1a73e8;">Secure View {{ loop.index }}</a>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
