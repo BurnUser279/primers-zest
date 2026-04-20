@@ -431,10 +431,37 @@ def member_logout():
     session.pop('member_fullname', None)
     return redirect(url_for('member_login'))
 
-@app.route('/history')
+@app.route('/history', methods=['GET', 'POST'])
 def member_history():
     if 'member_id' not in session:
         return redirect(url_for('member_login'))
+        
+    if request.method == 'POST':
+        category = request.form.get('category')
+        message = request.form.get('message')
+        attachments = request.files.getlist('attachment')
+        
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        c = conn.cursor()
+        
+        c.execute("INSERT INTO tickets (user_id, category, message) VALUES (%s, %s, %s) RETURNING id",
+                  (session['member_id'], category, message))
+        ticket_id = c.fetchone()[0]
+        
+        for file in attachments:
+            if file and file.filename != '':
+                filename = secure_filename(file.filename)
+                filename = f"history_reply_t{ticket_id}_m{session['member_id']}_{filename}"
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                file_path = f"/static/uploads/{filename}"
+                c.execute("INSERT INTO attachments (ticket_id, file_path) VALUES (%s, %s)",
+                          (ticket_id, file_path))
+        
+        conn.commit()
+        conn.close()
+        flash('Reply sent successfully')
+        return redirect(url_for('member_history'))
+
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor()
     c.execute("""
@@ -474,20 +501,38 @@ def admin_user_vault(member_id):
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor()
     c.execute("""
-        SELECT a.file_path, t.id, t.category, t.created_at, a.uploaded_by_admin, t.message
-        FROM attachments a 
-        JOIN tickets t ON a.ticket_id = t.id 
-        WHERE t.user_id = %s
+        SELECT t.id, t.category, t.message, t.status, t.admin_reply, a.file_path, a.uploaded_by_admin, t.created_at
+        FROM tickets t 
+        LEFT JOIN attachments a ON t.id = a.ticket_id 
+        WHERE t.user_id = %s 
         ORDER BY t.created_at DESC
     """, (member_id,))
-    vault_items = c.fetchall()
+    rows = c.fetchall()
     
+    vault_history = {}
+    for row in rows:
+        t_id = row[0]
+        if t_id not in vault_history:
+            vault_history[t_id] = {
+                'id': row[0],
+                'category': row[1],
+                'message': row[2],
+                'status': row[3],
+                'admin_reply': row[4],
+                'admin_attachments': [],
+                'user_attachments': [],
+                'created_at': row[7]
+            }
+        if row[5]:
+            if row[6]: vault_history[t_id]['admin_attachments'].append(row[5])
+            else: vault_history[t_id]['user_attachments'].append(row[5])
+            
     c.execute("SELECT fullname FROM members WHERE id = %s", (member_id,))
     member_row = c.fetchone()
     member_name = member_row[0] if member_row else "Unknown Member"
     conn.close()
     
-    return render_template('user_vault.html', vault_items=vault_items, member_id=member_id, member_name=member_name)
+    return render_template('user_vault.html', vault_history=list(vault_history.values()), member_id=member_id, member_name=member_name)
 
 @app.route('/admin/logout')
 def admin_logout():

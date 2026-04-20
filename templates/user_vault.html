@@ -1,66 +1,85 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>User Vault - {{ member_name }}</title>
+    <title>Member Vault & Chat Audit - {{ member_name }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a1a; color: #e0e0e0; margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; background: #2d2d2d; padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h1 { color: #fbbc04; border-bottom: 2px solid #444; padding-bottom: 10px; margin-bottom: 30px; }
-        .vault-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .vault-card { background: #3d3d3d; border-radius: 8px; padding: 15px; border: 1px solid #555; display: flex; flex-direction: column; }
-        .vault-card:hover { border-color: #fbbc04; box-shadow: 0 0 15px rgba(251, 188, 4, 0.2); }
-        .file-info { flex-grow: 1; margin-bottom: 15px; }
-        .file-info label { display: block; font-size: 0.75em; color: #aaa; text-transform: uppercase; margin-bottom: 2px; }
-        .file-info span { display: block; font-size: 0.9em; margin-bottom: 8px; color: #fff; }
-        .vault-actions { margin-top: auto; }
-        .view-btn { display: block; width: 100%; text-align: center; padding: 10px; background: #fbbc04; color: #000; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background 0.3s; }
-        .view-btn:hover { background: #e5ac00; }
-        .admin-tag { background: #4285f4; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; }
-        .back-link { color: #aaa; text-decoration: none; font-size: 0.9em; display: inline-block; margin-bottom: 20px; }
-        .back-link:hover { color: #fff; text-decoration: underline; }
-        .empty-vault { text-align: center; padding: 50px; color: #777; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        h1 { color: #fbbc04; background-color: #333; padding: 15px; border-radius: 8px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .member-id { font-size: 0.5em; background: #555; padding: 5px 10px; border-radius: 4px; color: #fff; }
+        .ticket-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 25px; background: #fff; border-left: 5px solid #fbbc04; }
+        .ticket-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .category { background: #fff3e0; color: #ef6c00; padding: 5px 12px; border-radius: 20px; font-size: 0.85em; font-weight: bold; }
+        .date { color: #888; font-size: 0.85em; }
+        .message-section { margin-bottom: 20px; }
+        .bubble { padding: 15px; border-radius: 8px; margin-top: 10px; position: relative; }
+        .user-bubble { background: #f1f8e9; border: 1px solid #c3e6cb; }
+        .admin-bubble { background: #e3f2fd; border: 1px solid #bbdefb; margin-top: 15px; }
+        .label { font-size: 0.75em; font-weight: bold; color: #666; text-transform: uppercase; display: block; margin-bottom: 5px; }
+        .attachment-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-top: 10px; }
+        .attachment-link { display: block; padding: 8px; background: #fff; border: 1px solid #ddd; border-radius: 4px; text-decoration: none; color: #1a73e8; font-size: 0.85em; text-align: center; transition: all 0.2s; }
+        .attachment-link:hover { background: #f8f9fa; border-color: #1a73e8; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #333; text-decoration: none; font-weight: 500; }
+        .back-link:hover { text-decoration: underline; }
+        .status-badge { padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: bold; }
+        .status-Open { background: #ffebee; color: #c62828; }
+        .status-Replied { background: #e8f5e9; color: #2e7d32; }
     </style>
 </head>
 <body>
     <div class="container">
-        <a href="/admin" class="back-link">&larr; Back to Admin Dashboard</a>
-        <h1>User Vault: {{ member_name }} (ID: {{ member_id }})</h1>
+        <a href="/admin" class="back-link">&larr; Back to Member Roster</a>
+        <h1>
+            <span>Audit Vault: {{ member_name }}</span>
+            <span class="member-id">Member #{{ member_id }}</span>
+        </h1>
         
-        {% if not vault_items %}
-            <div class="empty-vault">
-                <p>This member has not uploaded or received any files yet.</p>
-            </div>
-        {% else %}
-            <div class="vault-grid">
-                {% for item in vault_items %}
-                <div class="vault-card">
-                    <div class="file-info">
-                        <label>Date Captured</label>
-                        <span>{{ item[3].strftime('%Y-%m-%d %H:%M') }}</span>
-                        
-                        <label>Originating Ticket / Category</label>
-                        <span>Ticket #{{ item[1] }} - {{ item[2] }}</span>
-                        
-                        <label>Owner / Direction</label>
-                        <span>
-                            {% if item[4] %}
-                                Admin Attachment <span class="admin-tag">SENT BY ADMIN</span>
-                            {% else %}
-                                Member Upload <span class="admin-tag" style="background: #34a853;">USER PROOF</span>
-                            {% endif %}
-                        </span>
-                        
-                        <label>File Label</label>
-                        <span style="font-family: monospace; font-size: 0.8em; overflow: hidden; text-overflow: ellipsis;">{{ item[0].split('/')[-1] }}</span>
-                    </div>
-                    <div class="vault-actions">
-                        <a href="{{ item[0] }}" target="_blank" class="view-btn">Initialize Secure View</a>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
+        {% if not vault_history %}
+            <p style="text-align: center; color: #777; margin-top: 50px;">This member has no historical chats or uploads in the system.</p>
         {% endif %}
+
+        {% for ticket in vault_history %}
+        <div class="ticket-card">
+            <div class="ticket-header">
+                <div>
+                    <span class="category">{{ ticket.category }}</span>
+                    <span class="status-badge status-{{ ticket.status }}">Ticket #{{ ticket.id }} - {{ ticket.status }}</span>
+                </div>
+                <span class="date">{{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+            
+            <div class="message-section">
+                <div class="bubble user-bubble">
+                    <span class="label">User Message</span>
+                    <p style="margin: 5px 0;">{{ ticket.message }}</p>
+                    {% if ticket.user_attachments %}
+                        <span class="label" style="margin-top: 10px;">User Uploads</span>
+                        <div class="attachment-grid">
+                            {% for file in ticket.user_attachments %}
+                                <a href="{{ file }}" target="_blank" class="attachment-link">📁 Member File {{ loop.index }}</a>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if ticket.admin_reply or ticket.admin_attachments %}
+                <div class="bubble admin-bubble">
+                    <span class="label">Admin Response</span>
+                    <p style="margin: 5px 0;">{{ ticket.admin_reply if ticket.admin_reply else 'See attachments below.' }}</p>
+                    {% if ticket.admin_attachments %}
+                        <span class="label" style="margin-top: 10px;">Admin Sent Media</span>
+                        <div class="attachment-grid">
+                            {% for file in ticket.admin_attachments %}
+                                <a href="{{ file }}" target="_blank" class="attachment-link" style="color: #155724; border-color: #c3e6cb;">🔒 Secure Admin File {{ loop.index }}</a>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
     </div>
 </body>
 </html>

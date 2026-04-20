@@ -56,22 +56,47 @@
                 {% endif %}
             </div>
 
-            {% if ticket.admin_reply or ticket.admin_attachments %}
-            <div class="admin-reply">
-                <strong>Admin Reply:</strong><br>
-                <p>{{ ticket.admin_reply if ticket.admin_reply else 'See attachments below.' }}</p>
-                {% if ticket.admin_attachments %}
-                    <div class="attachment-section">
-                        <strong>Admin Attachments:</strong><br>
-                        {% for file in ticket.admin_attachments %}
-                            <a href="{{ file }}" target="_blank" class="attachment-link" style="background: #1a73e8;">Secure View {{ loop.index }}</a>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
-            {% endif %}
-        </div>
         {% endfor %}
+
+        <div style="margin-top: 50px; padding-top: 30px; border-top: 2px solid #e8f0fe;">
+            <h2>Send a Quick Reply / New Message</h2>
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                {% for message in messages %}
+                  <div style="padding: 10px; margin-bottom: 20px; color: #155724; background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; text-align: center;">
+                    {{ message }}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+            <form action="/history" method="POST" enctype="multipart/form-data">
+                <label style="font-weight: bold; display: block; margin-top: 15px;">Category:</label>
+                <select name="category" required style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 4px; border: 1px solid #ddd;">
+                    <option value="Meeting Request">Meeting Request</option>
+                    <option value="Payment Issue">Payment Issue</option>
+                    <option value="Feature Suggestion">Feature Suggestion</option>
+                    <option value="Bug Report">Bug Report</option>
+                    <option value="General Inquiry">General Inquiry</option>
+                </select>
+
+                <label style="font-weight: bold; display: block; margin-top: 15px;">Message:</label>
+                <textarea name="message" rows="5" required style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 4px; border: 1px solid #ddd;"></textarea>
+
+                <label style="font-weight: bold; display: block; margin-top: 15px;">Attachment (Max 5, Optional):</label>
+                <input type="file" name="attachment" id="attachment" multiple style="width: 100%; margin-top: 5px;">
+                
+                <script>
+                    document.getElementById('attachment').addEventListener('change', function() {
+                        if (this.files.length > 5) {
+                            alert("You can only upload a maximum of 5 files.");
+                            this.value = "";
+                        }
+                    });
+                </script>
+
+                <button type="submit" style="margin-top: 20px; padding: 12px 20px; width: 100%; background: #1a73e8; color: white; border: none; font-size: 16px; cursor: pointer; border-radius: 4px; font-weight: bold;">Submit Reply</button>
+            </form>
+        </div>
     </div>
 </body>
 </html>
