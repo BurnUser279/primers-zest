@@ -134,6 +134,12 @@
                     <button type="submit" style="background-color: lightcoral;">Remove VIP</button>
                 </form>
                 {% endif %}
+
+                {% if member[11] != 'VIP' %}
+                <form method="POST" action="/admin/manual_vip/{{ member[0] }}" style="display:inline; margin-left: 5px;">
+                    <button type="submit" style="background-color: gold; color: black; font-weight: bold;">Grant VIP Access</button>
+                </form>
+                {% endif %}
                 <hr>
                 <a href="/admin/vault/{{ member[0] }}" style="display:block; text-align:center; padding: 10px; background-color: #333; color: gold; text-decoration: none; border-radius: 4px; font-weight: bold; border: 1px solid #fbbc04;">View Member Vault</a>
             </td>

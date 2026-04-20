@@ -469,6 +469,20 @@ def admin_demote_member(member_id):
     
     return redirect(url_for('admin_dashboard'))
 
+@app.route('/admin/manual_vip/<int:member_id>', methods=['POST'])
+def admin_manual_vip(member_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+        
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    c.execute("UPDATE members SET membership_tier = 'VIP', vip_since = CURRENT_TIMESTAMP WHERE id = %s", (member_id,))
+    conn.commit()
+    conn.close()
+    
+    flash("Manual VIP Override successful.")
+    return redirect(url_for('admin_dashboard'))
+
 @app.route('/logout')
 def member_logout():
     session.pop('member_id', None)
