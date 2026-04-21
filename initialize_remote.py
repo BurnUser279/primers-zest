@@ -93,6 +93,27 @@ try:
     except Exception as e:
         conn.rollback()
 
+    try:
+        c.execute('''CREATE TABLE IF NOT EXISTS vip_periods
+                     (id SERIAL PRIMARY KEY,
+                      user_id INTEGER NOT NULL,
+                      start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                      end_time TIMESTAMP,
+                      FOREIGN KEY(user_id) REFERENCES members(id))''')
+        
+        # Migration: Create periods for legacy VIPs
+        c.execute("""
+            INSERT INTO vip_periods (user_id, start_time)
+            SELECT id, vip_since FROM members 
+            WHERE membership_tier = 'VIP' AND vip_since IS NOT NULL
+            AND NOT EXISTS (SELECT 1 FROM vip_periods WHERE user_id = members.id)
+        """)
+        conn.commit()
+        print("vip_periods table ready and legacy data migrated.")
+    except Exception as e:
+        print(f"Error initializing vip_periods: {e}")
+        conn.rollback()
+
     c.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';")
     tables = c.fetchall()
     conn.close()

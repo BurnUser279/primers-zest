@@ -474,6 +474,8 @@ def admin_finalize_vip(member_id):
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor()
     c.execute("UPDATE members SET membership_tier = 'VIP', vip_since = CURRENT_TIMESTAMP WHERE id = %s", (member_id,))
+    # Start a new VIP period
+    c.execute("INSERT INTO vip_periods (user_id, start_time) VALUES (%s, CURRENT_TIMESTAMP)", (member_id,))
     conn.commit()
     conn.close()
     
@@ -487,6 +489,8 @@ def admin_demote_member(member_id):
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor()
     c.execute("UPDATE members SET membership_tier = 'Regular' WHERE id = %s", (member_id,))
+    # Close the active VIP period
+    c.execute("UPDATE vip_periods SET end_time = CURRENT_TIMESTAMP WHERE user_id = %s AND end_time IS NULL", (member_id,))
     conn.commit()
     conn.close()
     
@@ -500,6 +504,8 @@ def admin_manual_vip(member_id):
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor()
     c.execute("UPDATE members SET membership_tier = 'VIP', vip_since = CURRENT_TIMESTAMP WHERE id = %s", (member_id,))
+    # Start a new VIP period
+    c.execute("INSERT INTO vip_periods (user_id, start_time) VALUES (%s, CURRENT_TIMESTAMP)", (member_id,))
     conn.commit()
     conn.close()
     
@@ -749,9 +755,15 @@ def vip_lounge():
             SELECT m.fullname, cm.message_text, cm.created_at, cm.id
             FROM chatroom_messages cm
             JOIN members m ON cm.sender_id = m.id
-            WHERE cm.room_id = %s AND cm.created_at >= %s
+            WHERE cm.room_id = %s 
+            AND EXISTS (
+                SELECT 1 FROM vip_periods vp 
+                WHERE vp.user_id = %s 
+                AND cm.created_at >= vp.start_time 
+                AND (vp.end_time IS NULL OR cm.created_at <= vp.end_time)
+            )
             ORDER BY cm.created_at ASC
-        """, (room_id, member_data['vip_since']))
+        """, (room_id, member_id))
     
     # Retrieve messages with unique IDs and associated media attachments
     msgs = c.fetchall()
