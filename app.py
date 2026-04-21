@@ -80,6 +80,11 @@ def init_db():
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                   FOREIGN KEY(room_id) REFERENCES chatrooms(id),
                   FOREIGN KEY(sender_id) REFERENCES members(id))''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS subscription_plans
+                 (id SERIAL PRIMARY KEY,
+                  plan_name TEXT NOT NULL,
+                  price REAL NOT NULL)''')
                   
     # Ensure Official Admin Member exists for technical sender identity
     dummy_hash = generate_password_hash('AdminPostIdentity2026')
@@ -228,9 +233,11 @@ def member_dashboard():
     current_tier = status_row[0] if status_row else 'Regular'
     admin_reply = status_row[1] if status_row else None
     user_proof = status_row[2] if status_row else None
+    c.execute("SELECT plan_name, price FROM subscription_plans ORDER BY id")
+    plans = c.fetchall()
     conn.close()
         
-    return render_template('dashboard.html', fullname=session.get('member_fullname'), donations=my_donations, tickets=my_tickets, membership_tier=current_tier, vip_admin_reply=admin_reply, vip_user_proof=user_proof)
+    return render_template('dashboard.html', fullname=session.get('member_fullname'), donations=my_donations, tickets=my_tickets, membership_tier=current_tier, vip_admin_reply=admin_reply, vip_user_proof=user_proof, plans=plans)
 
 @app.route('/dashboard/request_vip', methods=['POST'])
 def dashboard_request_vip():
@@ -362,9 +369,33 @@ def admin_dashboard():
     
     c.execute("SELECT * FROM donations")
     all_donations = c.fetchall()
+    
+    c.execute("SELECT * FROM subscription_plans ORDER BY id")
+    all_plans = c.fetchall()
     conn.close()
 
-    return render_template('admin.html', members=all_members, donations=all_donations)
+    return render_template('admin.html', members=all_members, donations=all_donations, plans=all_plans)
+
+@app.route('/admin/settings', methods=['POST'])
+def admin_settings():
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+    
+    plan_ids = request.form.getlist('plan_id')
+    plan_names = request.form.getlist('plan_name')
+    plan_prices = request.form.getlist('plan_price')
+    
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    
+    for i in range(len(plan_ids)):
+        c.execute("UPDATE subscription_plans SET plan_name = %s, price = %s WHERE id = %s",
+                  (plan_names[i], float(plan_prices[i]), int(plan_ids[i])))
+    
+    conn.commit()
+    conn.close()
+    flash("Platform settings updated successfully.")
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/reset/<int:member_id>', methods=['POST'])
 def admin_reset_password(member_id):

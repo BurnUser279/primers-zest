@@ -210,6 +210,38 @@
         {% endfor %}
     </table>
     </div>
+
+    <br><hr><br>
+    <div class="container">
+        <h2>Platform Settings - Subscription Plans</h2>
+        <div class="table-wrapper">
+        <form action="/admin/settings" method="POST" class="no-history-form">
+            <table>
+                <tr>
+                    <th>Plan ID</th>
+                    <th>Plan Name</th>
+                    <th>Price ($)</th>
+                </tr>
+                {% for plan in plans %}
+                <tr>
+                    <td>
+                        {{ plan[0] }}
+                        <input type="hidden" name="plan_id" value="{{ plan[0] }}">
+                    </td>
+                    <td>
+                        <input type="text" name="plan_name" value="{{ plan[1] }}" required>
+                    </td>
+                    <td>
+                        <input type="number" step="0.01" name="plan_price" value="{{ plan[2] }}" required>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            <br>
+            <button type="submit" style="background-color: #2e7d32; color: white;">Save Platform Settings</button>
+        </form>
+        </div>
+    </div>
 </body>
 
 </html>

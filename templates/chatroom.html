@@ -46,7 +46,7 @@
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <span style="font-size: 11px;">{{ msg.time.strftime('%Y-%m-%d %H:%M') }}</span>
                             {% if is_admin %}
-                                <form action="/admin_delete_chat_message/{{ msg.id }}" method="POST" style="display:inline;" onsubmit="return confirm('Purge this message and associated media from the records?')">
+                                <form action="/admin_delete_chat_message/{{ msg.id }}" method="POST" style="display:inline;" onsubmit="return confirm('Purge this message and associated media from the records?')" class="no-history-form">
                                     <button type="submit" style="background: none; border: 1px solid #ff4444; color: #ff4444; padding: 2px 6px; border-radius: 3px; font-size: 10px; cursor: pointer; text-transform: uppercase; font-weight: bold;">Delete</button>
                                 </form>
                             {% endif %}

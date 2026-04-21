@@ -94,6 +94,20 @@ try:
         conn.rollback()
 
     try:
+        c.execute('''CREATE TABLE IF NOT EXISTS subscription_plans
+                     (id SERIAL PRIMARY KEY,
+                      plan_name TEXT NOT NULL,
+                      price REAL NOT NULL)''')
+        c.execute("SELECT COUNT(*) FROM subscription_plans")
+        if c.fetchone()[0] == 0:
+            c.execute("INSERT INTO subscription_plans (plan_name, price) VALUES (%s, %s), (%s, %s), (%s, %s)",
+                      ('Monthly', 9.99, 'Quarterly', 24.99, 'Annual', 89.99))
+        conn.commit()
+        print("Subscription plans table ready and seeded.")
+    except Exception as e:
+        conn.rollback()
+
+    try:
         c.execute('''CREATE TABLE IF NOT EXISTS vip_periods
                      (id SERIAL PRIMARY KEY,
                       user_id INTEGER NOT NULL,

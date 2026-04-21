@@ -192,9 +192,9 @@
                     <label style="font-weight: bold;">Select Your Purchased Plan:</label><br>
                     <select name="selected_plan" required style="width: 100%; padding: 12px; margin: 10px 0 20px 0; border: 1px solid #ccc; border-radius: 4px; font-size: 16px;">
                         <option value="" disabled selected>-- Select Your Plan --</option>
-                        <option value="Monthly">Monthly VIP Access ($9.99)</option>
-                        <option value="Quarterly">Quarterly VIP Access ($24.99)</option>
-                        <option value="Annual">Annual VIP Access ($89.99)</option>
+                        {% for plan in plans %}
+                        <option value="{{ plan[0] }}">{{ plan[0] }} VIP Access (${{ "%.2f"|format(plan[1]) }})</option>
+                        {% endfor %}
                     </select><br>
 
                     <label style="font-weight: bold;">Receipt / Screenshot (Image or PDF):</label><br>
