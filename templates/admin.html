@@ -29,8 +29,7 @@
         .container { padding: 30px; }
         
         @media screen and (max-width: 768px) {
-            table, td, th { width: 100%; display: block; box-sizing: border-box; }
-            table { overflow-x: auto; display: block; }
+            /* Removed display: block overrides to allow table-wrapper to function correctly */
             button, input[type="submit"] { padding: 15px; font-size: 16px; min-width: 44px; min-height: 44px; width: 100%; margin-top: 5px; }
             form, input { width: 100%; box-sizing: border-box; }
             .container { padding: 15px; }
