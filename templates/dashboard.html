@@ -39,6 +39,19 @@
             .sidebar { width: 85%; }
             .nav-brand { font-size: 16px; }
         }
+
+        /* Pricing Grid */
+        .pricing-grid { display: flex; gap: 20px; margin: 25px 0; flex-wrap: wrap; justify-content: center; }
+        .plan-card { background: white; border: 1px solid #ddd; border-radius: 12px; padding: 25px; flex: 1; min-width: 250px; max-width: 350px; text-align: center; transition: 0.3s; position: relative; display: flex; flex-direction: column; }
+        .plan-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-color: #fbbc04; }
+        .plan-card.featured { border: 2px solid #fbbc04; background: linear-gradient(180deg, #fffcf0 0%, #ffffff 100%); }
+        .premium-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #fbbc04; color: black; padding: 4px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .plan-name { font-size: 1.25rem; font-weight: bold; margin-bottom: 10px; color: #333; }
+        .plan-price { font-size: 2rem; font-weight: 800; color: #000; margin-bottom: 5px; }
+        .price-sub { font-size: 0.9rem; color: #666; margin-bottom: 20px; }
+        .plan-features { list-style: none; padding: 0; margin: 0 0 25px 0; text-align: left; font-size: 0.95rem; color: #444; flex-grow: 1; }
+        .plan-features li { margin-bottom: 8px; display: flex; align-items: start; gap: 8px; }
+        .plan-features li::before { content: '✓'; color: #2e7d32; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -137,13 +150,57 @@
                 <strong>Admin Instructions:</strong><br>
                 <em>{{ vip_admin_reply }}</em>
                 <hr>
-                <h3>Request VIP Access</h3>
+                <div class="pricing-grid">
+                    <div class="plan-card">
+                        <div class="plan-name">Monthly Plan</div>
+                        <div class="plan-price">$9.99</div>
+                        <div class="price-sub">Billed monthly</div>
+                        <ul class="plan-features">
+                            <li>Immediate VIP Lounge access</li>
+                            <li>Standard resolution media previews</li>
+                            <li>Basic historical chat access</li>
+                        </ul>
+                    </div>
+                    <div class="plan-card featured">
+                        <div class="premium-badge">Best Value</div>
+                        <div class="plan-name">Quarterly Plan</div>
+                        <div class="plan-price">$24.99</div>
+                        <div class="price-sub">Billed every 3 months</div>
+                        <ul class="plan-features">
+                            <li>Priority Admin support</li>
+                            <li>Full resolution media previews</li>
+                            <li>Extended historical chat access</li>
+                        </ul>
+                    </div>
+                    <div class="plan-card">
+                        <div class="plan-name">Annual Plan</div>
+                        <div class="plan-price">$89.99</div>
+                        <div class="price-sub">Billed annually</div>
+                        <ul class="plan-features">
+                            <li>All VIP Lounge features</li>
+                            <li>Elite "Founding Member" status</li>
+                            <li>Full lifetime history synchronization</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <hr>
+                <h3>Submit Payment Verification</h3>
                 <form action="/dashboard/verify_payment" method="POST" enctype="multipart/form-data" class="no-history-form">
-                    <p style="color: #666;">Please upload your payment receipt below for administrative verification.</p>
-                    <label>Receipt / Screenshot (Image or PDF):</label><br>
-                    <input type="file" name="receipt_file" required><br><br>
+                    <p style="color: #666;">Please select your plan and upload your payment receipt below.</p>
                     
-                    <button type="submit" style="padding: 12px 25px; background-color: #fbbc04; color: black; border: none; font-weight: bold; cursor: pointer; border-radius: 4px;">Submit Receipt for Verification</button>
+                    <label style="font-weight: bold;">Select Your Purchased Plan:</label><br>
+                    <select name="selected_plan" required style="width: 100%; padding: 12px; margin: 10px 0 20px 0; border: 1px solid #ccc; border-radius: 4px; font-size: 16px;">
+                        <option value="" disabled selected>-- Select Your Plan --</option>
+                        <option value="Monthly">Monthly VIP Access ($9.99)</option>
+                        <option value="Quarterly">Quarterly VIP Access ($24.99)</option>
+                        <option value="Annual">Annual VIP Access ($89.99)</option>
+                    </select><br>
+
+                    <label style="font-weight: bold;">Receipt / Screenshot (Image or PDF):</label><br>
+                    <input type="file" name="receipt_file" required style="margin: 10px 0 20px 0;"><br>
+                    
+                    <button type="submit" style="padding: 12px 25px; background-color: #fbbc04; color: black; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; width: 100%; font-size: 16px;">Upload Proof & Verify Status</button>
                 </form>
             </div>
         {% elif membership_tier == 'Payment Received' %}
