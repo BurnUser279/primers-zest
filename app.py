@@ -753,6 +753,7 @@ def vip_lounge():
             ORDER BY cm.created_at ASC
         """, (room_id, member_data['vip_since']))
     
+    # Retrieve messages with unique IDs and associated media attachments
     msgs = c.fetchall()
     display_messages = []
     for m in msgs:
