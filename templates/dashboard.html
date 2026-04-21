@@ -62,34 +62,48 @@
     </div>
 
     <script>
-        function toggleMenu() {
-            const sidebar = document.getElementById('sideDrawer');
-            const overlay = document.getElementById('menuOverlay');
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        }
-
-        window.addEventListener('pageshow', function(event) {
-            if (event.persisted) {
-                window.location.reload();
+        document.addEventListener('DOMContentLoaded', function() {
+            function toggleMenu() {
+                const sidebar = document.getElementById('sideDrawer');
+                const overlay = document.getElementById('menuOverlay');
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
             }
-        });
+            window.toggleMenu = toggleMenu;
 
-        // Fetch API History Fix
-        document.querySelectorAll('.no-history-form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const formData = new FormData(this);
-                fetch(this.action, {
-                    method: this.method,
-                    body: formData
-                }).then(() => {
-                    window.location.replace(window.location.href);
-                }).catch(err => {
-                    console.error('Submission failed:', err);
-                    alert('Submission failed. Please check your connection.');
+            window.addEventListener('pageshow', function(event) {
+                if (event.persisted) {
+                    window.location.replace(window.location.pathname + '?t=' + new Date().getTime());
+                }
+            });
+
+            // Fetch API History Fix
+            document.querySelectorAll('.no-history-form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const formData = new FormData(this);
+                    fetch(this.action, {
+                        method: this.method,
+                        body: formData
+                    }).then(() => {
+                        window.location.replace(window.location.pathname + '?t=' + new Date().getTime());
+                    }).catch(err => {
+                        console.error('Submission failed:', err);
+                        alert('Submission failed. Please check your connection.');
+                    });
                 });
             });
+
+            // Attachment limit validation
+            const attachmentInput = document.getElementById('attachment');
+            if (attachmentInput) {
+                attachmentInput.addEventListener('change', function() {
+                    if (this.files.length > 5) {
+                        alert("You can only upload a maximum of 5 files.");
+                        this.value = "";
+                    }
+                });
+            }
         });
     </script>
 
@@ -201,14 +215,7 @@
                 <label style="font-weight: bold; display: block; margin-top: 15px;">Attachment (Max 5, Optional):</label>
                 <input type="file" name="attachment" id="attachment" multiple style="width: 100%; margin-top: 5px;">
                 
-                <script>
-                    document.getElementById('attachment').addEventListener('change', function() {
-                        if (this.files.length > 5) {
-                            alert("You can only upload a maximum of 5 files.");
-                            this.value = "";
-                        }
-                    });
-                </script>
+                
 
                 <button type="submit" style="margin-top: 20px; padding: 12px 20px; width: 100%; background: #4CAF50; color: white; border: none; font-size: 16px; cursor: pointer; border-radius: 4px; font-weight: bold;">Dispatch Message</button>
             </form>

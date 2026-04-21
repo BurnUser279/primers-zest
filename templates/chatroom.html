@@ -86,7 +86,7 @@
             {% endif %}
         {% endwith %}
         
-        <form class="chat-form" action="/vip_lounge" method="POST" enctype="multipart/form-data" onsubmit="return validateForm()">
+        <form class="chat-form no-history-form" action="/vip_lounge" method="POST" enctype="multipart/form-data" onsubmit="return validateForm()">
             <div class="input-row">
                 <textarea name="message_text" rows="2" placeholder="Send an encrypted message..." required></textarea>
                 <button type="submit" class="btn-send">DISPATCH</button>
@@ -99,32 +99,68 @@
     </div>
 
     <script>
-        // Scroll to bottom on load
-        const chatBox = document.getElementById('chat-box');
-        chatBox.scrollTop = chatBox.scrollHeight;
+        document.addEventListener('DOMContentLoaded', function() {
+            // Scroll to bottom on load
+            const chatBox = document.getElementById('chat-box');
+            if (chatBox) {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
 
-        function validateForm() {
-            const fileInput = document.getElementById('attachments');
-            const files = fileInput.files;
-            
-            if (files.length > 5) {
-                alert("Security Protocol Violation: Maximum 5 files allowed per dispatch.");
-                return false;
-            }
-            
-            let totalSize = 0;
-            for (let i = 0; i < files.length; i++) {
-                totalSize += files[i].size;
-            }
-            
-            const limit = 200 * 1024 * 1024; // 200MB
-            if (totalSize > limit) {
-                alert("Security Protocol Violation: Collective file size exceeds 200MB limit.");
-                return false;
-            }
-            
-            return true;
-        }
+            window.validateForm = function() {
+                const fileInput = document.getElementById('attachments');
+                const files = fileInput.files;
+                
+                if (files.length > 5) {
+                    alert("Security Protocol Violation: Maximum 5 files allowed per dispatch.");
+                    return false;
+                }
+                
+                let totalSize = 0;
+                for (let i = 0; i < files.length; i++) {
+                    totalSize += files[i].size;
+                }
+                
+                const limit = 200 * 1024 * 1024; // 200MB
+                if (totalSize > limit) {
+                    alert("Security Protocol Violation: Collective file size exceeds 200MB limit.");
+                    return false;
+                }
+                
+                return true;
+            };
+
+            window.addEventListener('pageshow', function(event) {
+                if (event.persisted) {
+                    window.location.replace(window.location.pathname + '?t=' + new Date().getTime());
+                }
+            });
+
+            // Fetch API History Fix
+            document.querySelectorAll('.no-history-form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    // Check validation if applicable
+                    if (this.hasAttribute('onsubmit')) {
+                        const isValid = eval(this.getAttribute('onsubmit').replace('return ', ''));
+                        if (!isValid) {
+                            e.preventDefault();
+                            return;
+                        }
+                    }
+
+                    e.preventDefault();
+                    const formData = new FormData(this);
+                    fetch(this.action, {
+                        method: this.method,
+                        body: formData
+                    }).then(() => {
+                        window.location.replace(window.location.pathname + '?t=' + new Date().getTime());
+                    }).catch(err => {
+                        console.error('Submission failed:', err);
+                        alert('Submission failed. Please check your connection.');
+                    });
+                });
+            });
+        });
     </script>
 </body>
 </html>
