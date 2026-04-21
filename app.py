@@ -17,6 +17,13 @@ app.config['CHATROOM_UPLOAD_FOLDER'] = 'static/chatroom_uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True) 
 os.makedirs(app.config['CHATROOM_UPLOAD_FOLDER'], exist_ok=True)
 
+@app.after_request
+def add_header(response):
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
 def init_db():
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor()
