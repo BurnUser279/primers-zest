@@ -5,41 +5,171 @@
     <title>VIP Admin Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body, html { overflow-x: hidden; max-width: 100vw; }
-        body { margin: 0; font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
-        
-        .table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        
-        /* Top Navigation */
-        .top-nav { background-color: #000; color: #fbbc04; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-        .nav-brand { font-size: 20px; font-weight: bold; letter-spacing: 1px; }
-        .hamburger { font-size: 28px; cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; }
-        
-        /* Side Drawer */
-        .sidebar { position: fixed; top: 0; left: -100%; width: 280px; height: 100%; background-color: #1a1a1a; color: white; padding: 60px 20px 20px; box-sizing: border-box; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1100; display: flex; flex-direction: column; }
-        .sidebar.active { left: 0; box-shadow: 5px 0 15px rgba(0,0,0,0.5); }
-        .sidebar h2 { color: #fbbc04; margin-bottom: 30px; font-size: 1.5rem; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .sidebar a { color: #eee; text-decoration: none; padding: 12px 15px; margin-bottom: 8px; border-radius: 6px; transition: 0.2s; font-size: 16px; display: block; }
-        .sidebar a:hover { background-color: #333; color: #fbbc04; padding-left: 20px; }
-        
-        /* Backdrop */
-        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; z-index: 1050; backdrop-filter: blur(2px); }
-        .menu-overlay.active { display: block; }
-
-        .container { padding: 30px; }
-        
-        @media screen and (max-width: 768px) {
-            /* Removed display: block overrides to allow table-wrapper to function correctly */
-            button, input[type="submit"] { padding: 15px; font-size: 16px; min-width: 44px; min-height: 44px; width: 100%; margin-top: 5px; }
-            form, input { width: 100%; box-sizing: border-box; }
-            .container { padding: 15px; }
-            .sidebar { width: 85%; }
+        body,
+        html {
+            overflow-x: hidden;
+            max-width: 100vw;
         }
-        table { border-collapse: collapse; width: 100%; margin-top: 20px; background: white; }
-        th, td { border: 1px solid #ccc; padding: 12px; text-align: left; }
-        th { background-color: #f2f2f2; }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            background-color: #000;
+            color: #fbbc04;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-brand {
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .hamburger {
+            font-size: 28px;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+        }
+
+        /* Side Drawer */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 280px;
+            height: 100%;
+            background-color: #1a1a1a;
+            color: white;
+            padding: 60px 20px 20px;
+            box-sizing: border-box;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1100;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar.active {
+            left: 0;
+            box-shadow: 5px 0 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .sidebar h2 {
+            color: #fbbc04;
+            margin-bottom: 30px;
+            font-size: 1.5rem;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .sidebar a {
+            color: #eee;
+            text-decoration: none;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            transition: 0.2s;
+            font-size: 16px;
+            display: block;
+        }
+
+        .sidebar a:hover {
+            background-color: #333;
+            color: #fbbc04;
+            padding-left: 20px;
+        }
+
+        /* Backdrop */
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            z-index: 1050;
+            backdrop-filter: blur(2px);
+        }
+
+        .menu-overlay.active {
+            display: block;
+        }
+
+        .container {
+            padding: 30px;
+        }
+
+        @media screen and (max-width: 768px) {
+
+            /* Removed display: block overrides to allow table-wrapper to function correctly */
+            button,
+            input[type="submit"] {
+                padding: 15px;
+                font-size: 16px;
+                min-width: 44px;
+                min-height: 44px;
+                width: 100%;
+                margin-top: 5px;
+            }
+
+            form,
+            input {
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .sidebar {
+                width: 85%;
+            }
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            background: white;
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
+
 <body>
 
     <div class="top-nav">
@@ -59,7 +189,7 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             function toggleMenu() {
                 const sidebar = document.getElementById('sideDrawer');
                 const overlay = document.getElementById('menuOverlay');
@@ -69,7 +199,7 @@
             // expose toggleMenu to the global scope since it's called from onclick in HTML
             window.toggleMenu = toggleMenu;
 
-            window.addEventListener('pageshow', function(event) {
+            window.addEventListener('pageshow', function (event) {
                 if (event.persisted) {
                     window.location.replace(window.location.pathname + '?t=' + new Date().getTime());
                 }
@@ -77,7 +207,7 @@
 
             // Fetch API History Fix
             document.querySelectorAll('.no-history-form').forEach(form => {
-                form.addEventListener('submit', function(e) {
+                form.addEventListener('submit', function (e) {
                     e.preventDefault();
                     const formData = new FormData(this);
                     fetch(this.action, {
@@ -97,159 +227,171 @@
     <div class="container">
         <h2>VIP Club - Member Roster</h2>
         <div class="table-wrapper">
-        <table>
-        <tr>
-            <th>ID</th>
-            <th>Email</th>
-            <th>Mobile</th>
-            <th>Full Name</th>
-            <th>Username</th>
-            <th>Age</th>
-            <th>Gender</th>
-            <th>Travel</th>
-            <th>Income Tier</th>
-            <th>Chat</th>
-            <th>Membership Tier</th>
-            <th>Actions</th>
-        </tr>
-        {% for member in members %}
-        <tr>
-            <td>{{ member[0] }}</td>
-            <td>{{ member[1] }}</td>
-            <td>{{ member[2] }}</td>
-            <td>{{ member[3] }}</td>
-            <td>{{ member[4] }}</td>
-            <td>{{ member[5] }}</td>
-            <td>{{ member[6] }}</td>
-            <td>{{ member[7] }}</td>
-            <td>{{ member[8] }}</td>
-            <td>
-                {{ member[9] }}
-                {% if member[9] %}
-                <br>
-                {% endif %}
-                {% if member[14] %}
-                <div style="background-color: #f9f9f9; padding: 5px; border: 1px solid #ddd; margin-top: 5px; font-size: 13px; color: #333;">
-                    <strong>Latest Ticket:</strong> {{ member[14] }}
-                </div>
-                {% endif %}
-                <a href="/admin/reply/{{ member[0] }}" style="display:inline-block; padding: 5px 10px; background-color: #2196F3; color: white; text-decoration: none; border: 1px solid #0b7dda; border-radius: 3px; font-size: 12px; margin-top: 5px;">Reply to Member</a>
-            </td>
-            <td>{{ member[11] }}</td>
-            <td>
-                <form method="POST" action="/admin/reset/{{ member[0] }}" style="display:inline;">
-                    <button type="submit">Reset Password</button>
-                </form>
-                <hr>
-                {% if member[11] == 'Regular' %}
-                <!-- Nothing else for Regular, they just exist -->
-                {% elif member[11] == 'Pending Request' %}
-                <form method="POST" action="/admin/send_instructions/{{ member[0] }}" style="display:inline;">
-                    <input type="text" name="admin_instructions" required placeholder="Payment instructions">
-                    <button type="submit" style="background-color: lightblue;">Send Instructions</button>
-                </form>
-                {% elif member[11] == 'Awaiting Payment' %}
-                <span style="color: gray;">Awaiting User Payment</span>
-                {% elif member[11] == 'Payment Received' %}
-                {% if member[13] %}
-                <a href="{{ member[13] }}" target="_blank">View Proof</a><br>
-                {% endif %}
-                <form method="POST" action="/admin/finalize_vip/{{ member[0] }}" style="display:inline;" class="no-history-form">
-                    <button type="submit" style="background-color: lightgreen;">Verify & Approve VIP</button>
-                </form>
-                {% elif member[11] == 'VIP' %}
-                <form method="POST" action="/admin/demote/{{ member[0] }}" style="display:inline;" class="no-history-form">
-                    <button type="submit" style="background-color: lightcoral;">Remove VIP</button>
-                </form>
-                {% endif %}
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Email</th>
+                    <th>Mobile</th>
+                    <th>Full Name</th>
+                    <th>Username</th>
+                    <th>Age</th>
+                    <th>Gender</th>
+                    <th>Travel</th>
+                    <th>Income Tier</th>
+                    <th>Chat</th>
+                    <th>Membership Tier</th>
+                    <th>Actions</th>
+                </tr>
+                {% for member in members %}
+                <tr>
+                    <td>{{ member[0] }}</td>
+                    <td>{{ member[1] }}</td>
+                    <td>{{ member[2] }}</td>
+                    <td>{{ member[3] }}</td>
+                    <td>{{ member[4] }}</td>
+                    <td>{{ member[5] }}</td>
+                    <td>{{ member[6] }}</td>
+                    <td>{{ member[7] }}</td>
+                    <td>{{ member[8] }}</td>
+                    <td>
+                        {{ member[9] }}
+                        {% if member[9] %}
+                        <br>
+                        {% endif %}
+                        {% if member[14] %}
+                        <div
+                            style="background-color: #f9f9f9; padding: 5px; border: 1px solid #ddd; margin-top: 5px; font-size: 13px; color: #333;">
+                            <strong>Latest Ticket:</strong> {{ member[14] }}
+                        </div>
+                        {% endif %}
+                        <a href="/admin/reply/{{ member[0] }}"
+                            style="display:inline-block; padding: 5px 10px; background-color: #2196F3; color: white; text-decoration: none; border: 1px solid #0b7dda; border-radius: 3px; font-size: 12px; margin-top: 5px;">Reply
+                            to Member</a>
+                    </td>
+                    <td>{{ member[11] }}</td>
+                    <td>
+                        <form method="POST" action="/admin/reset/{{ member[0] }}" style="display:inline;">
+                            <button type="submit">Reset Password</button>
+                        </form>
+                        <hr>
+                        {% if member[11] == 'Regular' %}
+                        <!-- Nothing else for Regular, they just exist -->
+                        {% elif member[11] == 'Pending Request' %}
+                        <form method="POST" action="/admin/send_instructions/{{ member[0] }}" style="display:inline;">
+                            <input type="text" name="admin_instructions" required placeholder="Payment instructions">
+                            <button type="submit" style="background-color: lightblue;">Send Instructions</button>
+                        </form>
+                        {% elif member[11] == 'Awaiting Payment' %}
+                        <span style="color: gray;">Awaiting User Payment</span>
+                        {% elif member[11] == 'Payment Received' %}
+                        {% if member[13] %}
+                        <a href="{{ member[13] }}" target="_blank">View Proof</a><br>
+                        {% endif %}
+                        <form method="POST" action="/admin/finalize_vip/{{ member[0] }}" style="display:inline;"
+                            class="no-history-form">
+                            <button type="submit" style="background-color: lightgreen;">Verify & Approve VIP</button>
+                        </form>
+                        {% elif member[11] == 'VIP' %}
+                        <form method="POST" action="/admin/demote/{{ member[0] }}" style="display:inline;"
+                            class="no-history-form">
+                            <button type="submit" style="background-color: lightcoral;">Remove VIP</button>
+                        </form>
+                        {% endif %}
 
-                {% if member[11] != 'VIP' %}
-                <form method="POST" action="/admin/manual_vip/{{ member[0] }}" style="display:inline; margin-left: 5px;" class="no-history-form">
-                    <button type="submit" style="background-color: gold; color: black; font-weight: bold;">Grant VIP Access</button>
-                </form>
-                {% endif %}
-                <hr>
-                <a href="/admin/vault/{{ member[0] }}" style="display:block; text-align:center; padding: 10px; background-color: #333; color: gold; text-decoration: none; border-radius: 4px; font-weight: bold; border: 1px solid #fbbc04;">View Member Vault</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-    </div>
+                        {% if member[11] != 'VIP' %}
+                        <form method="POST" action="/admin/manual_vip/{{ member[0] }}"
+                            style="display:inline; margin-left: 5px;" class="no-history-form">
+                            <button type="submit" style="background-color: gold; color: black; font-weight: bold;">Grant
+                                VIP Access</button>
+                        </form>
+                        {% endif %}
+                        <hr>
+                        <a href="/admin/vault/{{ member[0] }}"
+                            style="display:block; text-align:center; padding: 10px; background-color: #333; color: gold; text-decoration: none; border-radius: 4px; font-weight: bold; border: 1px solid #fbbc04;">View
+                            Member Vault</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
     </div>
 
     <br><br>
     <h2>Donations Manager</h2>
     <div class="table-wrapper">
-    <table>
-        <tr>
-            <th>Donation ID</th>
-            <th>Member ID</th>
-            <th>Amount</th>
-            <th>Visibility</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
-        {% for donation in donations %}
-        <tr>
-            <td>{{ donation[0] }}</td>
-            <td>{{ donation[1] }}</td>
-            <td>${{ "%.2f"|format(donation[2]) }}</td>
-            <td>{{ donation[3] }}</td>
-            <td>{{ donation[4] }}</td>
-            <td>
-                {% if donation[4] == 'Pending' %}
-                <form method="POST" action="/admin/donation_reply/{{ donation[0] }}" style="display:inline;" class="no-history-form">
-                    <input type="text" name="admin_reply" required placeholder="Reply instructions...">
-                    <button type="submit">Approve & Reply</button>
-                </form>
-                {% else %}
+        <table>
+            <tr>
+                <th>Donation ID</th>
+                <th>Member ID</th>
+                <th>Amount</th>
+                <th>Visibility</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+            {% for donation in donations %}
+            <tr>
+                <td>{{ donation[0] }}</td>
+                <td>{{ donation[1] }}</td>
+                <td>${{ "%.2f"|format(donation[2]) }}</td>
+                <td>{{ donation[3] }}</td>
+                <td>{{ donation[4] }}</td>
+                <td>
+                    {% if donation[4] == 'Pending' %}
+                    <form method="POST" action="/admin/donation_reply/{{ donation[0] }}" style="display:inline;"
+                        class="no-history-form">
+                        <input type="text" name="admin_reply" required placeholder="Reply instructions...">
+                        <button type="submit">Approve & Reply</button>
+                    </form>
+                    {% else %}
                     {{ donation[5] }}
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
     </div>
 
-    <br><hr><br>
+    <br>
+    <hr><br>
     <div class="container">
         <h2>Platform Settings - Subscription Plans</h2>
         <div class="table-wrapper">
-        <form action="/admin/settings" method="POST" class="no-history-form">
-            <table>
-                <tr>
-                    <th>Plan ID</th>
-                    <th>Plan Name</th>
-                    <th>Price ($)</th>
-                </tr>
-                {% for plan in plans %}
-                <tr>
-                    <td>
-                        {{ plan[0] }}
-                        <input type="hidden" name="plan_id" value="{{ plan[0] }}">
-                    </td>
-                    <td>
-                        <input type="text" name="plan_name" value="{{ plan[1] }}" required>
-                    </td>
-                    <td>
-                        <input type="number" step="0.01" name="plan_price" value="{{ plan[2] }}" required>
-                    </td>
-                </tr>
-                {% endfor %}
-                <tr style="background-color: #f0fdf4;">
-                    <td style="color: #166534; font-weight: bold;">NEW</td>
-                    <td>
-                        <input type="text" name="new_plan_name" placeholder="e.g. Lifetime Access">
-                    </td>
-                    <td>
-                        <input type="number" step="0.01" name="new_plan_price" placeholder="99.99">
-                    </td>
-                </tr>
-            </table>
-            <p style="font-size: 0.85rem; color: #666; margin-top: 10px;">* To create a new tier, fill in the green 'NEW' row and click Save.</p>
-            <br>
-            <button type="submit" style="background-color: #2e7d32; color: white;">Save Platform Settings</button>
-        </form>
+            <form action="/admin/settings" method="POST" class="no-history-form">
+                <table>
+                    <tr>
+                        <th>Plan ID</th>
+                        <th>Plan Name</th>
+                        <th>Price ($)</th>
+                    </tr>
+                    {% for plan in plans %}
+                    <tr>
+                        <td>
+                            {{ plan[0] }}
+                            <input type="hidden" name="plan_id" value="{{ plan[0] }}">
+                        </td>
+                        <td>
+                            <input type="text" name="plan_name" value="{{ plan[1] }}" required>
+                        </td>
+                        <td>
+                            <input type="number" step="0.01" name="plan_price" value="{{ plan[2] }}" required>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <tr style="background-color: #f0fdf4;">
+                        <td style="color: #166534; font-weight: bold;">NEW</td>
+                        <td>
+                            <input type="text" name="new_plan_name" placeholder="e.g. Lifetime Access">
+                        </td>
+                        <td>
+                            <input type="number" step="0.01" name="new_plan_price" placeholder="99.99">
+                        </td>
+                    </tr>
+                </table>
+                <p style="font-size: 0.85rem; color: #666; margin-top: 10px;">* To create a new tier, fill in the green
+                    'NEW' row and click Save.</p>
+                <br>
+                <button type="submit" style="background-color: #2e7d32; color: white;">Save Platform Settings</button>
+            </form>
         </div>
     </div>
 </body>
