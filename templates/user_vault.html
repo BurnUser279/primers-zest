@@ -80,7 +80,18 @@
                         <span class="label" style="margin-top: 10px;">User Uploads</span>
                         <div class="attachment-grid">
                             {% for file in ticket.user_attachments %}
-                                <a href="{{ file }}" target="_blank" class="attachment-link">📁 Member File {{ loop.index }}</a>
+                                {% set file_lower = file.lower() %}
+                                <div style="background: #fff; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                                    {% if file_lower.endswith('.jpg') or file_lower.endswith('.jpeg') or file_lower.endswith('.png') or file_lower.endswith('.gif') or file_lower.endswith('.webp') %}
+                                        <a href="{{ file }}" target="_blank">
+                                            <img src="{{ file }}" style="max-width: 250px; border-radius: 4px; display: block;" alt="Member Image">
+                                        </a>
+                                    {% elif file_lower.endswith('.mp4') or file_lower.endswith('.webm') %}
+                                        <video src="{{ file }}" controls style="max-width: 250px; border-radius: 4px; display: block;"></video>
+                                    {% else %}
+                                        <a href="{{ file }}" target="_blank" class="attachment-link">📁 Download File {{ loop.index }}</a>
+                                    {% endif %}
+                                </div>
                             {% endfor %}
                         </div>
                     {% endif %}
@@ -94,7 +105,18 @@
                         <span class="label" style="margin-top: 10px;">Admin Sent Media</span>
                         <div class="attachment-grid">
                             {% for file in ticket.admin_attachments %}
-                                <a href="{{ file }}" target="_blank" class="attachment-link" style="color: #155724; border-color: #c3e6cb;">🔒 Secure Admin File {{ loop.index }}</a>
+                                {% set file_lower = file.lower() %}
+                                <div style="background: #fff; padding: 5px; border: 1px solid #c3e6cb; border-radius: 4px;">
+                                    {% if file_lower.endswith('.jpg') or file_lower.endswith('.jpeg') or file_lower.endswith('.png') or file_lower.endswith('.gif') or file_lower.endswith('.webp') %}
+                                        <a href="{{ file }}" target="_blank">
+                                            <img src="{{ file }}" style="max-width: 250px; border-radius: 4px; display: block;" alt="Admin Media">
+                                        </a>
+                                    {% elif file_lower.endswith('.mp4') or file_lower.endswith('.webm') %}
+                                        <video src="{{ file }}" controls style="max-width: 250px; border-radius: 4px; display: block;"></video>
+                                    {% else %}
+                                        <a href="{{ file }}" target="_blank" class="attachment-link" style="color: #155724; border-color: #c3e6cb;">🔒 Secure Admin File {{ loop.index }}</a>
+                                    {% endif %}
+                                </div>
                             {% endfor %}
                         </div>
                     {% endif %}

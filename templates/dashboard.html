@@ -289,10 +289,22 @@
                             <strong>Admin Response:</strong> {{ ticket.admin_reply if ticket.admin_reply else 'See attachments below' }}
                             {% if ticket.admin_attachments %}
                                 <div style="margin-top: 10px;">
-                                    <strong>Attached Media (Secure):</strong><br>
-                                    {% for file in ticket.admin_attachments %}
-                                        <a href="{{ file }}" target="_blank" style="display:inline-block; margin-right:10px; margin-top:5px; padding:5px 10px; background:#4CAF50; color:white; text-decoration:none; border-radius:3px; font-size:12px;">View File {{ loop.index }}</a>
-                                    {% endfor %}
+                                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;">
+                                        {% for file in ticket.admin_attachments %}
+                                            {% set file_lower = file.lower() %}
+                                            <div style="background: #fff; padding: 4px; border: 1px solid #c3e6cb; border-radius: 4px;">
+                                                {% if file_lower.endswith('.jpg') or file_lower.endswith('.jpeg') or file_lower.endswith('.png') or file_lower.endswith('.gif') or file_lower.endswith('.webp') %}
+                                                    <a href="{{ file }}" target="_blank">
+                                                        <img src="{{ file }}" style="max-width: 250px; border-radius: 4px; display: block;" alt="Admin Media">
+                                                    </a>
+                                                {% elif file_lower.endswith('.mp4') or file_lower.endswith('.webm') %}
+                                                    <video src="{{ file }}" controls style="max-width: 250px; border-radius: 4px; display: block;"></video>
+                                                {% else %}
+                                                    <a href="{{ file }}" target="_blank" style="display:inline-block; padding: 5px 10px; background:#4CAF50; color:white; text-decoration:none; border-radius:3px; font-size:12px;">🔒 File {{ loop.index }}</a>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
                                 </div>
                             {% endif %}
                         </div>

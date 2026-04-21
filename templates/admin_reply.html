@@ -21,11 +21,24 @@
             <strong>Member's Original Message:</strong><br>
             <p>{{ ticket_text }}</p>
             {% if attachments %}
-                <div style="margin-top: 10px;">
-                    <strong>Original Attachments:</strong><br>
-                    {% for file in attachments %}
-                        <a href="{{ file }}" target="_blank" style="display:inline-block; margin-right:10px; margin-top:5px; color:#2196F3;">View File {{ loop.index }}</a>
-                    {% endfor %}
+                <div style="margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px;">
+                    <strong>Member Attachments:</strong><br>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
+                        {% for file in attachments %}
+                            {% set file_lower = file.lower() %}
+                            <div style="background: #fff; padding: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                                {% if file_lower.endswith('.jpg') or file_lower.endswith('.jpeg') or file_lower.endswith('.png') or file_lower.endswith('.gif') or file_lower.endswith('.webp') %}
+                                    <a href="{{ file }}" target="_blank">
+                                        <img src="{{ file }}" style="max-width: 250px; border-radius: 4px; display: block;" alt="Member Image">
+                                    </a>
+                                {% elif file_lower.endswith('.mp4') or file_lower.endswith('.webm') %}
+                                    <video src="{{ file }}" controls style="max-width: 250px; border-radius: 4px; display: block;"></video>
+                                {% else %}
+                                    <a href="{{ file }}" target="_blank" style="display:inline-block; padding: 10px; background: #2196F3; color: white; text-decoration: none; border-radius: 4px; font-size: 14px;">Download File {{ loop.index }}</a>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
             {% endif %}
         </div>
