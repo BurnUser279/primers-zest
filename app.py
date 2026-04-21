@@ -758,10 +758,33 @@ def vip_lounge():
     for m in msgs:
         c.execute("SELECT file_path FROM chatroom_attachments WHERE message_id = %s", (m['id'],))
         atts = [r[0] for r in c.fetchall()]
-        display_messages.append({'sender': m['fullname'], 'text': m['message_text'], 'time': m['created_at'], 'attachments': atts})
+        display_messages.append({
+            'id': m['id'],
+            'sender': m['fullname'], 
+            'text': m['message_text'], 
+            'time': m['created_at'], 
+            'attachments': atts
+        })
         
     conn.close()
     return render_template('chatroom.html', messages=display_messages, is_admin=is_admin)
+
+@app.route('/admin_delete_chat_message/<int:msg_id>', methods=['POST'])
+def admin_delete_chat_message(msg_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+        
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    # 1. Delete associated attachments
+    c.execute("DELETE FROM chatroom_attachments WHERE message_id = %s", (msg_id,))
+    # 2. Delete the message itself
+    c.execute("DELETE FROM chatroom_messages WHERE id = %s", (msg_id,))
+    conn.commit()
+    conn.close()
+    
+    flash("Message and associated media purged successfully.")
+    return redirect(url_for('vip_lounge'))
 
 if __name__ == '__main__':
     init_db()
