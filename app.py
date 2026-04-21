@@ -235,28 +235,50 @@ def dashboard_request_vip():
     conn.close()
     return redirect(url_for('member_dashboard'))
 
-@app.route('/dashboard/submit_proof', methods=['POST'])
-def dashboard_submit_proof():
+@app.route('/dashboard/verify_payment', methods=['POST'])
+def dashboard_verify_payment():
     if 'member_id' not in session:
         return redirect(url_for('member_login'))
         
-    proof_text = request.form.get('proof_text', '').strip()
-    proof_file = request.files.get('proof_file')
-    
-    proof_reference = proof_text
-    
-    if proof_file and proof_file.filename != '':
-        filename = secure_filename(proof_file.filename)
-        filename = f"m{session['member_id']}_{filename}"
-        proof_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        proof_reference = f"/static/uploads/{filename}"
+    receipt_file = request.files.get('receipt_file')
+    if not receipt_file or receipt_file.filename == '':
+        flash("Please upload a valid receipt file.")
+        return redirect(url_for('member_dashboard'))
         
+    # Save the physical file
+    filename = secure_filename(receipt_file.filename)
+    unique_filename = f"receipt_m{session['member_id']}_{int(time.time())}_{filename}"
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+    receipt_file.save(file_path)
+    web_path = f"/static/uploads/{unique_filename}"
+    
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor()
-    c.execute("UPDATE members SET membership_tier = 'Payment Received', vip_user_proof = %s WHERE id = %s", (proof_reference, session['member_id']))
+    
+    # 1. Create the Ticket for Admin Review in the Vault
+    c.execute("""
+        INSERT INTO tickets (user_id, category, message, status) 
+        VALUES (%s, %s, %s, %s) RETURNING id
+    """, (session['member_id'], 'VIP Payment Verification', 'Payment receipt submitted via dashboard.', 'Open'))
+    ticket_id = c.fetchone()[0]
+    
+    # 2. Attach the receipt to the ticket
+    c.execute("INSERT INTO attachments (ticket_id, file_path) VALUES (%s, %s)", (ticket_id, web_path))
+    
+    # 3. Update Member Tier and store proof reference for legacy compatibility
+    c.execute("""
+        UPDATE members 
+        SET membership_tier = 'Payment Received', vip_user_proof = %s 
+        WHERE id = %s
+    """, (web_path, session['member_id']))
+    
     conn.commit()
     conn.close()
+    
+    flash("Payment receipt submitted. An admin will review your 'VIP Payment Verification' ticket in the Vault shortly.")
     return redirect(url_for('member_dashboard'))
+    
+@app.route('/dashboard/submit_proof', methods=['POST'])
 
 @app.route('/profile')
 def member_profile():

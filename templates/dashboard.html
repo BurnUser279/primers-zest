@@ -100,15 +100,13 @@
                 <strong>Admin Instructions:</strong><br>
                 <em>{{ vip_admin_reply }}</em>
                 <hr>
-                <h4>Upload Proof of Payment</h4>
-                <form action="/dashboard/submit_proof" method="POST" enctype="multipart/form-data">
-                    <label>Reference Details / Link:</label><br>
-                    <input type="text" name="proof_text" style="width: 100%;"><br><br>
+                <h3>Request VIP Access</h3>
+                <form action="/dashboard/verify_payment" method="POST" enctype="multipart/form-data">
+                    <p style="color: #666;">Please upload your payment receipt below for administrative verification.</p>
+                    <label>Receipt / Screenshot (Image or PDF):</label><br>
+                    <input type="file" name="receipt_file" required><br><br>
                     
-                    <label>Or Upload Screenshot:</label><br>
-                    <input type="file" name="proof_file"><br><br>
-                    
-                    <button type="submit" style="padding: 10px; background-color: #4CAF50; color: white; border: none;">Submit Proof</button>
+                    <button type="submit" style="padding: 12px 25px; background-color: #fbbc04; color: black; border: none; font-weight: bold; cursor: pointer; border-radius: 4px;">Submit Receipt for Verification</button>
                 </form>
             </div>
         {% elif membership_tier == 'Payment Received' %}
