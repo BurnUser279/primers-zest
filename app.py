@@ -381,16 +381,24 @@ def admin_settings():
     if not session.get('is_admin'):
         return redirect(url_for('admin_login'))
     
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    
+    # Update existing plans
     plan_ids = request.form.getlist('plan_id')
     plan_names = request.form.getlist('plan_name')
     plan_prices = request.form.getlist('plan_price')
     
-    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
-    c = conn.cursor()
-    
     for i in range(len(plan_ids)):
         c.execute("UPDATE subscription_plans SET plan_name = %s, price = %s WHERE id = %s",
                   (plan_names[i], float(plan_prices[i]), int(plan_ids[i])))
+    
+    # Add new plan if provided
+    new_name = request.form.get('new_plan_name')
+    new_price = request.form.get('new_plan_price')
+    if new_name and new_price:
+        c.execute("INSERT INTO subscription_plans (plan_name, price) VALUES (%s, %s)",
+                  (new_name, float(new_price)))
     
     conn.commit()
     conn.close()

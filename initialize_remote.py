@@ -98,14 +98,18 @@ try:
                      (id SERIAL PRIMARY KEY,
                       plan_name TEXT NOT NULL,
                       price REAL NOT NULL)''')
+        # Strict Seeding Check
         c.execute("SELECT COUNT(*) FROM subscription_plans")
-        if c.fetchone()[0] == 0:
+        count = c.fetchone()[0]
+        if count == 0:
+            print("Detected empty subscription plans. Seeding defaults...")
             c.execute("INSERT INTO subscription_plans (plan_name, price) VALUES (%s, %s), (%s, %s), (%s, %s)",
                       ('Monthly', 9.99, 'Quarterly', 24.99, 'Annual', 89.99))
         conn.commit()
-        print("Subscription plans table ready and seeded.")
+        print(f"Subscription plans table ready (Current Count: {count if count > 0 else 3}).")
     except Exception as e:
         conn.rollback()
+        print(f"Error seeding subscription plans: {e}")
 
     try:
         c.execute('''CREATE TABLE IF NOT EXISTS vip_periods

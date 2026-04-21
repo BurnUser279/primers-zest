@@ -14,6 +14,9 @@
         h2 { text-align: center; }
         p { font-size: 16px; margin-bottom: 10px; }
         a.button { display: inline-block; padding: 10px 15px; background: #333; color: white; text-decoration: none; border-radius: 4px; }
+        .tier-display { font-weight: bold; }
+        .tier-vip { color: #b8860b; } /* Goldenrod for visibility */
+        .tier-standard { color: #333; }
     </style>
 </head>
 <body>
@@ -27,9 +30,9 @@
             <p><strong>Age:</strong> {{ member['age'] }}</p>
             <p><strong>Gender:</strong> {{ member['gender'] }}</p>
             <p><strong>Travel Preference:</strong> {{ member['travel'] }}</p>
-            <p><strong>Income Brack:</strong> {{ member['income'] }}</p>
+            <p><strong>Income Bracket:</strong> {{ member['income'] }}</p>
             <p><strong>Medical Details:</strong> {{ member['medical'] }}</p>
-            <p><strong>Membership Tier:</strong> <span style="font-weight: bold; color: {% if member['membership_tier'] == 'VIP' %}gold{% else %}#333{% endif %};">{{ member['membership_tier'] }}</span></p>
+            <p><strong>Membership Tier:</strong> <span class="tier-display {% if member['membership_tier'] == 'VIP' %}tier-vip{% else %}tier-standard{% endif %}">{{ member['membership_tier'] }}</span></p>
         {% else %}
             <p>No profile data found.</p>
         {% endif %}
