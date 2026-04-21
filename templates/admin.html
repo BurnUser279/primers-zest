@@ -71,6 +71,23 @@
                 window.location.reload();
             }
         });
+
+        // Fetch API History Fix
+        document.querySelectorAll('.no-history-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                fetch(this.action, {
+                    method: this.method,
+                    body: formData
+                }).then(() => {
+                    window.location.replace(window.location.href);
+                }).catch(err => {
+                    console.error('Submission failed:', err);
+                    alert('Submission failed. Please check your connection.');
+                });
+            });
+        });
     </script>
 
     <div class="container">
@@ -133,17 +150,17 @@
                 {% if member[13] %}
                 <a href="{{ member[13] }}" target="_blank">View Proof</a><br>
                 {% endif %}
-                <form method="POST" action="/admin/finalize_vip/{{ member[0] }}" style="display:inline;">
+                <form method="POST" action="/admin/finalize_vip/{{ member[0] }}" style="display:inline;" class="no-history-form">
                     <button type="submit" style="background-color: lightgreen;">Verify & Approve VIP</button>
                 </form>
                 {% elif member[11] == 'VIP' %}
-                <form method="POST" action="/admin/demote/{{ member[0] }}" style="display:inline;">
+                <form method="POST" action="/admin/demote/{{ member[0] }}" style="display:inline;" class="no-history-form">
                     <button type="submit" style="background-color: lightcoral;">Remove VIP</button>
                 </form>
                 {% endif %}
 
                 {% if member[11] != 'VIP' %}
-                <form method="POST" action="/admin/manual_vip/{{ member[0] }}" style="display:inline; margin-left: 5px;">
+                <form method="POST" action="/admin/manual_vip/{{ member[0] }}" style="display:inline; margin-left: 5px;" class="no-history-form">
                     <button type="submit" style="background-color: gold; color: black; font-weight: bold;">Grant VIP Access</button>
                 </form>
                 {% endif %}
@@ -177,7 +194,7 @@
             <td>{{ donation[4] }}</td>
             <td>
                 {% if donation[4] == 'Pending' %}
-                <form method="POST" action="/admin/donation_reply/{{ donation[0] }}" style="display:inline;">
+                <form method="POST" action="/admin/donation_reply/{{ donation[0] }}" style="display:inline;" class="no-history-form">
                     <input type="text" name="admin_reply" required placeholder="Reply instructions...">
                     <button type="submit">Approve & Reply</button>
                 </form>

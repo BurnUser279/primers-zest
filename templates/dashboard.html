@@ -74,6 +74,23 @@
                 window.location.reload();
             }
         });
+
+        // Fetch API History Fix
+        document.querySelectorAll('.no-history-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                fetch(this.action, {
+                    method: this.method,
+                    body: formData
+                }).then(() => {
+                    window.location.replace(window.location.href);
+                }).catch(err => {
+                    console.error('Submission failed:', err);
+                    alert('Submission failed. Please check your connection.');
+                });
+            });
+        });
     </script>
 
     <div class="main-content">
@@ -94,7 +111,7 @@
         </div>
 
         {% if membership_tier == 'Regular' %}
-            <form action="/dashboard/request_vip" method="POST" style="margin-bottom: 20px;">
+            <form action="/dashboard/request_vip" method="POST" style="margin-bottom: 20px;" class="no-history-form">
                 <button type="submit" style="padding: 10px 20px; background-color: gold; border: none; font-weight: bold; cursor: pointer;">Request VIP Subscription</button>
             </form>
         {% elif membership_tier == 'Pending Request' %}
@@ -107,7 +124,7 @@
                 <em>{{ vip_admin_reply }}</em>
                 <hr>
                 <h3>Request VIP Access</h3>
-                <form action="/dashboard/verify_payment" method="POST" enctype="multipart/form-data">
+                <form action="/dashboard/verify_payment" method="POST" enctype="multipart/form-data" class="no-history-form">
                     <p style="color: #666;">Please upload your payment receipt below for administrative verification.</p>
                     <label>Receipt / Screenshot (Image or PDF):</label><br>
                     <input type="file" name="receipt_file" required><br><br>
@@ -130,7 +147,7 @@
         <hr>
 
         <h3>Make a Donation</h3>
-        <form action="/dashboard" method="POST">
+        <form action="/dashboard" method="POST" class="no-history-form">
             <label>Amount:</label><br>
             <input type="number" step="0.01" name="amount" required><br><br>
             
@@ -167,7 +184,7 @@
         
         <div style="background-color: #fff; padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
             <h3>Start New Message / Support Request</h3>
-            <form action="/dashboard" method="POST" enctype="multipart/form-data">
+            <form action="/dashboard" method="POST" enctype="multipart/form-data" class="no-history-form">
                 <input type="hidden" name="form_type" value="new_message">
                 <label style="font-weight: bold; display: block; margin-top: 15px;">Category:</label>
                 <select name="category" required style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 4px; border: 1px solid #ddd;">
