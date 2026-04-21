@@ -49,7 +49,14 @@
                     {% if msg.attachments %}
                         <div class="attachments">
                             {% for file in msg.attachments %}
-                                <a href="{{ file }}" target="_blank" class="attachment-link">Attached File {{ loop.index }}</a>
+                                {% set file_lower = file.lower() %}
+                                {% if file_lower.endswith('.jpg') or file_lower.endswith('.jpeg') or file_lower.endswith('.png') or file_lower.endswith('.gif') or file_lower.endswith('.webp') %}
+                                    <img src="{{ file }}" style="max-width: 250px; border-radius: 8px; display: block; margin-bottom: 5px; border: 1px solid #444;" alt="Sent Image">
+                                {% elif file_lower.endswith('.mp4') or file_lower.endswith('.webm') %}
+                                    <video src="{{ file }}" controls style="max-width: 250px; border-radius: 8px; display: block; margin-bottom: 5px; border: 1px solid #444;"></video>
+                                {% else %}
+                                    <a href="{{ file }}" target="_blank" class="attachment-link">Attached File {{ loop.index }}</a>
+                                {% endif %}
                             {% endfor %}
                         </div>
                     {% endif %}
