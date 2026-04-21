@@ -1,4 +1,5 @@
 import os
+import time
 import psycopg2
 import psycopg2.extras
 from dotenv import load_dotenv
@@ -724,7 +725,6 @@ def vip_lounge():
                               (room_id, selected_sender_id, msg_text))
                     msg_id = c.fetchone()[0]
                     
-                    import time
                     for f in files:
                         if f and f.filename != '':
                             filename = f"{int(time.time())}_{secure_filename(f.filename)}"
