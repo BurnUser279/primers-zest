@@ -233,7 +233,7 @@ def member_dashboard():
     current_tier = status_row[0] if status_row else 'Regular'
     admin_reply = status_row[1] if status_row else None
     user_proof = status_row[2] if status_row else None
-    c.execute("SELECT plan_name, price FROM subscription_plans ORDER BY id")
+    c.execute("SELECT plan_name, price, features FROM subscription_plans ORDER BY id")
     plans = c.fetchall()
     conn.close()
         
@@ -388,17 +388,19 @@ def admin_settings():
     plan_ids = request.form.getlist('plan_id')
     plan_names = request.form.getlist('plan_name')
     plan_prices = request.form.getlist('plan_price')
+    plan_features = request.form.getlist('plan_features')
     
     for i in range(len(plan_ids)):
-        c.execute("UPDATE subscription_plans SET plan_name = %s, price = %s WHERE id = %s",
-                  (plan_names[i], float(plan_prices[i]), int(plan_ids[i])))
+        c.execute("UPDATE subscription_plans SET plan_name = %s, price = %s, features = %s WHERE id = %s",
+                  (plan_names[i], float(plan_prices[i]), plan_features[i], int(plan_ids[i])))
     
     # Add new plan if provided
     new_name = request.form.get('new_plan_name')
     new_price = request.form.get('new_plan_price')
+    new_features = request.form.get('new_plan_features')
     if new_name and new_price:
-        c.execute("INSERT INTO subscription_plans (plan_name, price) VALUES (%s, %s)",
-                  (new_name, float(new_price)))
+        c.execute("INSERT INTO subscription_plans (plan_name, price, features) VALUES (%s, %s, %s)",
+                  (new_name, float(new_price), new_features if new_features else ""))
     
     conn.commit()
     conn.close()

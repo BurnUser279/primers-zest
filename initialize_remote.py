@@ -94,17 +94,28 @@ try:
         conn.rollback()
 
     try:
+        # Create table if not exists
         c.execute('''CREATE TABLE IF NOT EXISTS subscription_plans
                      (id SERIAL PRIMARY KEY,
                       plan_name TEXT NOT NULL,
                       price REAL NOT NULL)''')
+        
+        # safely add features column if it doesn't exist
+        c.execute("ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS features TEXT")
+        
         # Strict Seeding Check
         c.execute("SELECT COUNT(*) FROM subscription_plans")
         count = c.fetchone()[0]
         if count == 0:
             print("Detected empty subscription plans. Seeding defaults...")
-            c.execute("INSERT INTO subscription_plans (plan_name, price) VALUES (%s, %s), (%s, %s), (%s, %s)",
-                      ('Monthly', 9.99, 'Quarterly', 24.99, 'Annual', 89.99))
+            default_monthly = "Immediate VIP Lounge access\nStandard resolution media previews\nBasic historical chat access"
+            default_quarterly = "Priority Admin support\nFull resolution media previews\nExtended historical chat access"
+            default_annual = "All VIP Lounge features\nElite 'Founding Member' status\nFull lifetime history synchronization"
+            
+            c.execute("INSERT INTO subscription_plans (plan_name, price, features) VALUES (%s, %s, %s), (%s, %s, %s), (%s, %s, %s)",
+                      ('Monthly', 9.99, default_monthly, 
+                       'Quarterly', 24.99, default_quarterly, 
+                       'Annual', 89.99, default_annual))
         conn.commit()
         print(f"Subscription plans table ready (Current Count: {count if count > 0 else 3}).")
     except Exception as e:

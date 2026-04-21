@@ -359,16 +359,15 @@
                 <div class="plan-price">${{ "%.2f"|format(plan[1]) }}</div>
                 <div class="price-sub">Billed per cycle</div>
                 <ul class="plan-features">
-                    <li>Immediate VIP Lounge access</li>
-                    {% if plan[1] > 20 %}
-                    <li>Priority Admin support</li>
-                    <li>Full resolution media previews</li>
+                    {% if plan[2] %}
+                        {% for feature in plan[2].split('\n') %}
+                            {% if feature.strip() %}
+                                <li>{{ feature.strip() }}</li>
+                            {% endif %}
+                        {% endfor %}
                     {% else %}
-                    <li>Standard resolution media previews</li>
-                    <li>Basic historical chat access</li>
-                    {% endif %}
-                    {% if plan[1] > 50 %}
-                    <li>Elite "Founding Member" status</li>
+                        <li>Standard VIP Lounge access</li>
+                        <li>Historical chat visibility</li>
                     {% endif %}
                 </ul>
             </div>
