@@ -294,6 +294,29 @@
                 overlay.classList.toggle('active');
             }
             window.toggleMenu = toggleMenu;
+            
+            function requestPaymentInfo(planName) {
+                fetch('/request_payment_details', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ plan_name: planName }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("Payment request sent to Admin. Please check your inbox shortly for transfer details.");
+                    } else {
+                        alert("Error sending request. Please try again.");
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    alert("System error. Please contact support.");
+                });
+            }
+            window.requestPaymentInfo = requestPaymentInfo;
 
             window.addEventListener('pageshow', function (event) {
                 if (event.persisted) {
@@ -353,7 +376,7 @@
             Subscription Tiers</h3>
         <div class="pricing-grid">
             {% for plan in plans %}
-            <div class="plan-card {% if loop.index == 2 %}featured{% endif %}">
+            <div class="plan-card {% if loop.index == 2 %}featured{% endif %}" style="cursor: pointer;" onclick="requestPaymentInfo('{{ plan[0] }}')">
                 {% if loop.index == 2 %}<div class="premium-badge">Best Value</div>{% endif %}
                 <div class="plan-name">{{ plan[0] }} Plan</div>
                 <div class="plan-price">${{ "%.2f"|format(plan[1]) }}</div>

@@ -239,6 +239,30 @@ def member_dashboard():
         
     return render_template('dashboard.html', fullname=session.get('member_fullname'), donations=my_donations, tickets=my_tickets, membership_tier=current_tier, vip_admin_reply=admin_reply, vip_user_proof=user_proof, plans=plans)
 
+@app.route('/request_payment_details', methods=['POST'])
+def request_payment_details():
+    if 'member_id' not in session:
+        return jsonify({"success": False, "error": "Unauthorized"}), 401
+    
+    data = request.get_json()
+    plan_name = data.get('plan_name', 'Unknown')
+    member_id = session['member_id']
+    
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    
+    # Insert a ticket for the admin
+    message = f"I am requesting payment details for the {plan_name} plan."
+    c.execute("""
+        INSERT INTO tickets (user_id, category, message, status) 
+        VALUES (%s, %s, %s, %s)
+    """, (member_id, 'Payment Detail Request', message, 'Open'))
+    
+    conn.commit()
+    conn.close()
+    
+    return jsonify({"success": True})
+
 @app.route('/dashboard/request_vip', methods=['POST'])
 def dashboard_request_vip():
     if 'member_id' not in session:
