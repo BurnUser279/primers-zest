@@ -103,7 +103,26 @@ try:
         # safely add features column if it doesn't exist
         c.execute("ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS features TEXT")
         
-        # Strict Seeding Check
+        # Create email_templates table
+        c.execute('''CREATE TABLE IF NOT EXISTS email_templates
+                     (id SERIAL PRIMARY KEY,
+                      event_type TEXT UNIQUE NOT NULL,
+                      subject TEXT NOT NULL,
+                      body TEXT NOT NULL)''')
+        
+        # Seed default templates if empty
+        c.execute("SELECT COUNT(*) FROM email_templates")
+        if c.fetchone()[0] == 0:
+            print("Seeding default email templates...")
+            templates = [
+                ('Registration', 'Welcome to Primer\'s Zest, {{name}}!', 'Hello {{name}},\n\nThank you for registering with Primer\'s Zest. Your account is now active.\n\nBest regards,\nAdministration'),
+                ('VIP_Welcome', 'Congratulations! You are now a VIP Member', 'Hello {{name}},\n\nWe are excited to inform you that your VIP status has been granted! You now have full access to the VIP Lounge and exclusive features.\n\nEnjoy your stay,\nAdministration'),
+                ('Admin_Reply', 'New Administrative Response', 'Hello {{name}},\n\nAn administrator has responded to your inquiry:\n\n---\n{{admin_text}}\n---\n\nPlease check your dashboard for more details.\n\nBest regards,\nAdministration'),
+                ('Subscription_Success', 'Payment Verified - Access Granted', 'Hello {{name}},\n\nYour payment has been successfully verified for your chosen plan. Welcome to the elite tier of Primer\'s Zest.\n\nBest regards,\nAdministration')
+            ]
+            c.executemany("INSERT INTO email_templates (event_type, subject, body) VALUES (%s, %s, %s)", templates)
+
+        # Strict Seeding Check for subscription_plans
         c.execute("SELECT COUNT(*) FROM subscription_plans")
         count = c.fetchone()[0]
         if count == 0:

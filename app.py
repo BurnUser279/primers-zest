@@ -7,6 +7,53 @@ load_dotenv()
 from flask import Flask, render_template, request, session, redirect, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+# Email Notification Utility
+def send_email_notification(recipient_email, subject, body):
+    try:
+        sender_email = os.environ.get('MAIL_USERNAME')
+        sender_password = os.environ.get('MAIL_PASSWORD')
+        
+        if not sender_email or not sender_password:
+            print("Email configuration missing (MAIL_USERNAME/MAIL_PASSWORD).")
+            return False
+
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = recipient_email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'plain'))
+
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.send_message(msg)
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"SMTP Error: {e}")
+        return False
+
+def get_templated_email(event_type, name, admin_text=None):
+    try:
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        c = conn.cursor()
+        c.execute("SELECT subject, body FROM email_templates WHERE event_type = %s", (event_type,))
+        row = c.fetchone()
+        conn.close()
+        
+        if row:
+            subject = row[0].replace('{{name}}', name)
+            body = row[1].replace('{{name}}', name)
+            if admin_text:
+                body = body.replace('{{admin_text}}', admin_text)
+            return subject, body
+    except Exception as e:
+        print(f"Template Error: {e}")
+    return None, None
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_prototype_key' 
@@ -122,6 +169,12 @@ def register():
             c = conn.cursor()
             c.execute("INSERT INTO members (email, mobile, fullname, username, age, gender, travel, income, medical, password_hash, membership_tier) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Regular')",
                       (request.form['email'], request.form['mobile'], final_fullname, request.form['username'], request.form['age'], final_gender, request.form['travel'], request.form['income'], request.form['medical'], hashed_pw))
+            
+            # Send Registration Email
+            subj, body = get_templated_email('Registration', final_fullname)
+            if subj:
+                send_email_notification(request.form['email'], subj, body)
+                
             conn.commit()
             conn.close()
             return redirect(url_for('member_login'))
@@ -396,9 +449,12 @@ def admin_dashboard():
     
     c.execute("SELECT * FROM subscription_plans ORDER BY id")
     all_plans = c.fetchall()
+
+    c.execute("SELECT * FROM email_templates ORDER BY id")
+    all_templates = c.fetchall()
     conn.close()
 
-    return render_template('admin.html', members=all_members, donations=all_donations, plans=all_plans)
+    return render_template('admin.html', members=all_members, donations=all_donations, plans=all_plans, email_templates=all_templates)
 
 @app.route('/admin/settings', methods=['POST'])
 def admin_settings():
@@ -464,6 +520,15 @@ def admin_donation_reply(donation_id):
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor()
     c.execute("UPDATE donations SET status = 'Approved', admin_reply = %s WHERE id = %s", (reply_text, donation_id))
+    
+    # Send Subscription Success Email
+    c.execute("SELECT m.email, m.fullname FROM members m JOIN donations d ON m.id = d.member_id WHERE d.id = %s", (donation_id,))
+    m_row = c.fetchone()
+    if m_row:
+        subj, body = get_templated_email('Subscription_Success', m_row[1])
+        if subj:
+            send_email_notification(m_row[0], subj, body)
+            
     conn.commit()
     conn.close()
     
@@ -493,6 +558,14 @@ def admin_reply_member(member_id):
             ticket_id = ticket_row[0]
             # Update ticket status and reply text
             c.execute("UPDATE tickets SET admin_reply = %s, status = 'Replied' WHERE id = %s", (admin_reply_text, ticket_id))
+            
+            # Send Admin Reply Email
+            c.execute("SELECT email, fullname FROM members WHERE id = %s", (member_id,))
+            m_row = c.fetchone()
+            if m_row:
+                subj, body = get_templated_email('Admin_Reply', m_row[1], admin_text=admin_reply_text)
+                if subj:
+                    send_email_notification(m_row[0], subj, body)
             
             # Save admin media attachments
             for file in media_files:
@@ -548,6 +621,15 @@ def admin_finalize_vip(member_id):
     c.execute("UPDATE members SET membership_tier = 'VIP', vip_since = CURRENT_TIMESTAMP WHERE id = %s", (member_id,))
     # Start a new VIP period
     c.execute("INSERT INTO vip_periods (user_id, start_time) VALUES (%s, CURRENT_TIMESTAMP)", (member_id,))
+    
+    # Send VIP Welcome Email
+    c.execute("SELECT email, fullname FROM members WHERE id = %s", (member_id,))
+    m_row = c.fetchone()
+    if m_row:
+        subj, body = get_templated_email('VIP_Welcome', m_row[1])
+        if subj:
+            send_email_notification(m_row[0], subj, body)
+            
     conn.commit()
     conn.close()
     
@@ -578,10 +660,63 @@ def admin_manual_vip(member_id):
     c.execute("UPDATE members SET membership_tier = 'VIP', vip_since = CURRENT_TIMESTAMP WHERE id = %s", (member_id,))
     # Start a new VIP period
     c.execute("INSERT INTO vip_periods (user_id, start_time) VALUES (%s, CURRENT_TIMESTAMP)", (member_id,))
+    
+    # Send VIP Welcome Email
+    c.execute("SELECT email, fullname FROM members WHERE id = %s", (member_id,))
+    m_row = c.fetchone()
+    if m_row:
+        subj, body = get_templated_email('VIP_Welcome', m_row[1])
+        if subj:
+            send_email_notification(m_row[0], subj, body)
+            
     conn.commit()
     conn.close()
     
     flash("Manual VIP Override successful.")
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/email_settings', methods=['POST'])
+def admin_email_settings():
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+    
+    event_types = request.form.getlist('event_type')
+    subjects = request.form.getlist('subject')
+    bodies = request.form.getlist('body')
+    
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    for i in range(len(event_types)):
+        c.execute("UPDATE email_templates SET subject = %s, body = %s WHERE event_type = %s",
+                  (subjects[i], bodies[i], event_types[i]))
+    conn.commit()
+    conn.close()
+    flash("Email templates updated successfully.")
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/send_custom_email', methods=['POST'])
+def admin_send_custom_email():
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+    
+    member_id = request.form.get('member_id')
+    custom_subject = request.form.get('custom_subject')
+    custom_body = request.form.get('custom_body')
+    
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    c.execute("SELECT email FROM members WHERE id = %s", (member_id,))
+    res = c.fetchone()
+    conn.close()
+    
+    if res:
+        if send_email_notification(res[0], custom_subject, custom_body):
+            flash(f"Manual email successfully dispatched to {res[0]}.")
+        else:
+            flash("Failed to send email. Check SMTP settings.")
+    else:
+        flash("Member not found.")
+        
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/logout')
