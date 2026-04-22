@@ -110,6 +110,15 @@ try:
                       subject TEXT NOT NULL,
                       body TEXT NOT NULL)''')
         
+        # Create email_logs table
+        c.execute('''CREATE TABLE IF NOT EXISTS email_logs
+                     (id SERIAL PRIMARY KEY,
+                      user_id INTEGER,
+                      subject TEXT NOT NULL,
+                      body TEXT NOT NULL,
+                      sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                      FOREIGN KEY(user_id) REFERENCES members(id))''')
+        
         # Seed default templates if empty
         c.execute("SELECT COUNT(*) FROM email_templates")
         if c.fetchone()[0] == 0:

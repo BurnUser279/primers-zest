@@ -12,7 +12,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 # Email Notification Utility
-def send_email_notification(recipient_email, subject, body):
+def send_email_notification(recipient_email, subject, body, user_id=None):
     try:
         sender_email = os.environ.get('MAIL_USERNAME')
         sender_password = os.environ.get('MAIL_PASSWORD')
@@ -32,6 +32,18 @@ def send_email_notification(recipient_email, subject, body):
         server.login(sender_email, sender_password)
         server.send_message(msg)
         server.quit()
+
+        # Audit Logging
+        if user_id:
+            try:
+                conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+                c = conn.cursor()
+                c.execute("INSERT INTO email_logs (user_id, subject, body) VALUES (%s, %s, %s)", (user_id, subject, body))
+                conn.commit()
+                conn.close()
+            except Exception as log_err:
+                print(f"Log Error: {log_err}")
+
         return True
     except Exception as e:
         print(f"SMTP Error: {e}")
@@ -160,6 +172,18 @@ def register():
             raw_password = request.form['password']
             confirm_password = request.form['confirm_password']
             
+            # Password Security Enforcement
+            import re
+            if len(raw_password) < 8:
+                flash("Security Alert: Password must be at least 8 characters long.")
+                return redirect(url_for('register'))
+            if not re.search(r"[a-zA-Z]", raw_password):
+                flash("Security Alert: Password must contain at least one letter.")
+                return redirect(url_for('register'))
+            if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", raw_password):
+                flash("Security Alert: Password must contain at least one special character.")
+                return redirect(url_for('register'))
+
             if raw_password != confirm_password:
                 return "System Crash Report: Passwords do not match. Try again."
                 
@@ -167,13 +191,14 @@ def register():
 
             conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
             c = conn.cursor()
-            c.execute("INSERT INTO members (email, mobile, fullname, username, age, gender, travel, income, medical, password_hash, membership_tier) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Regular')",
+            c.execute("INSERT INTO members (email, mobile, fullname, username, age, gender, travel, income, medical, password_hash, membership_tier) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Regular') RETURNING id",
                       (request.form['email'], request.form['mobile'], final_fullname, request.form['username'], request.form['age'], final_gender, request.form['travel'], request.form['income'], request.form['medical'], hashed_pw))
+            new_user_id = c.fetchone()[0]
             
             # Send Registration Email
             subj, body = get_templated_email('Registration', final_fullname)
             if subj:
-                send_email_notification(request.form['email'], subj, body)
+                send_email_notification(request.form['email'], subj, body, user_id=new_user_id)
                 
             conn.commit()
             conn.close()
@@ -522,12 +547,12 @@ def admin_donation_reply(donation_id):
     c.execute("UPDATE donations SET status = 'Approved', admin_reply = %s WHERE id = %s", (reply_text, donation_id))
     
     # Send Subscription Success Email
-    c.execute("SELECT m.email, m.fullname FROM members m JOIN donations d ON m.id = d.member_id WHERE d.id = %s", (donation_id,))
+    c.execute("SELECT m.email, m.fullname, m.id FROM members m JOIN donations d ON m.id = d.member_id WHERE d.id = %s", (donation_id,))
     m_row = c.fetchone()
     if m_row:
         subj, body = get_templated_email('Subscription_Success', m_row[1])
         if subj:
-            send_email_notification(m_row[0], subj, body)
+            send_email_notification(m_row[0], subj, body, user_id=m_row[2])
             
     conn.commit()
     conn.close()
@@ -560,12 +585,12 @@ def admin_reply_member(member_id):
             c.execute("UPDATE tickets SET admin_reply = %s, status = 'Replied' WHERE id = %s", (admin_reply_text, ticket_id))
             
             # Send Admin Reply Email
-            c.execute("SELECT email, fullname FROM members WHERE id = %s", (member_id,))
+            c.execute("SELECT email, fullname, id FROM members WHERE id = %s", (member_id,))
             m_row = c.fetchone()
             if m_row:
                 subj, body = get_templated_email('Admin_Reply', m_row[1], admin_text=admin_reply_text)
                 if subj:
-                    send_email_notification(m_row[0], subj, body)
+                    send_email_notification(m_row[0], subj, body, user_id=m_row[2])
             
             # Save admin media attachments
             for file in media_files:
@@ -623,12 +648,12 @@ def admin_finalize_vip(member_id):
     c.execute("INSERT INTO vip_periods (user_id, start_time) VALUES (%s, CURRENT_TIMESTAMP)", (member_id,))
     
     # Send VIP Welcome Email
-    c.execute("SELECT email, fullname FROM members WHERE id = %s", (member_id,))
+    c.execute("SELECT email, fullname, id FROM members WHERE id = %s", (member_id,))
     m_row = c.fetchone()
     if m_row:
         subj, body = get_templated_email('VIP_Welcome', m_row[1])
         if subj:
-            send_email_notification(m_row[0], subj, body)
+            send_email_notification(m_row[0], subj, body, user_id=m_row[2])
             
     conn.commit()
     conn.close()
@@ -662,12 +687,12 @@ def admin_manual_vip(member_id):
     c.execute("INSERT INTO vip_periods (user_id, start_time) VALUES (%s, CURRENT_TIMESTAMP)", (member_id,))
     
     # Send VIP Welcome Email
-    c.execute("SELECT email, fullname FROM members WHERE id = %s", (member_id,))
+    c.execute("SELECT email, fullname, id FROM members WHERE id = %s", (member_id,))
     m_row = c.fetchone()
     if m_row:
         subj, body = get_templated_email('VIP_Welcome', m_row[1])
         if subj:
-            send_email_notification(m_row[0], subj, body)
+            send_email_notification(m_row[0], subj, body, user_id=m_row[2])
             
     conn.commit()
     conn.close()
@@ -701,19 +726,25 @@ def admin_send_custom_email():
     
     member_id = request.form.get('member_id')
     custom_subject = request.form.get('custom_subject')
-    custom_body = request.form.get('custom_body')
+    custom_message = request.form.get('custom_body')
     
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor()
-    c.execute("SELECT email FROM members WHERE id = %s", (member_id,))
+    c.execute("SELECT email, fullname FROM members WHERE id = %s", (member_id,))
     res = c.fetchone()
     conn.close()
     
     if res:
-        if send_email_notification(res[0], custom_subject, custom_body):
-            flash(f"Manual email successfully dispatched to {res[0]}.")
+        recipient_email = res[0]
+        member_name = res[1]
+        
+        # Render through manual_email_template.html
+        html_body = render_template('manual_email_template.html', name=member_name, custom_message=custom_message)
+        
+        if send_email_notification(recipient_email, custom_subject, html_body, user_id=member_id):
+            flash(f"Manual dispatch successful to {recipient_email}.")
         else:
-            flash("Failed to send email. Check SMTP settings.")
+            flash("Dispatch failed. Check SMTP settings.")
     else:
         flash("Member not found.")
         
