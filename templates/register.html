@@ -15,6 +15,17 @@
 
 <body>
     <h2>VIP Registration</h2>
+    
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div style="background-color: #ffe5e5; color: #b71c1c; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffcdd2;">
+          {% for message in messages %}
+            <p style="margin: 0;">{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
     <form method="POST">
         <label>Email:</label><br>
         <input type="email" name="email" required><br><br>
