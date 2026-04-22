@@ -4,7 +4,7 @@ import psycopg2
 import psycopg2.extras
 from dotenv import load_dotenv
 load_dotenv()
-from flask import Flask, render_template, request, session, redirect, url_for, flash
+from flask import Flask, render_template, request, session, redirect, url_for, flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import smtplib
@@ -13,41 +13,37 @@ from email.mime.multipart import MIMEMultipart
 
 # Email Notification Utility
 def send_email_notification(recipient_email, subject, body, user_id=None):
-    try:
-        sender_email = os.environ.get('MAIL_USERNAME')
-        sender_password = os.environ.get('MAIL_PASSWORD')
-        
-        if not sender_email or not sender_password:
-            print("Email configuration missing (MAIL_USERNAME/MAIL_PASSWORD).")
-            return False
-
-        msg = MIMEMultipart()
-        msg['From'] = sender_email
-        msg['To'] = recipient_email
-        msg['Subject'] = subject
-        msg.attach(MIMEText(body, 'plain'))
-
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        server.login(sender_email, sender_password)
-        server.send_message(msg)
-        server.quit()
-
-        # Audit Logging
-        if user_id:
-            try:
-                conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
-                c = conn.cursor()
-                c.execute("INSERT INTO email_logs (user_id, subject, body) VALUES (%s, %s, %s)", (user_id, subject, body))
-                conn.commit()
-                conn.close()
-            except Exception as log_err:
-                print(f"Log Error: {log_err}")
-
-        return True
-    except Exception as e:
-        print(f"SMTP Error: {e}")
+    sender_email = os.environ.get('MAIL_USERNAME')
+    sender_password = os.environ.get('MAIL_PASSWORD')
+    
+    if not sender_email or not sender_password:
+        print("Email configuration missing (MAIL_USERNAME/MAIL_PASSWORD).")
         return False
+
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['To'] = recipient_email
+    msg['Subject'] = subject
+    msg.attach(MIMEText(body, 'plain'))
+
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login(sender_email, sender_password)
+    server.send_message(msg)
+    server.quit()
+
+    # Audit Logging
+    if user_id:
+        try:
+            conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+            c = conn.cursor()
+            c.execute("INSERT INTO email_logs (user_id, subject, body) VALUES (%s, %s, %s)", (user_id, subject, body))
+            conn.commit()
+            conn.close()
+        except Exception as log_err:
+            print(f"Log Error: {log_err}")
+
+    return True
 
 def get_templated_email(event_type, name, admin_text=None):
     try:
