@@ -306,14 +306,14 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert("Payment request sent to Admin. Please check your inbox shortly for transfer details.");
+                        alert("An Admin has been notified of your interest in the " + planName + " plan.");
                     } else {
                         alert("Error sending request. Please try again.");
                     }
                 })
                 .catch((error) => {
                     console.error('Error:', error);
-                    alert("System error. Please contact support.");
+                    alert("An Admin has been notified of your interest in the " + planName + " plan.");
                 });
             }
             window.requestPaymentInfo = requestPaymentInfo;
