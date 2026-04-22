@@ -262,6 +262,60 @@
             color: #2e7d32;
             font-weight: bold;
         }
+
+        /* Custom Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 90%;
+            width: 500px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border: 2px solid #fbbc04;
+        }
+
+        .modal-message {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #000;
+            line-height: 1.2;
+            margin-bottom: 30px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .modal-btn {
+            background-color: #fbbc04;
+            color: black;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .modal-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(251, 188, 4, 0.4);
+        }
     </style>
 </head>
 
@@ -295,6 +349,16 @@
             }
             window.toggleMenu = toggleMenu;
             
+            function showModal(msg) {
+                document.getElementById('modalMessage').innerText = msg;
+                document.getElementById('paymentModal').style.display = 'flex';
+            }
+
+            function closeModal() {
+                document.getElementById('paymentModal').style.display = 'none';
+            }
+            window.closeModal = closeModal;
+
             function requestPaymentInfo(planName) {
                 fetch('/request_payment_details', {
                     method: 'POST',
@@ -305,15 +369,13 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success) {
-                        alert("An Admin has been notified of your interest in the " + planName + " plan.");
-                    } else {
-                        alert("Error sending request. Please try again.");
-                    }
+                    const msg = "An Admin has been notified of your interest in the " + planName + " plan.";
+                    showModal(msg);
                 })
                 .catch((error) => {
                     console.error('Error:', error);
-                    alert("An Admin has been notified of your interest in the " + planName + " plan.");
+                    const msg = "An Admin has been notified of your interest in the " + planName + " plan.";
+                    showModal(msg);
                 });
             }
             window.requestPaymentInfo = requestPaymentInfo;
@@ -579,6 +641,14 @@
         <p style="text-align: center; margin-top: 15px;"><a href="/history"
                 style="color: #4CAF50; text-decoration: underline; font-weight: bold;">View Full Message History
                 &larr;</a></p>
+    </div>
+
+    <!-- Custom Notification Modal -->
+    <div id="paymentModal" class="modal-overlay">
+        <div class="modal-content">
+            <div id="modalMessage" class="modal-message"></div>
+            <button class="modal-btn" onclick="closeModal()">Got it</button>
+        </div>
     </div>
 
 </body>
