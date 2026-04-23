@@ -24,7 +24,7 @@ def send_email_notification(recipient_email, subject, body, user_id=None):
     msg['From'] = sender_email
     msg['To'] = recipient_email
     msg['Subject'] = subject
-    msg.attach(MIMEText(body, 'plain'))
+    msg.attach(MIMEText(body, 'html'))
 
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
@@ -271,11 +271,6 @@ def member_login():
             
         # member[2] is the scrambled hash. We compare the raw password to the hash.
         if member and check_password_hash(member[2], password):
-            # Step 2 & 3: Check is_verified status after password match
-            if not member[3]:
-                flash("You must verify your email before logging in. Please check your inbox for the verification link.")
-                return redirect(url_for('member_login'))
-
             session['member_id'] = member[0]
             session['member_fullname'] = member[1]
             return redirect(url_for('member_dashboard'))
