@@ -214,7 +214,7 @@ def register():
                 
             conn.commit()
             conn.close()
-            flash("Registration successful! Please check your email to verify your account.")
+            flash("Account created successfully. Please check your email to verify your account before logging in.")
             return redirect(url_for('member_login'))
         except Exception as e:
             return f"System Crash Report: {str(e)}"
@@ -265,12 +265,17 @@ def member_login():
         
         conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
         c = conn.cursor()
-        c.execute("SELECT id, fullname, password_hash FROM members WHERE email = %s", (email,))
+        c.execute("SELECT id, fullname, password_hash, is_verified FROM members WHERE email = %s", (email,))
         member = c.fetchone()
         conn.close()
             
         # member[2] is the scrambled hash. We compare the raw password to the hash.
         if member and check_password_hash(member[2], password):
+            # Step 2 & 3: Check is_verified status after password match
+            if not member[3]:
+                flash("You must verify your email before logging in. Please check your inbox for the verification link.")
+                return redirect(url_for('member_login'))
+
             session['member_id'] = member[0]
             session['member_fullname'] = member[1]
             return redirect(url_for('member_dashboard'))
