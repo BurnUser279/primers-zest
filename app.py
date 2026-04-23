@@ -1088,5 +1088,12 @@ def admin_delete_chat_message(msg_id):
     return redirect(url_for('vip_lounge'))
 
 if __name__ == '__main__':
+    # Auto-migration on startup
+    try:
+        from initialize_remote import run_migrations
+        run_migrations()
+    except Exception as e:
+        print(f"Startup Migration Error: {e}")
+        
     init_db()
     app.run(debug=True)

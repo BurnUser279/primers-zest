@@ -5,30 +5,47 @@ from dotenv import load_dotenv
 # Load environment logic
 load_dotenv()
 
-# Initialize the db using app's function
-from app import init_db
-
-try:
-    init_db()
-    
-    # Establish connection
-    db_url = os.environ.get('DATABASE_URL')
-    conn = psycopg2.connect(db_url)
-    c = conn.cursor()
-    
+def run_migrations():
+    """Live PostgreSQL schema migration utility."""
     try:
-        c.execute("ALTER TABLE tickets ADD COLUMN admin_reply TEXT;")
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
+        # Establish connection
+        db_url = os.environ.get('DATABASE_URL')
+        if not db_url:
+            print("DATABASE_URL not found. Skipping migrations.")
+            return
 
-    try:
-        c.execute("ALTER TABLE tickets ADD COLUMN admin_media TEXT;")
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
+        conn = psycopg2.connect(db_url)
+        c = conn.cursor()
+        
+        # 1. Base Tables (via app.py logic)
+        try:
+            init_db()
+        except Exception as e:
+            print(f"init_db base failed: {e}")
 
-    try:
+        # 2. Schema Hardening & Migrations
+        migrations = [
+            # Tickets expansions
+            "ALTER TABLE tickets ADD COLUMN IF NOT EXISTS admin_reply TEXT;",
+            "ALTER TABLE tickets ADD COLUMN IF NOT EXISTS admin_media TEXT;",
+            
+            # Members expansions (Email Verification Fix)
+            "ALTER TABLE members ADD COLUMN IF NOT EXISTS vip_since TIMESTAMP;",
+            "ALTER TABLE members ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE;",
+            
+            # Chatroom expansions
+            "ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS features TEXT;"
+        ]
+
+        for sql in migrations:
+            try:
+                c.execute(sql)
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+
+        # 3. New Table Definitions
+        # Attachments
         c.execute('''CREATE TABLE IF NOT EXISTS attachments
                      (id SERIAL PRIMARY KEY,
                       ticket_id INTEGER NOT NULL,
@@ -36,11 +53,8 @@ try:
                       uploaded_by_admin BOOLEAN DEFAULT FALSE,
                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                       FOREIGN KEY(ticket_id) REFERENCES tickets(id))''')
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-
-    try:
+        
+        # Secure Tokens
         c.execute('''CREATE TABLE IF NOT EXISTS secure_tokens
                      (id SERIAL PRIMARY KEY,
                       attachment_id INTEGER NOT NULL,
@@ -48,39 +62,25 @@ try:
                       expires_at TIMESTAMP NOT NULL,
                       is_used BOOLEAN DEFAULT FALSE,
                       FOREIGN KEY(attachment_id) REFERENCES attachments(id))''')
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
 
-    try:
+        # Chatrooms
         c.execute('''CREATE TABLE IF NOT EXISTS chatrooms
                      (id SERIAL PRIMARY KEY,
                       room_name TEXT NOT NULL,
                       created_by_admin_id INTEGER,
                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+        
         c.execute("INSERT INTO chatrooms (room_name) SELECT 'VIP Lounge' WHERE NOT EXISTS (SELECT 1 FROM chatrooms WHERE room_name = 'VIP Lounge');")
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
 
-    try:
-        c.execute("ALTER TABLE members ADD COLUMN IF NOT EXISTS vip_since TIMESTAMP;")
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-
-    try:
+        # Chatroom Attachments
         c.execute('''CREATE TABLE IF NOT EXISTS chatroom_attachments
                      (id SERIAL PRIMARY KEY,
                       message_id INTEGER NOT NULL,
                       file_path TEXT NOT NULL,
                       file_size BIGINT,
                       FOREIGN KEY(message_id) REFERENCES chatroom_messages(id))''')
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
 
-    try:
+        # Chatroom Messages
         c.execute('''CREATE TABLE IF NOT EXISTS chatroom_messages
                      (id SERIAL PRIMARY KEY,
                       room_id INTEGER NOT NULL,
@@ -89,28 +89,21 @@ try:
                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                       FOREIGN KEY(room_id) REFERENCES chatrooms(id),
                       FOREIGN KEY(sender_id) REFERENCES members(id))''')
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
 
-    try:
-        # Create table if not exists
+        # Subscription Plans
         c.execute('''CREATE TABLE IF NOT EXISTS subscription_plans
                      (id SERIAL PRIMARY KEY,
                       plan_name TEXT NOT NULL,
                       price REAL NOT NULL)''')
-        
-        # safely add features column if it doesn't exist
-        c.execute("ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS features TEXT")
-        
-        # Create email_templates table
+
+        # Email Templates
         c.execute('''CREATE TABLE IF NOT EXISTS email_templates
                      (id SERIAL PRIMARY KEY,
                       event_type TEXT UNIQUE NOT NULL,
                       subject TEXT NOT NULL,
                       body TEXT NOT NULL)''')
-        
-        # Create email_logs table
+
+        # Step 3: Verify email_logs table creation SQL
         c.execute('''CREATE TABLE IF NOT EXISTS email_logs
                      (id SERIAL PRIMARY KEY,
                       user_id INTEGER,
@@ -118,11 +111,38 @@ try:
                       body TEXT NOT NULL,
                       sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                       FOREIGN KEY(user_id) REFERENCES members(id))''')
-        
-        # Seed default templates if empty
+
+        # Step 2: Ensure verification_tokens targets "members" table
+        c.execute('''CREATE TABLE IF NOT EXISTS verification_tokens
+                     (id SERIAL PRIMARY KEY,
+                      user_id INTEGER NOT NULL,
+                      token_string TEXT UNIQUE NOT NULL,
+                      is_used BOOLEAN DEFAULT FALSE,
+                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                      FOREIGN KEY(user_id) REFERENCES members(id))''')
+
+        # VIP Periods
+        c.execute('''CREATE TABLE IF NOT EXISTS vip_periods
+                     (id SERIAL PRIMARY KEY,
+                      user_id INTEGER NOT NULL,
+                      start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                      end_time TIMESTAMP,
+                      FOREIGN KEY(user_id) REFERENCES members(id))''')
+
+        conn.commit()
+
+        # 4. Seeding & Data Migration
+        # Legacy VIP Migration
+        c.execute("""
+            INSERT INTO vip_periods (user_id, start_time)
+            SELECT id, vip_since FROM members 
+            WHERE membership_tier = 'VIP' AND vip_since IS NOT NULL
+            AND NOT EXISTS (SELECT 1 FROM vip_periods WHERE user_id = members.id)
+        """)
+
+        # Email Template Seeding
         c.execute("SELECT COUNT(*) FROM email_templates")
         if c.fetchone()[0] == 0:
-            print("Seeding default email templates...")
             templates = [
                 ('Registration', 'Welcome to Primer\'s Zest, {{name}}!', 'Hello {{name}},\n\nThank you for registering with Primer\'s Zest. Your account is now active.\n\nBest regards,\nAdministration'),
                 ('VIP_Welcome', 'Congratulations! You are now a VIP Member', 'Hello {{name}},\n\nWe are excited to inform you that your VIP status has been granted! You now have full access to the VIP Lounge and exclusive features.\n\nEnjoy your stay,\nAdministration'),
@@ -131,54 +151,22 @@ try:
             ]
             c.executemany("INSERT INTO email_templates (event_type, subject, body) VALUES (%s, %s, %s)", templates)
 
-        # Strict Seeding Check for subscription_plans
+        # Subscription Plans Seeding
         c.execute("SELECT COUNT(*) FROM subscription_plans")
-        count = c.fetchone()[0]
-        if count == 0:
-            print("Detected empty subscription plans. Seeding defaults...")
+        if c.fetchone()[0] == 0:
             default_monthly = "Immediate VIP Lounge access\nStandard resolution media previews\nBasic historical chat access"
             default_quarterly = "Priority Admin support\nFull resolution media previews\nExtended historical chat access"
             default_annual = "All VIP Lounge features\nElite 'Founding Member' status\nFull lifetime history synchronization"
-            
             c.execute("INSERT INTO subscription_plans (plan_name, price, features) VALUES (%s, %s, %s), (%s, %s, %s), (%s, %s, %s)",
                       ('Monthly', 9.99, default_monthly, 
                        'Quarterly', 24.99, default_quarterly, 
                        'Annual', 89.99, default_annual))
-        conn.commit()
-        print(f"Subscription plans table ready (Current Count: {count if count > 0 else 3}).")
-    except Exception as e:
-        conn.rollback()
-        print(f"Error seeding subscription plans: {e}")
 
-    try:
-        c.execute('''CREATE TABLE IF NOT EXISTS vip_periods
-                     (id SERIAL PRIMARY KEY,
-                      user_id INTEGER NOT NULL,
-                      start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                      end_time TIMESTAMP,
-                      FOREIGN KEY(user_id) REFERENCES members(id))''')
-        
-        # Migration: Create periods for legacy VIPs
-        c.execute("""
-            INSERT INTO vip_periods (user_id, start_time)
-            SELECT id, vip_since FROM members 
-            WHERE membership_tier = 'VIP' AND vip_since IS NOT NULL
-            AND NOT EXISTS (SELECT 1 FROM vip_periods WHERE user_id = members.id)
-        """)
         conn.commit()
-        print("vip_periods table ready and legacy data migrated.")
+        conn.close()
+        print("Database migrations completed successfully.")
     except Exception as e:
-        print(f"Error initializing vip_periods: {e}")
-        conn.rollback()
+        print(f"MIGRATION FAILED: {e}")
 
-    c.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';")
-    tables = c.fetchall()
-    conn.close()
-    
-    print("Tables found:")
-    for table in tables:
-        print(table[0])
-except Exception as e:
-    import sys
-    print(f"FAILED: {e}")
-    sys.exit(1)
+if __name__ == '__main__':
+    run_migrations()
