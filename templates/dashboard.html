@@ -166,9 +166,38 @@
                 width: 85%;
             }
 
+            .top-nav {
+                display: none; /* Hide top nav on mobile if using fixed hamburger */
+            }
+
             .nav-brand {
                 font-size: 16px;
             }
+        }
+
+        .fixed-hamburger {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            font-size: 30px;
+            color: #fbbc04;
+            background: #000;
+            border: 2px solid #fbbc04;
+            border-radius: 6px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 2000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            transition: 0.3s;
+        }
+        .fixed-hamburger:hover {
+            background: #fbbc04;
+            color: #000;
+            transform: scale(1.1);
         }
 
         /* Pricing Grid */
@@ -321,11 +350,7 @@
 
 <body>
 
-    <div class="top-nav">
-        <div class="hamburger" onclick="toggleMenu()">&#9776;</div>
-        <div class="nav-brand">MEMBER DASHBOARD</div>
-        <div style="width: 44px;"></div> <!-- Spacer for centering -->
-    </div>
+    <div class="fixed-hamburger" onclick="toggleMenu()">&#9776;</div>
 
     <div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
 
