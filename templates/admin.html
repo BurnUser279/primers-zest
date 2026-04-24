@@ -197,6 +197,38 @@
             color: #666;
             font-style: italic;
         }
+
+        /* Accordion Styles */
+        .admin-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .nav-btn {
+            flex: 1;
+            padding: 15px;
+            background: #1a1a1a;
+            color: #fbbc04;
+            border: 2px solid #fbbc04;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            min-width: 150px;
+        }
+        .nav-btn:hover {
+            background: #fbbc04;
+            color: black;
+        }
+        .accordion-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 
@@ -227,8 +259,22 @@
                 sidebar.classList.toggle('active');
                 overlay.classList.toggle('active');
             }
-            // expose toggleMenu to the global scope since it's called from onclick in HTML
             window.toggleMenu = toggleMenu;
+
+            // Accordion Toggle Logic
+            window.toggleSection = function(id) {
+                const sections = ['section-roster', 'section-plans', 'section-emails', 'section-settings'];
+                const target = document.getElementById(id);
+                const isVisible = window.getComputedStyle(target).display === 'block';
+
+                sections.forEach(s => {
+                    document.getElementById(s).style.display = 'none';
+                });
+
+                if (!isVisible) {
+                    target.style.display = 'block';
+                }
+            };
 
             window.addEventListener('pageshow', function (event) {
                 if (event.persisted) {
@@ -236,7 +282,6 @@
                 }
             });
 
-            // Fetch API History Fix
             document.querySelectorAll('.no-history-form').forEach(form => {
                 form.addEventListener('submit', function (e) {
                     e.preventDefault();
@@ -256,7 +301,17 @@
     </script>
 
     <div class="container">
-        <h2>VIP Club - Member Roster</h2>
+        <!-- Master Navigation Menu -->
+        <div class="admin-nav">
+            <button class="nav-btn" onclick="toggleSection('section-roster')">Member Roster</button>
+            <button class="nav-btn" onclick="toggleSection('section-plans')">Subscription Plans</button>
+            <button class="nav-btn" onclick="toggleSection('section-emails')">Email Logs & Templates</button>
+            <button class="nav-btn" onclick="toggleSection('section-settings')">Global Settings</button>
+        </div>
+
+        <!-- Section 1: Member Roster -->
+        <div id="section-roster" class="accordion-content">
+            <h2>VIP Club - Member Roster</h2>
         <div class="table-wrapper">
             <table>
                 <tr>
@@ -322,47 +377,47 @@
                 {% endfor %}
             </table>
         </div>
-    </div>
 
-    <br><br>
-    <h2>Donations Manager</h2>
-    <div class="table-wrapper">
-        <table>
-            <tr>
-                <th>Donation ID</th>
-                <th>Member ID</th>
-                <th>Amount</th>
-                <th>Visibility</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-            {% for donation in donations %}
-            <tr>
-                <td>{{ donation[0] }}</td>
-                <td>{{ donation[1] }}</td>
-                <td>${{ "%.2f"|format(donation[2]) }}</td>
-                <td>{{ donation[3] }}</td>
-                <td>{{ donation[4] }}</td>
-                <td>
-                    {% if donation[4] == 'Pending' %}
-                    <form method="POST" action="/admin/donation_reply/{{ donation[0] }}" style="display:inline;"
-                        class="no-history-form">
-                        <input type="text" name="admin_reply" required placeholder="Reply instructions...">
-                        <button type="submit">Approve & Reply</button>
-                    </form>
-                    {% else %}
-                    {{ donation[5] }}
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </table>
-    </div>
+        <br><br>
+        <h2>Donations Manager</h2>
+        <div class="table-wrapper">
+            <table>
+                <tr>
+                    <th>Donation ID</th>
+                    <th>Member ID</th>
+                    <th>Amount</th>
+                    <th>Visibility</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                {% for donation in donations %}
+                <tr>
+                    <td>{{ donation[0] }}</td>
+                    <td>{{ donation[1] }}</td>
+                    <td>${{ "%.2f"|format(donation[2]) }}</td>
+                    <td>{{ donation[3] }}</td>
+                    <td>{{ donation[4] }}</td>
+                    <td>
+                        {% if donation[4] == 'Pending' %}
+                        <form method="POST" action="/admin/donation_reply/{{ donation[0] }}" style="display:inline;"
+                            class="no-history-form">
+                            <input type="text" name="admin_reply" required placeholder="Reply instructions...">
+                            <button type="submit">Approve & Reply</button>
+                        </form>
+                        {% else %}
+                        {{ donation[5] }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div> <!-- End Member Roster Section -->
 
-    <br>
-    <hr><br>
-    <div class="container">
-        <h2>Platform Settings - Subscription Plans</h2>
+    <!-- Section 2: Subscription Plans -->
+    <div id="section-plans" class="accordion-content">
+        <div class="container">
+            <h2>Platform Settings - Subscription Plans</h2>
         <div class="table-wrapper">
             <form action="/admin/settings" method="POST" class="no-history-form">
                 <table>
@@ -422,9 +477,11 @@
                 {% endfor %}
             </table>
         </div>
-    </div>
+    </div> <!-- End Subscription Plans Section -->
 
-    <div class="container" id="manualEmailForm">
+    <!-- Section 3: Email Management -->
+    <div id="section-emails" class="accordion-content">
+        <div class="container" id="manualEmailForm">
         <div class="email-config-section">
             <h3>Direct Member Contact (Manual Email)</h3>
             <p>Send a custom, one-time email to any registered member. This bypasses automated templates.</p>
@@ -492,6 +549,23 @@
                 {% endfor %}
                 <button type="submit" style="background-color: #2e7d32; color: white; padding: 15px 30px;">Save All Template Changes</button>
             </form>
+        </div>
+    </div> <!-- End Email Section -->
+
+    <!-- Section 4: Global Settings -->
+    <div id="section-settings" class="accordion-content">
+        <div class="container">
+            <div class="email-config-section">
+                <h3>Global Admin Settings Quick-Link</h3>
+                <p>Manage administrative credentials and system-wide configurations.</p>
+                <a href="/admin/settings" class="nav-btn" style="display: inline-block; text-decoration: none; text-align: center;">Open Full System Settings</a>
+                
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                    <h4>System Identity</h4>
+                    <p>Current Admin Identity: <strong>AdminMaster</strong></p>
+                    <p>Support Email: <strong>support@yourdomain.com</strong> (Manage in settings)</p>
+                </div>
+            </div>
         </div>
     </div>
 </body>
