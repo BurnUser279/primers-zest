@@ -788,6 +788,48 @@ def admin_manual_vip(member_id):
     flash("Manual VIP Override successful.")
     return redirect(url_for('admin_dashboard'))
 
+@app.route('/admin/toggle_vip/<int:user_id>', methods=['POST'])
+def admin_toggle_vip(user_id):
+    if not session.get('is_admin'): return redirect(url_for('admin_login'))
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    c.execute("SELECT membership_tier, email, fullname FROM members WHERE id = %s", (user_id,))
+    user = c.fetchone()
+    if not user:
+        conn.close()
+        return "User not found", 404
+    
+    current_tier, email, fullname = user
+    new_tier = 'VIP' if current_tier != 'VIP' else 'Regular'
+    
+    if new_tier == 'VIP':
+        c.execute("UPDATE members SET membership_tier = 'VIP', vip_since = CURRENT_TIMESTAMP WHERE id = %s", (user_id,))
+        c.execute("INSERT INTO vip_periods (user_id, start_time) VALUES (%s, CURRENT_TIMESTAMP)", (user_id,))
+        # Trigger VIP Added email
+        c.execute("SELECT subject, body FROM email_templates WHERE trigger_event = 'VIP Added'")
+        t = c.fetchone()
+        if t:
+            send_email_notification(email, t[0].replace('{{name}}', fullname), t[1].replace('{{name}}', fullname), user_id=user_id)
+        else:
+            subj, body = get_templated_email('VIP_Welcome', fullname)
+            if subj: send_email_notification(email, subj, body, user_id=user_id)
+    else:
+        c.execute("UPDATE members SET membership_tier = 'Regular' WHERE id = %s", (user_id,))
+        c.execute("UPDATE vip_periods SET end_time = CURRENT_TIMESTAMP WHERE user_id = %s AND end_time IS NULL", (user_id,))
+        # Trigger VIP Removed email
+        c.execute("SELECT subject, body FROM email_templates WHERE trigger_event = 'VIP Removed'")
+        t = c.fetchone()
+        if t:
+            send_email_notification(email, t[0].replace('{{name}}', fullname), t[1].replace('{{name}}', fullname), user_id=user_id)
+        else:
+            subj, body = get_templated_email('VIP_Removal', fullname)
+            if subj: send_email_notification(email, subj, body, user_id=user_id)
+
+    conn.commit()
+    conn.close()
+    flash(f"User {fullname} status updated to {new_tier}.")
+    return redirect(request.referrer or url_for('admin_dashboard'))
+
 @app.route('/admin/email_settings', methods=['POST'])
 def admin_email_settings():
     if not session.get('is_admin'):

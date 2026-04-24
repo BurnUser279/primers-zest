@@ -39,9 +39,18 @@
                 <h1 style="margin:0;">{{ member['fullname'] }}</h1>
                 <p style="margin:5px 0 0 0; color: #666;">@{{ member['username'] }} | Member ID: {{ member['id'] }}</p>
             </div>
-            <span class="status-badge {{ 'status-active' if member['is_active'] else 'status-disabled' }}">
-                {{ 'ACTIVE' if member['is_active'] else 'DISABLED' }}
-            </span>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <span class="status-badge {{ 'status-active' if member['is_active'] else 'status-disabled' }}">
+                    {{ 'ACTIVE' if member['is_active'] else 'DISABLED' }}
+                </span>
+                <form action="/admin/toggle_vip/{{ member['id'] }}" method="POST">
+                    {% if member['membership_tier'] == 'VIP' %}
+                    <button type="submit" class="btn" style="background-color: #f44336; color: white; padding: 5px 10px; font-size: 0.8rem;">Remove VIP Status</button>
+                    {% else %}
+                    <button type="submit" class="btn" style="background-color: #4CAF50; color: white; padding: 5px 10px; font-size: 0.8rem;">Make VIP Member</button>
+                    {% endif %}
+                </form>
+            </div>
         </div>
 
         <div class="info-grid">

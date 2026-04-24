@@ -299,7 +299,16 @@
                             style="display:inline-block; padding: 5px 10px; background-color: #2196F3; color: white; text-decoration: none; border: 1px solid #0b7dda; border-radius: 3px; font-size: 12px; margin-top: 5px;">Reply
                             to Member</a>
                     </td>
-                    <td>{{ member[11] }}</td>
+                    <td>
+                        {{ member[11] }}
+                        <form action="/admin/toggle_vip/{{ member[0] }}" method="POST" style="margin-top: 5px;">
+                            {% if member[11] == 'VIP' %}
+                            <button type="submit" style="background-color: #f44336; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Remove VIP</button>
+                            {% else %}
+                            <button type="submit" style="background-color: #4CAF50; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Make VIP</button>
+                            {% endif %}
+                        </form>
+                    </td>
                     <td>
                         <a href="/admin/user/{{ member[0] }}"
                             style="display:block; text-align:center; padding: 10px; background-color: #fbbc04; color: black; text-decoration: none; border-radius: 4px; font-weight: bold; border: 1px solid #000;">View Profile</a>
@@ -448,8 +457,10 @@
                             <select name="trigger_event" style="width: 100%; padding: 5px;">
                                 <option value="Manual" {{ 'selected' if template[4] == 'Manual' }}>Manual / Other</option>
                                 <option value="Plan Purchased" {{ 'selected' if template[4] == 'Plan Purchased' }}>Plan Purchased</option>
+                                <option value="VIP Added" {{ 'selected' if template[4] == 'VIP Added' }}>VIP Added</option>
                                 <option value="VIP Removed" {{ 'selected' if template[4] == 'VIP Removed' }}>VIP Removed</option>
                                 <option value="Registration" {{ 'selected' if template[4] == 'Registration' }}>Registration</option>
+                                <option value="Admin Reply" {{ 'selected' if template[4] == 'Admin Reply' }}>Admin Reply</option>
                             </select>
                         </div>
                         <div>
