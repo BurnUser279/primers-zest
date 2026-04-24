@@ -148,6 +148,35 @@
             .sidebar {
                 width: 85%;
             }
+
+            .top-nav {
+                display: none; /* Hide top nav on mobile if using fixed hamburger */
+            }
+        }
+
+        .fixed-hamburger {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            font-size: 30px;
+            color: #fbbc04;
+            background: #000;
+            border: 2px solid #fbbc04;
+            border-radius: 6px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 2000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            transition: 0.3s;
+        }
+        .fixed-hamburger:hover {
+            background: #fbbc04;
+            color: #000;
+            transform: scale(1.1);
         }
 
         table {
@@ -234,17 +263,15 @@
 
 <body>
 
-    <div class="top-nav">
-        <div class="hamburger" onclick="toggleMenu()">&#9776;</div>
-        <div class="nav-brand">ADMIN CONTROL PANEL</div>
-        <div style="width: 44px;"></div>
-    </div>
+    <div class="fixed-hamburger" onclick="toggleMenu()">&#9776;</div>
 
     <div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
 
     <div class="sidebar" id="sideDrawer">
         <h2>Admin Menu</h2>
         <a href="/admin/dashboard" style="background-color: #333;">Member Roster</a>
+        <a href="javascript:void(0)" onclick="toggleSection('section-plans'); toggleMenu();">Subscription Plans</a>
+        <a href="javascript:void(0)" onclick="toggleSection('section-emails'); toggleMenu();">Email Logs & Templates</a>
         <a href="/admin/settings">Global Admin Settings</a>
         <a href="/vip_lounge" style="border: 1px solid gold; color: gold;">Join VIP Lounge</a>
         <hr style="width: 100%; border: 0; border-top: 1px solid #333; margin: 15px 0;">
