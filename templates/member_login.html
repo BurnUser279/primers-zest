@@ -5,27 +5,70 @@
     <title>Member Login</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+        .login-card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 100%; max-width: 400px; box-sizing: border-box; }
+        h2 { margin-top: 0; color: #1a1a1a; text-align: center; }
+        label { display: block; margin-bottom: 8px; font-weight: 500; color: #444; }
+        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 1rem; margin-bottom: 20px; transition: 0.3s; }
+        input:focus { border-color: #007bff; outline: none; box-shadow: 0 0 0 4px rgba(0,123,255,0.1); }
+        .pass-container { position: relative; }
+        .pass-toggle { position: absolute; right: 12px; top: 12px; background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 0; }
+        button[type="submit"] { width: 100%; padding: 14px; border-radius: 8px; border: none; background: #1a1a1a; color: white; font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.3s; }
+        button[type="submit"]:hover { background: #333; transform: translateY(-1px); }
+        .back-link { position: absolute; top: 20px; left: 20px; text-decoration: none; color: #666; font-weight: 500; }
+        
+        /* Glassmorphism Flash Messages */
+        .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 2000; display: flex; align-items: center; justify-content: center; }
+        .flash-modal { background: rgba(255, 255, 255, 0.8); padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 20px 50px rgba(0,0,0,0.1); text-align: center; max-width: 450px; width: 90%; }
+        .flash-modal p { margin: 0 0 20px 0; color: #333; line-height: 1.6; font-weight: 500; }
+        .flash-modal a { color: #007bff; text-decoration: underline; }
+        .close-btn { background: #1a1a1a; color: white; padding: 10px 25px; border-radius: 30px; border: none; cursor: pointer; font-weight: bold; }
+
         @media screen and (max-width: 768px) {
-            body { padding: 15px; font-family: sans-serif; }
-            form, input { width: 100%; box-sizing: border-box; }
-            button[type="submit"] { padding: 15px; font-size: 18px; width: 100%; margin-top: 10px; }
+            .login-card { width: 90%; padding: 30px; }
         }
     </style>
 </head>
 
 <body>
-    <a href="/" style="display:inline-block; margin-bottom: 20px; text-decoration: none; color: #333; font-weight: bold;">&larr; Back to Landing</a>
-    <h2>Club member Portal</h2>
-    <form action="/login" method="POST">
-        <label>Email Address:</label><br>
-        <input type="email" name="email" required><br><br>
+    <a href="/" class="back-link">&larr; Back to Landing</a>
 
-        <label>Password:</label><br>
-        <input type="password" name="password" required><br><br>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash-overlay" id="flashOverlay">
+            <div class="flash-modal">
+                {% for message in messages %}
+                  <p>{{ message | safe }}</p>
+                {% endfor %}
+                <button class="close-btn" onclick="document.getElementById('flashOverlay').style.display='none'">Close</button>
+            </div>
+        </div>
+      {% endif %}
+    {% endwith %}
 
-        <button type="submit">Login</button>
-    </form>
-    <p style="margin-top: 20px;">Don't have an account? <a href="/register">Sign up</a></p>
+    <div class="login-card">
+        <h2>Club Member Portal</h2>
+        <form action="/login" method="POST">
+            <label>Email Address:</label>
+            <input type="email" name="email" required placeholder="name@example.com">
+
+            <label>Password:</label>
+            <div class="pass-container">
+                <input type="password" name="password" id="loginPass" required placeholder="••••••••">
+                <button type="button" class="pass-toggle" onclick="togglePass()">👁️</button>
+            </div>
+
+            <button type="submit">Login to Portal</button>
+        </form>
+        <p style="margin-top: 25px; text-align: center; color: #666;">Don't have an account? <a href="/register" style="color: #007bff; font-weight: 600; text-decoration: none;">Sign up</a></p>
+    </div>
+
+    <script>
+        function togglePass() {
+            const passInput = document.getElementById('loginPass');
+            passInput.type = passInput.type === 'password' ? 'text' : 'password';
+        }
+    </script>
 </body>
 
 </html>

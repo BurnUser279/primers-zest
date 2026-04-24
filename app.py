@@ -157,6 +157,9 @@ def init_db():
     dummy_hash = generate_password_hash('AdminPostIdentity2026')
     c.execute("INSERT INTO members (email, mobile, fullname, username, age, gender, travel, income, password_hash, membership_tier) SELECT 'admin@system.local', '0000000000', 'Official Admin', 'AdminMaster', 99, 'System', 'N/A', 'Infinite', %s, 'VIP' WHERE NOT EXISTS (SELECT 1 FROM members WHERE username = 'AdminMaster');", (dummy_hash,))
     
+    # Step 1: Rescue SQL to unlock everyone on reboot (Mass Unlock Bug Fix)
+    c.execute("UPDATE members SET is_locked = FALSE, failed_attempts = 0")
+    
     conn.commit()
     conn.close()
 
@@ -276,7 +279,7 @@ def member_login():
             
             if is_locked:
                 conn.close()
-                flash("Account temporarily locked due to multiple failed login attempts. Contact support.")
+                flash("Your account has been frozen, contact the admin through <a href='mailto:support@yourdomain.com'>support@yourdomain.com</a> for details on how to unfreeze your account.")
                 return redirect(url_for('member_login'))
             
             if check_password_hash(hashed_pw, password):
@@ -285,8 +288,8 @@ def member_login():
                     flash("Account disabled. Please contact support.")
                     return redirect(url_for('member_login'))
                 
-                # Step 5: Reset failed attempts on success
-                c.execute("UPDATE members SET failed_attempts = 0 WHERE id = %s", (user_id,))
+                # Step 5: Reset failed attempts on success (Targeted)
+                c.execute("UPDATE members SET failed_attempts = 0 WHERE email = %s", (email,))
                 conn.commit()
                 conn.close()
                 
@@ -294,10 +297,10 @@ def member_login():
                 session['member_fullname'] = fullname
                 return redirect(url_for('member_dashboard'))
             else:
-                # Step 4: Increment failed attempts on failure
+                # Step 4: Increment failed attempts on failure (Targeted)
                 new_failed = failed_attempts + 1
                 if new_failed >= 5:
-                    c.execute("UPDATE members SET failed_attempts = %s, is_locked = TRUE WHERE id = %s", (new_failed, user_id))
+                    c.execute("UPDATE members SET failed_attempts = %s, is_locked = TRUE WHERE email = %s", (new_failed, email))
                     conn.commit()
                     conn.close()
                     
@@ -306,9 +309,9 @@ def member_login():
                     body = f"Hello {fullname},\n\nYour account has been frozen for security due to 5 consecutive failed login attempts. For your security, access has been restricted.\n\nPlease contact administration to verify your identity and unfreeze your account."
                     send_email_notification(email, subj, body, user_id=user_id)
                     
-                    flash("Account temporarily locked due to multiple failed login attempts. Contact support.")
+                    flash("Your account has been frozen, contact the admin through <a href='mailto:support@yourdomain.com'>support@yourdomain.com</a> for details on how to unfreeze your account.")
                 else:
-                    c.execute("UPDATE members SET failed_attempts = %s WHERE id = %s", (new_failed, user_id))
+                    c.execute("UPDATE members SET failed_attempts = %s WHERE email = %s", (new_failed, email))
                     conn.commit()
                     conn.close()
                     flash("Invalid Email or Password.")
