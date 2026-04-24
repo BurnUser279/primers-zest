@@ -933,14 +933,18 @@ def admin_disable_user(user_id):
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor()
     c.execute("SELECT password_hash FROM members WHERE username = 'AdminMaster'")
-    admin_hash = c.fetchone()[0]
-    if check_password_hash(admin_hash, admin_password):
+    admin_row = c.fetchone()
+    conn.close()
+    
+    if admin_row and check_password_hash(admin_row[0], admin_password):
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        c = conn.cursor()
         c.execute("UPDATE members SET is_active = FALSE WHERE id = %s", (user_id,))
         conn.commit()
+        conn.close()
         flash("User account disabled.")
     else:
         flash("Invalid admin password.")
-    conn.close()
     return redirect(url_for('admin_user_profile', user_id=user_id))
 
 @app.route('/admin/user/<int:user_id>/delete', methods=['POST'])
@@ -950,11 +954,13 @@ def admin_delete_user(user_id):
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor()
     c.execute("SELECT password_hash FROM members WHERE username = 'AdminMaster'")
-    admin_hash = c.fetchone()[0]
-    if check_password_hash(admin_hash, admin_password):
+    admin_row = c.fetchone()
+    conn.close()
+    
+    if admin_row and check_password_hash(admin_row[0], admin_password):
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        c = conn.cursor()
         try:
-            # Delete associated records first (optional, but good practice)
-            # For simplicity, we assume CASCADE or manual deletion if needed
             c.execute("DELETE FROM members WHERE id = %s", (user_id,))
             conn.commit()
             flash("User account deleted permanently.")
@@ -962,9 +968,9 @@ def admin_delete_user(user_id):
             return redirect(url_for('admin_dashboard'))
         except Exception as e:
             flash(f"Delete failed: {e}")
+            conn.close()
     else:
         flash("Invalid admin password.")
-    conn.close()
     return redirect(url_for('admin_user_profile', user_id=user_id))
 
 @app.route('/admin/settings', methods=['GET', 'POST'])

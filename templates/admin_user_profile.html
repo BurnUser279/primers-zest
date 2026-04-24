@@ -95,12 +95,18 @@
             {% endwith %}
 
             <form action="/admin/user/{{ member['id'] }}/disable" method="POST" class="action-form" onsubmit="confirmAction(event, 'disable')">
-                <input type="password" name="admin_password" placeholder="Enter Admin Password to Disable" required>
+                <div style="position: relative; flex-grow: 1;">
+                    <input type="password" name="admin_password" id="passDisable" placeholder="Enter Admin Password to Disable" required style="width: 100%; box-sizing: border-box;">
+                    <button type="button" onclick="togglePass('passDisable')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1.2rem;">👁️</button>
+                </div>
                 <button type="submit" class="btn btn-disable">Disable Account</button>
             </form>
 
             <form action="/admin/user/{{ member['id'] }}/delete" method="POST" class="action-form" style="margin-top: 30px;" onsubmit="confirmAction(event, 'delete')">
-                <input type="password" name="admin_password" placeholder="Enter Admin Password to PURGE" required>
+                <div style="position: relative; flex-grow: 1;">
+                    <input type="password" name="admin_password" id="passDelete" placeholder="Enter Admin Password to PURGE" required style="width: 100%; box-sizing: border-box;">
+                    <button type="button" onclick="togglePass('passDelete')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1.2rem;">👁️</button>
+                </div>
                 <button type="submit" class="btn btn-delete">Delete Account Permanently</button>
             </form>
         </div>
@@ -119,6 +125,11 @@
     </div>
 
     <script>
+        function togglePass(id) {
+            const input = document.getElementById(id);
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
         let currentForm = null;
 
         function confirmAction(event, type) {
