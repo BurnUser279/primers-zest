@@ -35,7 +35,11 @@ def run_migrations():
             "ALTER TABLE members ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;",
             
             # Chatroom expansions
-            "ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS features TEXT;"
+            "ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS features TEXT;",
+
+            # Email Templates expansions
+            "ALTER TABLE email_templates ADD COLUMN IF NOT EXISTS trigger_event VARCHAR(50);",
+            "ALTER TABLE email_templates ADD COLUMN IF NOT EXISTS plan_id INTEGER;"
         ]
 
         for sql in migrations:

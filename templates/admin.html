@@ -442,6 +442,27 @@
                     <h4 style="margin: 0 0 10px 0; color: #2e7d32;">Event: {{ template[1] }}</h4>
                     <input type="hidden" name="event_type" value="{{ template[1] }}">
                     
+                    <div style="margin-bottom: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div>
+                            <label style="font-weight: bold; font-size: 0.8rem;">Trigger Event:</label>
+                            <select name="trigger_event" style="width: 100%; padding: 5px;">
+                                <option value="Manual" {{ 'selected' if template[4] == 'Manual' }}>Manual / Other</option>
+                                <option value="Plan Purchased" {{ 'selected' if template[4] == 'Plan Purchased' }}>Plan Purchased</option>
+                                <option value="VIP Removed" {{ 'selected' if template[4] == 'VIP Removed' }}>VIP Removed</option>
+                                <option value="Registration" {{ 'selected' if template[4] == 'Registration' }}>Registration</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-weight: bold; font-size: 0.8rem;">Link to Plan (Optional):</label>
+                            <select name="template_plan_id" style="width: 100%; padding: 5px;">
+                                <option value="None">No Specific Plan</option>
+                                {% for p in plans %}
+                                <option value="{{ p[0] }}" {{ 'selected' if template[5] == p[0] }}>{{ p[1] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
                     <div style="margin-bottom: 10px;">
                         <label style="font-weight: bold; font-size: 0.9rem;">Subject Line:</label><br>
                         <input type="text" name="subject" value="{{ template[2] }}" required style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">

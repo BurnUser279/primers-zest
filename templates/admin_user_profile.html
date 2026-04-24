@@ -75,6 +75,8 @@
             <h3>Advanced Admin Actions</h3>
             <p style="font-size: 0.9rem; color: #5d4037;">Note: Admin password verification is required for these destructive operations.</p>
             
+            <a href="/admin/user/{{ member['id'] }}/emails" class="btn" style="display:inline-block; background-color: #0288d1; color: white; text-decoration: none; margin-bottom: 20px;">View Email History</a>
+
             {% with messages = get_flashed_messages() %}
               {% if messages %}
                 {% for message in messages %}

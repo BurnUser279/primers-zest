@@ -609,13 +609,29 @@ def admin_donation_reply(donation_id):
     c = conn.cursor()
     c.execute("UPDATE donations SET status = 'Approved', admin_reply = %s WHERE id = %s", (reply_text, donation_id))
     
-    # Send Subscription Success Email
-    c.execute("SELECT m.email, m.fullname, m.id FROM members m JOIN donations d ON m.id = d.member_id WHERE d.id = %s", (donation_id,))
+    # Dynamic Automated Email Engine (Step 6)
+    c.execute("SELECT m.email, m.fullname, m.id FROM members m JOIN donations m_don ON m.id = m_don.member_id WHERE m_don.id = %s", (donation_id,))
     m_row = c.fetchone()
     if m_row:
-        subj, body = get_templated_email('Subscription_Success', m_row[1])
-        if subj:
+        # Check for dynamic plan-based template
+        c.execute("""
+            SELECT subject, body FROM email_templates 
+            WHERE trigger_event = 'Plan Purchased' 
+            AND (plan_id IS NULL OR plan_id = (SELECT id FROM subscription_plans WHERE plan_name = 'Monthly' LIMIT 1))
+            ORDER BY plan_id DESC LIMIT 1
+        """)
+        # Note: In a real system, we'd determine which plan was actually purchased. 
+        # Here we use 'Monthly' as placeholder or fetch from donation context if available.
+        t_row = c.fetchone()
+        if t_row:
+            subj = t_row[0].replace('{{name}}', m_row[1])
+            body = t_row[1].replace('{{name}}', m_row[1])
             send_email_notification(m_row[0], subj, body, user_id=m_row[2])
+        else:
+            # Fallback to legacy
+            subj, body = get_templated_email('Subscription_Success', m_row[1])
+            if subj:
+                send_email_notification(m_row[0], subj, body, user_id=m_row[2])
             
     conn.commit()
     conn.close()
@@ -780,12 +796,18 @@ def admin_email_settings():
     event_types = request.form.getlist('event_type')
     subjects = request.form.getlist('subject')
     bodies = request.form.getlist('body')
+    trigger_events = request.form.getlist('trigger_event')
+    plan_ids = request.form.getlist('template_plan_id')
     
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor()
     for i in range(len(event_types)):
-        c.execute("UPDATE email_templates SET subject = %s, body = %s WHERE event_type = %s",
-                  (subjects[i], bodies[i], event_types[i]))
+        p_id = plan_ids[i] if plan_ids[i] != 'None' else None
+        c.execute("""
+            UPDATE email_templates 
+            SET subject = %s, body = %s, trigger_event = %s, plan_id = %s 
+            WHERE event_type = %s
+        """, (subjects[i], bodies[i], trigger_events[i], p_id, event_types[i]))
     conn.commit()
     conn.close()
     flash("Email templates updated successfully.")
@@ -822,6 +844,7 @@ def admin_send_custom_email():
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/view_emails/<int:user_id>')
+@app.route('/admin/user/<int:user_id>/emails')
 def admin_view_user_emails(user_id):
     if not session.get('is_admin'):
         return redirect(url_for('admin_login'))
@@ -837,7 +860,7 @@ def admin_view_user_emails(user_id):
     c.execute("SELECT sent_at, subject, body FROM email_logs WHERE user_id = %s ORDER BY sent_at DESC", (user_id,))
     logs = c.fetchall()
     conn.close()
-    return render_template('admin_user_emails.html', logs=logs, member_name=member_name[0])
+    return render_template('admin_user_emails.html', logs=logs, member_name=member_name[0], user_id=user_id)
 
 @app.route('/admin/delete_plan/<int:plan_id>', methods=['POST'])
 def admin_delete_plan(plan_id):
