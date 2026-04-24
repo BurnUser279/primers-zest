@@ -33,6 +33,8 @@ def run_migrations():
             "ALTER TABLE members ADD COLUMN IF NOT EXISTS vip_since TIMESTAMP;",
             "ALTER TABLE members ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE;",
             "ALTER TABLE members ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;",
+            "ALTER TABLE members ADD COLUMN IF NOT EXISTS failed_attempts INTEGER DEFAULT 0;",
+            "ALTER TABLE members ADD COLUMN IF NOT EXISTS is_locked BOOLEAN DEFAULT FALSE;",
             
             # Chatroom expansions
             "ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS features TEXT;",

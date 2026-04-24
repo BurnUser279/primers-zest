@@ -98,7 +98,9 @@ def init_db():
                   vip_admin_reply TEXT,
                   vip_user_proof TEXT,
                   is_verified BOOLEAN DEFAULT FALSE,
-                  is_active BOOLEAN DEFAULT TRUE)''')
+                  is_active BOOLEAN DEFAULT TRUE,
+                  failed_attempts INTEGER DEFAULT 0,
+                  is_locked BOOLEAN DEFAULT FALSE)''')
     
     c.execute('''CREATE TABLE IF NOT EXISTS verification_tokens
                  (id SERIAL PRIMARY KEY,
@@ -266,22 +268,55 @@ def member_login():
         
         conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
         c = conn.cursor()
-        c.execute("SELECT id, fullname, password_hash, is_verified, is_active FROM members WHERE email = %s", (email,))
+        c.execute("SELECT id, fullname, password_hash, is_verified, is_active, is_locked, failed_attempts FROM members WHERE email = %s", (email,))
         member = c.fetchone()
-        conn.close()
+        
+        if member:
+            user_id, fullname, hashed_pw, is_verified, is_active, is_locked, failed_attempts = member
             
-        # member[2] is the scrambled hash. We compare the raw password to the hash.
-        if member and check_password_hash(member[2], password):
-            # Account Status Check (Step 2)
-            if not member[4]:
-                flash("Account disabled. Please contact support.")
+            if is_locked:
+                conn.close()
+                flash("Account temporarily locked due to multiple failed login attempts. Contact support.")
                 return redirect(url_for('member_login'))
-
-            session['member_id'] = member[0]
-            session['member_fullname'] = member[1]
-            return redirect(url_for('member_dashboard'))
+            
+            if check_password_hash(hashed_pw, password):
+                if not is_active:
+                    conn.close()
+                    flash("Account disabled. Please contact support.")
+                    return redirect(url_for('member_login'))
+                
+                # Step 5: Reset failed attempts on success
+                c.execute("UPDATE members SET failed_attempts = 0 WHERE id = %s", (user_id,))
+                conn.commit()
+                conn.close()
+                
+                session['member_id'] = user_id
+                session['member_fullname'] = fullname
+                return redirect(url_for('member_dashboard'))
+            else:
+                # Step 4: Increment failed attempts on failure
+                new_failed = failed_attempts + 1
+                if new_failed >= 5:
+                    c.execute("UPDATE members SET failed_attempts = %s, is_locked = TRUE WHERE id = %s", (new_failed, user_id))
+                    conn.commit()
+                    conn.close()
+                    
+                    # Step 6: Hardcoded lock notification email
+                    subj = "Security Alert: Account Frozen"
+                    body = f"Hello {fullname},\n\nYour account has been frozen for security due to 5 consecutive failed login attempts. For your security, access has been restricted.\n\nPlease contact administration to verify your identity and unfreeze your account."
+                    send_email_notification(email, subj, body, user_id=user_id)
+                    
+                    flash("Account temporarily locked due to multiple failed login attempts. Contact support.")
+                else:
+                    c.execute("UPDATE members SET failed_attempts = %s WHERE id = %s", (new_failed, user_id))
+                    conn.commit()
+                    conn.close()
+                    flash("Invalid Email or Password.")
+                return redirect(url_for('member_login'))
         else:
-            return "Invalid Email or Password."
+            conn.close()
+            flash("Invalid Email or Password.")
+            return redirect(url_for('member_login'))
             
     return render_template('member_login.html')
 
@@ -971,6 +1006,17 @@ def admin_delete_user(user_id):
             conn.close()
     else:
         flash("Invalid admin password.")
+    return redirect(url_for('admin_user_profile', user_id=user_id))
+
+@app.route('/admin/unfreeze/<int:user_id>', methods=['POST'])
+def admin_unfreeze_user(user_id):
+    if not session.get('is_admin'): return redirect(url_for('admin_login'))
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    c.execute("UPDATE members SET is_locked = FALSE, failed_attempts = 0 WHERE id = %s", (user_id,))
+    conn.commit()
+    conn.close()
+    flash("Account successfully unfrozen.")
     return redirect(url_for('admin_user_profile', user_id=user_id))
 
 @app.route('/admin/settings', methods=['GET', 'POST'])
