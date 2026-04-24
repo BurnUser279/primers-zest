@@ -5,94 +5,123 @@
     <title>Club Registration</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 40px 0; }
+        .register-card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 100%; max-width: 500px; box-sizing: border-box; }
+        h2 { margin-top: 0; color: #1a1a1a; text-align: center; margin-bottom: 30px; }
+        label { display: block; margin-bottom: 8px; font-weight: 500; color: #444; }
+        input, select, textarea { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 1rem; margin-bottom: 20px; transition: 0.3s; font-family: inherit; }
+        input:focus, select:focus, textarea:focus { border-color: #007bff; outline: none; box-shadow: 0 0 0 4px rgba(0,123,255,0.1); }
+        .pass-container { position: relative; }
+        .pass-toggle { position: absolute; right: 12px; top: 12px; background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 0; }
+        button[type="submit"] { width: 100%; padding: 14px; border-radius: 8px; border: none; background: #1a1a1a; color: white; font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        button[type="submit"]:hover { background: #333; transform: translateY(-1px); }
+        .back-link { position: absolute; top: 20px; left: 20px; text-decoration: none; color: #666; font-weight: 500; }
+        
+        /* Glassmorphism Flash Messages */
+        .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 2000; display: flex; align-items: center; justify-content: center; }
+        .flash-modal { background: rgba(255, 255, 255, 0.85); padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 20px 50px rgba(0,0,0,0.1); text-align: center; max-width: 450px; width: 90%; }
+        .flash-modal p { margin: 0 0 20px 0; color: #b71c1c; line-height: 1.6; font-weight: 500; }
+        .close-btn { background: #1a1a1a; color: white; padding: 10px 25px; border-radius: 30px; border: none; cursor: pointer; font-weight: bold; }
+
         @media screen and (max-width: 768px) {
-            body { padding: 15px; font-family: sans-serif; }
-            form, input, select, textarea { width: 100%; box-sizing: border-box; }
-            input[type="submit"] { padding: 15px; font-size: 18px; width: 100%; margin-top: 10px; }
+            .register-card { width: 95%; padding: 25px; }
+            .back-link { position: static; display: inline-block; margin-bottom: 20px; width: 100%; text-align: center; }
         }
     </style>
 </head>
 
 <body>
-    <a href="/" style="display:inline-block; margin-bottom: 20px; text-decoration: none; color: #333; font-weight: bold;">&larr; Back to Landing</a>
-    <h2>VIP Registration</h2>
-    
+    <a href="/" class="back-link">&larr; Back to Landing</a>
+
     {% with messages = get_flashed_messages() %}
       {% if messages %}
-        <div style="background-color: #ffe5e5; color: #b71c1c; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffcdd2;">
-          {% for message in messages %}
-            <p style="margin: 0;">{{ message }}</p>
-          {% endfor %}
+        <div class="flash-overlay" id="flashOverlay">
+            <div class="flash-modal">
+                {% for message in messages %}
+                  <p>{{ message | safe }}</p>
+                {% endfor %}
+                <button class="close-btn" onclick="document.getElementById('flashOverlay').style.display='none'">Close</button>
+            </div>
         </div>
       {% endif %}
     {% endwith %}
 
-    <form method="POST">
-        <label>Email:</label><br>
-        <input type="email" name="email" required><br><br>
+    <div class="register-card">
+        <h2>VIP Registration</h2>
+        <form method="POST">
+            <label>Email Address:</label>
+            <input type="email" name="email" required placeholder="name@example.com">
 
-        <label>Set a Password:</label><br>
-        <input type="password" name="password" required><br><br>
+            <label>Full Name:</label>
+            <input type="text" name="fullname" required placeholder="John Doe">
 
-        <label>Confirm Password:</label><br>
-        <input type="password" name="confirm_password" required><br><br>
+            <label>Username:</label>
+            <input type="text" name="username" required placeholder="johndoe24">
 
-        <label>Mobile Number:</label><br>
-        <input type="tel" name="mobile" pattern="[+0-9]+" required><br>
+            <label>Set Password:</label>
+            <div class="pass-container">
+                <input type="password" name="password" id="regPass" required placeholder="••••••••">
+                <button type="button" class="pass-toggle" onclick="togglePass('regPass')">👁️</button>
+            </div>
 
-        <label>Full Name:</label><br>
-        <input type="text" name="fullname" required><br>
+            <label>Confirm Password:</label>
+            <div class="pass-container">
+                <input type="password" name="confirm_password" id="confPass" required placeholder="••••••••">
+                <button type="button" class="pass-toggle" onclick="togglePass('confPass')">👁️</button>
+            </div>
 
-        <label>Username:</label><br>
-        <input type="text" name="username" required><br>
+            <label>Mobile Number:</label>
+            <input type="tel" name="mobile" pattern="[+0-9]+" required placeholder="+123456789">
 
-        <label>Age:</label><br>
-        <input type="number" name="age" required><br>
+            <label>Age:</label>
+            <input type="number" name="age" required placeholder="25">
 
-        <label>Gender:</label><br>
-        <select name="gender" id="genderDropdown" onchange="toggleGenderInput()">
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Non-binary">Non-binary</option>
-            <option value="Other">Other</option>
-        </select><br>
+            <label>Gender:</label>
+            <select name="gender" id="genderDropdown" onchange="toggleGenderInput()">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Non-binary">Non-binary</option>
+                <option value="Other">Other</option>
+            </select>
 
-        <div id="customGenderBox" style="display: none; margin-top: 10px;">
-            <label>Please specify your gender:</label><br>
-            <input type="text" name="gender_other">
-        </div><br>
+            <div id="customGenderBox" style="display: none;">
+                <label>Please specify:</label>
+                <input type="text" name="gender_other" placeholder="Specify gender">
+            </div>
 
-        <label>Travel Experience:</label><br>
-        <select name="travel">
-            <option value="Frequent">Frequent traveler</option>
-            <option value="Occasional">Occasional traveler</option>
-            <option value="Rarely">Rarely travels</option>
-        </select><br>
+            <label>Travel Experience:</label>
+            <select name="travel">
+                <option value="Frequent">Frequent traveler</option>
+                <option value="Occasional">Occasional traveler</option>
+                <option value="Rarely">Rarely travels</option>
+            </select>
 
-        <label>Income Tier:</label><br>
-        <select name="income">
-            <option value="Tier 1">Under $50k</option>
-            <option value="Tier 2">$50k - $250k</option>
-            <option value="Tier 3">$250k - $1M</option>
-            <option value="Tier 4">$1M+</option>
-        </select><br>
+            <label>Income Tier:</label>
+            <select name="income">
+                <option value="Tier 1">Under $50k</option>
+                <option value="Tier 2">$50k - $250k</option>
+                <option value="Tier 3">$250k - $1M</option>
+                <option value="Tier 4">$1M+</option>
+            </select>
 
-        <label>Medical Conditions (Optional):</label><br>
-        <textarea name="medical"></textarea><br><br>
+            <label>Medical Conditions (Optional):</label>
+            <textarea name="medical" rows="3" placeholder="List any conditions..."></textarea>
 
-        <input type="submit" value="Register">
-    </form>
-    <p style="margin-top: 20px;">Already have an account? <a href="/login">Sign in</a></p>
+            <button type="submit">Create VIP Account</button>
+        </form>
+        <p style="margin-top: 25px; text-align: center; color: #666;">Already have an account? <a href="/login" style="color: #007bff; font-weight: 600; text-decoration: none;">Sign in</a></p>
+    </div>
 
     <script>
+        function togglePass(id) {
+            const input = document.getElementById(id);
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
         function toggleGenderInput() {
             var dropdown = document.getElementById("genderDropdown");
             var customBox = document.getElementById("customGenderBox");
-            if (dropdown.value === "Other") {
-                customBox.style.display = "block";
-            } else {
-                customBox.style.display = "none";
-            }
+            customBox.style.display = dropdown.value === "Other" ? "block" : "none";
         }
     </script>
 </body>
