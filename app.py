@@ -1032,10 +1032,10 @@ def admin_unfreeze_user(user_id):
     if not session.get('is_admin'): return redirect(url_for('admin_login'))
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor()
-    c.execute("UPDATE members SET is_locked = FALSE, failed_attempts = 0 WHERE id = %s", (user_id,))
+    c.execute("UPDATE members SET is_locked = FALSE, is_active = TRUE, failed_attempts = 0 WHERE id = %s", (user_id,))
     conn.commit()
     conn.close()
-    flash("Account successfully unfrozen.")
+    flash("Account successfully unfrozen and reactivated.")
     return redirect(url_for('admin_user_profile', user_id=user_id))
 
 @app.route('/admin/settings', methods=['GET', 'POST'])
@@ -1046,21 +1046,24 @@ def admin_global_settings():
     c = conn.cursor()
     
     if request.method == 'POST':
-        curr_pass = request.form.get('current_password')
-        new_pass = request.form.get('new_password')
-        conf_pass = request.form.get('confirm_password')
-        support_email = request.form.get('support_email')
+        form_type = request.form.get('form_type')
         
-        # Step 3: Update Support Email
-        if support_email:
-            c.execute("UPDATE system_settings SET support_email = %s WHERE id = 1", (support_email,))
-            conn.commit()
-            flash("System settings updated successfully.")
-
-        if curr_pass and new_pass and conf_pass:
+        if form_type == 'update_email':
+            support_email = request.form.get('support_email')
+            if support_email:
+                c.execute("UPDATE system_settings SET support_email = %s WHERE id = 1", (support_email,))
+                conn.commit()
+                flash("Support email updated successfully.")
+        
+        elif form_type == 'update_password':
+            curr_pass = request.form.get('current_password')
+            new_pass = request.form.get('new_password')
+            conf_pass = request.form.get('confirm_password')
+            
             c.execute("SELECT password_hash FROM members WHERE username = 'AdminMaster'")
-            admin_hash = c.fetchone()[0]
-            if check_password_hash(admin_hash, curr_pass):
+            admin_row = c.fetchone()
+            
+            if admin_row and check_password_hash(admin_row[0], curr_pass):
                 if new_pass == conf_pass:
                     hashed = generate_password_hash(new_pass)
                     c.execute("UPDATE members SET password_hash = %s WHERE username = 'AdminMaster'", (hashed,))
@@ -1069,7 +1072,9 @@ def admin_global_settings():
                 else:
                     flash("New passwords do not match.")
             else:
-                flash("Current password incorrect.")
+                flash("Invalid current admin password.")
+        
+        return redirect(url_for('admin_global_settings'))
     
     c.execute("SELECT support_email FROM system_settings WHERE id = 1")
     settings = c.fetchone()
