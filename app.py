@@ -797,6 +797,25 @@ def admin_send_custom_email():
             flash("Dispatch failed. Check SMTP settings.")
     else:
         flash("Member not found.")
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/view_emails/<int:user_id>')
+def admin_view_user_emails(user_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    c.execute("SELECT fullname FROM members WHERE id = %s", (user_id,))
+    member_name = c.fetchone()
+    if not member_name:
+        conn.close()
+        flash("Member not found.")
+        return redirect(url_for('admin_dashboard'))
+        
+    c.execute("SELECT sent_at, subject, body FROM email_logs WHERE user_id = %s ORDER BY sent_at DESC", (user_id,))
+    logs = c.fetchall()
+    conn.close()
+    return render_template('admin_user_emails.html', logs=logs, member_name=member_name[0])
         
     return redirect(url_for('admin_dashboard'))
 

@@ -14,6 +14,7 @@
 </head>
 
 <body>
+    <a href="/" style="display:inline-block; margin-bottom: 20px; text-decoration: none; color: #333; font-weight: bold;">&larr; Back to Landing</a>
     <h2>VIP Registration</h2>
     
     {% with messages = get_flashed_messages() %}
@@ -81,6 +82,7 @@
 
         <input type="submit" value="Register">
     </form>
+    <p style="margin-top: 20px;">Already have an account? <a href="/login">Sign in</a></p>
 
     <script>
         function toggleGenderInput() {
