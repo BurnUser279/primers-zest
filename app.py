@@ -1335,6 +1335,21 @@ def admin_delete_chat_message(msg_id):
     flash("Message and associated media purged successfully.")
     return redirect(url_for('vip_lounge'))
 
+@app.route('/trigger_admin_alert')
+def trigger_admin_alert():
+    if 'member_id' not in session and not session.get('is_admin'):
+        return redirect(url_for('member_login'))
+    
+    fullname = session.get('member_fullname', 'A VIP User')
+    subj = "VIP LOUNGE: ASSISTANCE REQUESTED"
+    body = f"Admin Alert Triggered!\n\nUser: {fullname}\nLocation: VIP Lounge Chat\n\nUsers are requesting immediate assistance in the VIP lounge chat."
+    
+    # Trigger existing email utility (Step 5)
+    send_email_notification('admin@system.local', subj, body)
+    
+    flash("Admin was pinged! Assistance is on the way.")
+    return redirect(url_for('vip_lounge'))
+
 if __name__ == '__main__':
     # Auto-migration on startup
     try:
