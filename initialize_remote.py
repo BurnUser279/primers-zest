@@ -32,6 +32,7 @@ def run_migrations():
             # Members expansions (Email Verification Fix)
             "ALTER TABLE members ADD COLUMN IF NOT EXISTS vip_since TIMESTAMP;",
             "ALTER TABLE members ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE;",
+            "ALTER TABLE members ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;",
             
             # Chatroom expansions
             "ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS features TEXT;"
@@ -147,7 +148,8 @@ def run_migrations():
                 ('Registration', 'Welcome to Primer\'s Zest, {{name}}!', 'Hello {{name}},\n\nThank you for registering with Primer\'s Zest. Your account is now active.\n\nBest regards,\nAdministration'),
                 ('VIP_Welcome', 'Congratulations! You are now a VIP Member', 'Hello {{name}},\n\nWe are excited to inform you that your VIP status has been granted! You now have full access to the VIP Lounge and exclusive features.\n\nEnjoy your stay,\nAdministration'),
                 ('Admin_Reply', 'New Administrative Response', 'Hello {{name}},\n\nAn administrator has responded to your inquiry:\n\n---\n{{admin_text}}\n---\n\nPlease check your dashboard for more details.\n\nBest regards,\nAdministration'),
-                ('Subscription_Success', 'Payment Verified - Access Granted', 'Hello {{name}},\n\nYour payment has been successfully verified for your chosen plan. Welcome to the elite tier of Primer\'s Zest.\n\nBest regards,\nAdministration')
+                ('Subscription_Success', 'Payment Verified - Access Granted', 'Hello {{name}},\n\nYour payment has been successfully verified for your chosen plan. Welcome to the elite tier of Primer\'s Zest.\n\nBest regards,\nAdministration'),
+                ('VIP_Removal', 'VIP Membership Status Update', 'Hello {{name}},\n\nThis is to notify you that your VIP membership status has been removed. You will still have access to your regular account features.\n\nIf you believe this is an error, please contact support.\n\nBest regards,\nAdministration')
             ]
             c.executemany("INSERT INTO email_templates (event_type, subject, body) VALUES (%s, %s, %s)", templates)
 

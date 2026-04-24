@@ -97,7 +97,8 @@ def init_db():
                   membership_tier TEXT DEFAULT 'Regular',
                   vip_admin_reply TEXT,
                   vip_user_proof TEXT,
-                  is_verified BOOLEAN DEFAULT FALSE)''')
+                  is_verified BOOLEAN DEFAULT FALSE,
+                  is_active BOOLEAN DEFAULT TRUE)''')
     
     c.execute('''CREATE TABLE IF NOT EXISTS verification_tokens
                  (id SERIAL PRIMARY KEY,
@@ -265,12 +266,17 @@ def member_login():
         
         conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
         c = conn.cursor()
-        c.execute("SELECT id, fullname, password_hash, is_verified FROM members WHERE email = %s", (email,))
+        c.execute("SELECT id, fullname, password_hash, is_verified, is_active FROM members WHERE email = %s", (email,))
         member = c.fetchone()
         conn.close()
             
         # member[2] is the scrambled hash. We compare the raw password to the hash.
         if member and check_password_hash(member[2], password):
+            # Account Status Check (Step 2)
+            if not member[4]:
+                flash("Account disabled. Please contact support.")
+                return redirect(url_for('member_login'))
+
             session['member_id'] = member[0]
             session['member_fullname'] = member[1]
             return redirect(url_for('member_dashboard'))
@@ -498,11 +504,18 @@ def support():
 def admin_login():
     if request.method == 'POST':
         password = request.form.get('password')
-        if password == 'boss123': 
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        c = conn.cursor()
+        c.execute("SELECT password_hash FROM members WHERE username = 'AdminMaster'")
+        admin_row = c.fetchone()
+        conn.close()
+        
+        if admin_row and check_password_hash(admin_row[0], password):
             session['is_admin'] = True
             return redirect(url_for('admin_dashboard'))
         else:
-            return "Incorrect Password. Get out."
+            flash("Incorrect Admin Password.")
+            return redirect(url_for('admin_login'))
     return render_template('admin_login.html')
 
 @app.route('/admin')
@@ -720,9 +733,18 @@ def admin_demote_member(member_id):
     c.execute("UPDATE members SET membership_tier = 'Regular' WHERE id = %s", (member_id,))
     # Close the active VIP period
     c.execute("UPDATE vip_periods SET end_time = CURRENT_TIMESTAMP WHERE user_id = %s AND end_time IS NULL", (member_id,))
+    
+    # Notify user of removal
+    c.execute("SELECT email, fullname FROM members WHERE id = %s", (member_id,))
+    user_row = c.fetchone()
+    if user_row:
+        subj, body = get_templated_email('VIP_Removal', user_row[1])
+        if subj:
+            send_email_notification(user_row[0], subj, body, user_id=member_id)
+            
     conn.commit()
     conn.close()
-    
+    flash(f"User {user_row[1] if user_row else ''} demoted and notified.")
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/manual_vip/<int:member_id>', methods=['POST'])
@@ -816,8 +838,95 @@ def admin_view_user_emails(user_id):
     logs = c.fetchall()
     conn.close()
     return render_template('admin_user_emails.html', logs=logs, member_name=member_name[0])
-        
+
+@app.route('/admin/delete_plan/<int:plan_id>', methods=['POST'])
+def admin_delete_plan(plan_id):
+    if not session.get('is_admin'): return redirect(url_for('admin_login'))
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    c.execute("DELETE FROM subscription_plans WHERE id = %s", (plan_id,))
+    conn.commit()
+    conn.close()
+    flash("Plan deleted successfully.")
     return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/user/<int:user_id>')
+def admin_user_profile(user_id):
+    if not session.get('is_admin'): return redirect(url_for('admin_login'))
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'), cursor_factory=psycopg2.extras.DictCursor)
+    c = conn.cursor()
+    c.execute("SELECT * FROM members WHERE id = %s", (user_id,))
+    member = c.fetchone()
+    conn.close()
+    if not member: return "User not found", 404
+    return render_template('admin_user_profile.html', member=member)
+
+@app.route('/admin/user/<int:user_id>/disable', methods=['POST'])
+def admin_disable_user(user_id):
+    if not session.get('is_admin'): return redirect(url_for('admin_login'))
+    admin_password = request.form.get('admin_password')
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    c.execute("SELECT password_hash FROM members WHERE username = 'AdminMaster'")
+    admin_hash = c.fetchone()[0]
+    if check_password_hash(admin_hash, admin_password):
+        c.execute("UPDATE members SET is_active = FALSE WHERE id = %s", (user_id,))
+        conn.commit()
+        flash("User account disabled.")
+    else:
+        flash("Invalid admin password.")
+    conn.close()
+    return redirect(url_for('admin_user_profile', user_id=user_id))
+
+@app.route('/admin/user/<int:user_id>/delete', methods=['POST'])
+def admin_delete_user(user_id):
+    if not session.get('is_admin'): return redirect(url_for('admin_login'))
+    admin_password = request.form.get('admin_password')
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    c.execute("SELECT password_hash FROM members WHERE username = 'AdminMaster'")
+    admin_hash = c.fetchone()[0]
+    if check_password_hash(admin_hash, admin_password):
+        try:
+            # Delete associated records first (optional, but good practice)
+            # For simplicity, we assume CASCADE or manual deletion if needed
+            c.execute("DELETE FROM members WHERE id = %s", (user_id,))
+            conn.commit()
+            flash("User account deleted permanently.")
+            conn.close()
+            return redirect(url_for('admin_dashboard'))
+        except Exception as e:
+            flash(f"Delete failed: {e}")
+    else:
+        flash("Invalid admin password.")
+    conn.close()
+    return redirect(url_for('admin_user_profile', user_id=user_id))
+
+@app.route('/admin/settings', methods=['GET', 'POST'])
+def admin_global_settings():
+    if not session.get('is_admin'): return redirect(url_for('admin_login'))
+    if request.method == 'POST':
+        curr_pass = request.form.get('current_password')
+        new_pass = request.form.get('new_password')
+        conf_pass = request.form.get('confirm_password')
+        
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        c = conn.cursor()
+        c.execute("SELECT password_hash FROM members WHERE username = 'AdminMaster'")
+        admin_hash = c.fetchone()[0]
+        
+        if check_password_hash(admin_hash, curr_pass):
+            if new_pass == conf_pass:
+                hashed = generate_password_hash(new_pass)
+                c.execute("UPDATE members SET password_hash = %s WHERE username = 'AdminMaster'", (hashed,))
+                conn.commit()
+                flash("Admin password updated successfully.")
+            else:
+                flash("New passwords do not match.")
+        else:
+            flash("Current password incorrect.")
+        conn.close()
+    return render_template('admin_settings.html')
 
 @app.route('/logout')
 def member_logout():

@@ -213,6 +213,7 @@
     <div class="sidebar" id="sideDrawer">
         <h2>Admin Menu</h2>
         <a href="/admin/dashboard" style="background-color: #333;">Member Roster</a>
+        <a href="/admin/settings">Global Admin Settings</a>
         <a href="/vip_lounge" style="border: 1px solid gold; color: gold;">Join VIP Lounge</a>
         <hr style="width: 100%; border: 0; border-top: 1px solid #333; margin: 15px 0;">
         <a href="/admin/logout" style="color: #ff6b6b; font-weight: bold;">Logout & Lock Vault</a>
@@ -300,49 +301,8 @@
                     </td>
                     <td>{{ member[11] }}</td>
                     <td>
-                        <form method="POST" action="/admin/reset/{{ member[0] }}" style="display:inline;">
-                            <button type="submit">Reset Password</button>
-                        </form>
-                        <hr>
-                        {% if member[11] == 'Regular' %}
-                        <!-- Nothing else for Regular, they just exist -->
-                        {% elif member[11] == 'Pending Request' %}
-                        <form method="POST" action="/admin/send_instructions/{{ member[0] }}" style="display:inline;">
-                            <input type="text" name="admin_instructions" required placeholder="Payment instructions">
-                            <button type="submit" style="background-color: lightblue;">Send Instructions</button>
-                        </form>
-                        {% elif member[11] == 'Awaiting Payment' %}
-                        <span style="color: gray;">Awaiting User Payment</span>
-                        {% elif member[11] == 'Payment Received' %}
-                        {% if member[13] %}
-                        <a href="{{ member[13] }}" target="_blank">View Proof</a><br>
-                        {% endif %}
-                        <form method="POST" action="/admin/finalize_vip/{{ member[0] }}" style="display:inline;"
-                            class="no-history-form">
-                            <button type="submit" style="background-color: lightgreen;">Verify & Approve VIP</button>
-                        </form>
-                        {% elif member[11] == 'VIP' %}
-                        <form method="POST" action="/admin/demote/{{ member[0] }}" style="display:inline;"
-                            class="no-history-form">
-                            <button type="submit" style="background-color: lightcoral;">Remove VIP</button>
-                        </form>
-                        {% endif %}
-
-                        {% if member[11] != 'VIP' %}
-                        <form method="POST" action="/admin/manual_vip/{{ member[0] }}"
-                            style="display:inline; margin-left: 5px;" class="no-history-form">
-                            <button type="submit" style="background-color: gold; color: black; font-weight: bold;">Grant
-                                VIP Access</button>
-                        </form>
-                        {% endif %}
-                        <a href="#manualEmailForm" onclick="document.getElementById('target_member_id').value='{{ member[0] }}'; document.getElementById('manualEmailForm').scrollIntoView();"
-                            style="display:block; text-align:center; padding: 10px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 5px;">Send Direct Email</a>
-                        <hr>
-                        <a href="/admin/vault/{{ member[0] }}"
-                            style="display:block; text-align:center; padding: 10px; background-color: #333; color: gold; text-decoration: none; border-radius: 4px; font-weight: bold; border: 1px solid #fbbc04;">View
-                            Member Vault</a>
-                        <a href="/admin/view_emails/{{ member[0] }}"
-                            style="display:block; text-align:center; padding: 10px; background-color: #0288d1; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 5px; border: 1px solid #01579b;">View Emails</a>
+                        <a href="/admin/user/{{ member[0] }}"
+                            style="display:block; text-align:center; padding: 10px; background-color: #fbbc04; color: black; text-decoration: none; border-radius: 4px; font-weight: bold; border: 1px solid #000;">View Profile</a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -433,6 +393,20 @@
                 <br>
                 <button type="submit" style="background-color: #2e7d32; color: white;">Save Platform Settings</button>
             </form>
+            <hr>
+            <h4>Management Actions</h4>
+            <table>
+                {% for plan in plans %}
+                <tr>
+                    <td><strong>{{ plan[1] }}</strong></td>
+                    <td>
+                        <form action="/admin/delete_plan/{{ plan[0] }}" method="POST" onsubmit="return confirm('Delete {{ plan[1] }} plan permanently?')">
+                            <button type="submit" style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Delete Plan</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
         </div>
     </div>
 
