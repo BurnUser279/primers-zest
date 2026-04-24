@@ -17,11 +17,8 @@ def run_migrations():
         conn = psycopg2.connect(db_url)
         c = conn.cursor()
         
-        # 1. Base Tables (via app.py logic)
-        try:
-            init_db()
-        except Exception as e:
-            print(f"init_db base failed: {e}")
+        # 1. Base Tables (handled by app.py)
+        # Migrations below use IF NOT EXISTS to safely update schema
 
         # 2. Schema Hardening & Migrations
         migrations = [
