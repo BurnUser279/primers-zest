@@ -36,9 +36,11 @@ def run_migrations():
             # Chatroom expansions
             "ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS features TEXT;",
 
-            # Email Templates expansions
-            "ALTER TABLE email_templates ADD COLUMN IF NOT EXISTS trigger_event VARCHAR(50);",
-            "ALTER TABLE email_templates ADD COLUMN IF NOT EXISTS plan_id INTEGER;"
+            "ALTER TABLE email_templates ADD COLUMN IF NOT EXISTS plan_id INTEGER;",
+            
+            # System Settings
+            "CREATE TABLE IF NOT EXISTS system_settings (id SERIAL PRIMARY KEY, support_email VARCHAR(255));",
+            "INSERT INTO system_settings (id, support_email) SELECT 1, 'support@yourdomain.com' WHERE NOT EXISTS (SELECT 1 FROM system_settings WHERE id = 1);"
         ]
 
         for sql in migrations:

@@ -152,10 +152,17 @@ def init_db():
                  (id SERIAL PRIMARY KEY,
                   plan_name TEXT NOT NULL,
                   price REAL NOT NULL)''')
+    
+    c.execute('''CREATE TABLE IF NOT EXISTS system_settings
+                 (id SERIAL PRIMARY KEY,
+                  support_email TEXT)''')
                   
     # Ensure Official Admin Member exists for technical sender identity
     dummy_hash = generate_password_hash('AdminPostIdentity2026')
     c.execute("INSERT INTO members (email, mobile, fullname, username, age, gender, travel, income, password_hash, membership_tier) SELECT 'admin@system.local', '0000000000', 'Official Admin', 'AdminMaster', 99, 'System', 'N/A', 'Infinite', %s, 'VIP' WHERE NOT EXISTS (SELECT 1 FROM members WHERE username = 'AdminMaster');", (dummy_hash,))
+    
+    # Ensure system_settings exists
+    c.execute("INSERT INTO system_settings (id, support_email) SELECT 1, 'support@yourdomain.com' WHERE NOT EXISTS (SELECT 1 FROM system_settings WHERE id = 1);")
     
     # Step 1: Rescue SQL to unlock everyone on reboot (Mass Unlock Bug Fix)
     c.execute("UPDATE members SET is_locked = FALSE, failed_attempts = 0")
@@ -278,8 +285,11 @@ def member_login():
             user_id, fullname, hashed_pw, is_verified, is_active, is_locked, failed_attempts = member
             
             if is_locked:
+                # Step 4: Query system settings for support email
+                c.execute("SELECT support_email FROM system_settings WHERE id = 1")
+                support_email = c.fetchone()[0]
                 conn.close()
-                flash("Your account has been frozen, contact the admin through <a href='mailto:support@yourdomain.com'>support@yourdomain.com</a> for details on how to unfreeze your account.")
+                flash(f'Your account has been frozen, contact the admin through <a href="mailto:{support_email}">{support_email}</a> for details on how to unfreeze your account.')
                 return redirect(url_for('member_login'))
             
             if check_password_hash(hashed_pw, password):
@@ -309,7 +319,13 @@ def member_login():
                     body = f"Hello {fullname},\n\nYour account has been frozen for security due to 5 consecutive failed login attempts. For your security, access has been restricted.\n\nPlease contact administration to verify your identity and unfreeze your account."
                     send_email_notification(email, subj, body, user_id=user_id)
                     
-                    flash("Your account has been frozen, contact the admin through <a href='mailto:support@yourdomain.com'>support@yourdomain.com</a> for details on how to unfreeze your account.")
+                    # Step 4: Inject dynamic support email
+                    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+                    c = conn.cursor()
+                    c.execute("SELECT support_email FROM system_settings WHERE id = 1")
+                    support_email = c.fetchone()[0]
+                    conn.close()
+                    flash(f'Your account has been frozen, contact the admin through <a href="mailto:{support_email}">{support_email}</a> for details on how to unfreeze your account.')
                 else:
                     c.execute("UPDATE members SET failed_attempts = %s WHERE email = %s", (new_failed, email))
                     conn.commit()
@@ -1025,28 +1041,40 @@ def admin_unfreeze_user(user_id):
 @app.route('/admin/settings', methods=['GET', 'POST'])
 def admin_global_settings():
     if not session.get('is_admin'): return redirect(url_for('admin_login'))
+    
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    
     if request.method == 'POST':
         curr_pass = request.form.get('current_password')
         new_pass = request.form.get('new_password')
         conf_pass = request.form.get('confirm_password')
+        support_email = request.form.get('support_email')
         
-        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
-        c = conn.cursor()
-        c.execute("SELECT password_hash FROM members WHERE username = 'AdminMaster'")
-        admin_hash = c.fetchone()[0]
-        
-        if check_password_hash(admin_hash, curr_pass):
-            if new_pass == conf_pass:
-                hashed = generate_password_hash(new_pass)
-                c.execute("UPDATE members SET password_hash = %s WHERE username = 'AdminMaster'", (hashed,))
-                conn.commit()
-                flash("Admin password updated successfully.")
+        # Step 3: Update Support Email
+        if support_email:
+            c.execute("UPDATE system_settings SET support_email = %s WHERE id = 1", (support_email,))
+            conn.commit()
+            flash("System settings updated successfully.")
+
+        if curr_pass and new_pass and conf_pass:
+            c.execute("SELECT password_hash FROM members WHERE username = 'AdminMaster'")
+            admin_hash = c.fetchone()[0]
+            if check_password_hash(admin_hash, curr_pass):
+                if new_pass == conf_pass:
+                    hashed = generate_password_hash(new_pass)
+                    c.execute("UPDATE members SET password_hash = %s WHERE username = 'AdminMaster'", (hashed,))
+                    conn.commit()
+                    flash("Admin password updated successfully.")
+                else:
+                    flash("New passwords do not match.")
             else:
-                flash("New passwords do not match.")
-        else:
-            flash("Current password incorrect.")
-        conn.close()
-    return render_template('admin_settings.html')
+                flash("Current password incorrect.")
+    
+    c.execute("SELECT support_email FROM system_settings WHERE id = 1")
+    settings = c.fetchone()
+    conn.close()
+    return render_template('admin_settings.html', settings=settings)
 
 @app.route('/logout')
 def member_logout():
