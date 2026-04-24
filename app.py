@@ -1,5 +1,6 @@
 import os
 import time
+import uuid
 import psycopg2
 import psycopg2.extras
 from dotenv import load_dotenv
@@ -71,6 +72,8 @@ app.config['CHATROOM_UPLOAD_FOLDER'] = 'static/chatroom_uploads'
 # Ensure the upload folders exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True) 
 os.makedirs(app.config['CHATROOM_UPLOAD_FOLDER'], exist_ok=True)
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
 
 @app.after_request
 def add_header(response):
@@ -474,7 +477,16 @@ def dashboard_verify_payment():
         
     # Save the physical file
     filename = secure_filename(receipt_file.filename)
-    unique_filename = f"receipt_m{session['member_id']}_{int(time.time())}_{filename}"
+    if '.' not in filename:
+        flash("SECURITY ALERT: File has no extension.")
+        return redirect(url_for('member_dashboard'))
+    
+    ext = filename.rsplit('.', 1)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        flash("SECURITY ALERT: Invalid file type. Only PNG, JPG, JPEG, and PDF are allowed.")
+        return redirect(url_for('member_dashboard'))
+        
+    unique_filename = f"{uuid.uuid4().hex}.{ext}"
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
     receipt_file.save(file_path)
     web_path = f"/static/uploads/{unique_filename}"
