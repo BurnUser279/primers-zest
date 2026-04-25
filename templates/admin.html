@@ -361,7 +361,7 @@
                     <td>{{ member[2] }}</td>
                     <td>
                         {{ member[3] }}
-                        {% if member[15] == False %}
+                        {% if member.is_locked or not member.is_active %}
                         <span style="background-color: #f44336; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 5px;">DISABLED</span>
                         {% endif %}
                     </td>

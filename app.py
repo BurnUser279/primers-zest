@@ -595,7 +595,7 @@ def admin_dashboard():
         return redirect(url_for('admin_login'))
 
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
-    c = conn.cursor()
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     c.execute("""
         SELECT m.*, 
         (SELECT message FROM tickets t WHERE t.user_id = m.id ORDER BY created_at DESC LIMIT 1) as latest_ticket 
