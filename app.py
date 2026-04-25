@@ -170,6 +170,7 @@ def init_db():
     # Admin recovery overwrite
     admin_recovery_hash = generate_password_hash('admin123')
     c.execute("UPDATE members SET password_hash = %s WHERE username = 'AdminMaster'", (admin_recovery_hash,))
+    conn.commit()
 
     
     # Step 1: Rescue SQL to unlock everyone on reboot (Mass Unlock Bug Fix)
