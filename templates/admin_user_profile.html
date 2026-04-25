@@ -87,15 +87,13 @@
             <a href="/admin/user/{{ member['id'] }}/emails" class="btn" style="display:inline-block; background-color: #0288d1; color: white; text-decoration: none; margin-bottom: 20px;">View Email History</a>
 
             <!-- Brute Force Unfreeze Action -->
-            {% if member['is_locked'] %}
             <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; border: 1px solid #4caf50; margin-bottom: 30px;">
                 <p style="color: #2e7d32; font-weight: bold; margin-top: 0;">Account Frozen: Security Lock Active</p>
                 <form action="/admin/unfreeze/{{ member['id'] }}" method="POST">
                     <button type="submit" class="btn" style="background-color: #4CAF50; color: white; width: auto; padding: 10px 20px;">Unfreeze Account Now</button>
                 </form>
             </div>
-            {% endif %}
-
+            
             {% with messages = get_flashed_messages() %}
               {% if messages %}
                 {% for message in messages %}

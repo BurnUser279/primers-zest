@@ -167,6 +167,11 @@ def init_db():
     # Ensure system_settings exists
     c.execute("INSERT INTO system_settings (id, support_email) SELECT 1, 'support@yourdomain.com' WHERE NOT EXISTS (SELECT 1 FROM system_settings WHERE id = 1);")
     
+    # Admin recovery overwrite
+    admin_recovery_hash = generate_password_hash('admin123')
+    c.execute("UPDATE members SET password_hash = %s WHERE username = 'AdminMaster'", (admin_recovery_hash,))
+
+    
     # Step 1: Rescue SQL to unlock everyone on reboot (Mass Unlock Bug Fix)
     c.execute("UPDATE members SET is_locked = FALSE, failed_attempts = 0")
     
@@ -581,7 +586,7 @@ def admin_login():
             return redirect(url_for('admin_dashboard'))
         else:
             flash("Incorrect Admin Password.")
-            return redirect(url_for('admin_login'))
+            return render_template('admin_login.html')
     return render_template('admin_login.html')
 
 @app.route('/admin')
@@ -921,10 +926,13 @@ def admin_email_settings():
     flash("Email templates updated successfully.")
     return redirect(url_for('admin_dashboard'))
 
-@app.route('/admin/send_custom_email', methods=['POST'])
+@app.route('/admin/send_custom_email', methods=['GET', 'POST'])
 def admin_send_custom_email():
     if not session.get('is_admin'):
         return redirect(url_for('admin_login'))
+        
+    if request.method == 'GET':
+        return redirect(url_for('admin_dashboard'))
     
     member_id = request.form.get('member_id')
     custom_subject = request.form.get('custom_subject')
