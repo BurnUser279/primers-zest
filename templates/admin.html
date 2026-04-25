@@ -283,8 +283,8 @@
             function toggleMenu() {
                 const sidebar = document.getElementById('sideDrawer');
                 const overlay = document.getElementById('menuOverlay');
-                sidebar.classList.toggle('active');
-                overlay.classList.toggle('active');
+                if (sidebar) sidebar.classList.toggle('active');
+                if (overlay) overlay.classList.toggle('active');
             }
             window.toggleMenu = toggleMenu;
 
@@ -554,7 +554,24 @@
                             <td>{{ template[2] }}</td>
                             <td>{{ template[4] }}</td>
                             <td>
-                                <button type="button" style="background-color: #2e7d32; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer;">Edit</button>
+                                <button type="button" onclick="document.getElementById('edit-template-{{ template[0] }}').style.display='table-row'" style="background-color: #2e7d32; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer;">Edit</button>
+                            </td>
+                        </tr>
+                        <tr id="edit-template-{{ template[0] }}" style="display: none; background-color: #f9f9f9;">
+                            <td colspan="5" style="padding: 15px;">
+                                <form action="/admin/email_settings" method="POST" style="display: flex; flex-direction: column; gap: 10px;">
+                                    <input type="hidden" name="event_type" value="{{ template[1] }}">
+                                    <input type="hidden" name="trigger_event" value="{{ template[4] }}">
+                                    <input type="hidden" name="template_plan_id" value="{{ template[5] }}">
+                                    <label><strong>Edit Subject:</strong></label>
+                                    <input type="text" name="subject" value="{{ template[2] }}" style="width: 100%; padding: 8px;">
+                                    <label><strong>Edit Message Body:</strong></label>
+                                    <textarea name="body" rows="5" style="width: 100%; padding: 8px;">{{ template[3] }}</textarea>
+                                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                        <button type="submit" style="background-color: #fbc02d; color: black; font-weight: bold; padding: 8px 15px; border: none; cursor: pointer;">Save Changes</button>
+                                        <button type="button" onclick="document.getElementById('edit-template-{{ template[0] }}').style.display='none'" style="background-color: #333; color: white; padding: 8px 15px; border: none; cursor: pointer;">Cancel</button>
+                                    </div>
+                                </form>
                             </td>
                         </tr>
                         {% endfor %}
