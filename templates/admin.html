@@ -515,76 +515,52 @@
 
     <!-- Section 3: Email Management -->
     <div id="section-emails" class="accordion-content">
-        <div class="container" id="manualEmailForm">
-        <div class="email-config-section">
-            <h3>Direct Member Contact (Manual Email)</h3>
-            <p>Send a custom, one-time email to any registered member. This bypasses automated templates.</p>
-            <form action="/admin/send_custom_email" method="POST" class="no-history-form">
-                <div style="margin-bottom: 15px;">
-                    <label>Target Member ID:</label><br>
-                    <input type="number" name="member_id" id="target_member_id" placeholder="Select from roster above" required style="padding: 10px; border-radius: 4px; border: 1px solid #ccc; width: 100%;">
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <label>Email Subject:</label><br>
-                    <input type="text" name="custom_subject" placeholder="Enter custom subject..." required style="padding: 10px; border-radius: 4px; border: 1px solid #ccc; width: 100%;">
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <label>Email Body:</label><br>
-                    <textarea name="custom_body" rows="6" placeholder="Enter your custom message here..." required style="padding: 10px; border-radius: 4px; border: 1px solid #ccc; width: 100%;"></textarea>
-                </div>
-                <button type="submit" style="background-color: #000; color: #fbbc04; font-weight: bold; padding: 15px 30px;">Dispatch Custom Email</button>
-            </form>
-        </div>
-    </div>
+        <div class="container">
+            <div class="email-config-section" style="margin-bottom: 30px;">
+                <h3>Compose Custom Email</h3>
+                <form action="/admin/send_custom_email" method="POST" class="no-history-form">
+                    <div style="margin-bottom: 15px;">
+                        <label>Recipient Member ID:</label><br>
+                        <input type="number" name="member_id" required style="padding: 10px; border-radius: 4px; border: 1px solid #ccc; width: 100%;">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label>Subject:</label><br>
+                        <input type="text" name="custom_subject" required style="padding: 10px; border-radius: 4px; border: 1px solid #ccc; width: 100%;">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label>Message Body:</label><br>
+                        <textarea name="custom_body" rows="6" required style="padding: 10px; border-radius: 4px; border: 1px solid #ccc; width: 100%;"></textarea>
+                    </div>
+                    <button type="submit" style="background-color: #000; color: #fbbc04; font-weight: bold; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">Send Email</button>
+                </form>
+            </div>
 
-    <div class="container">
-        <div class="email-config-section">
-            <h3>Automated Email Template Settings</h3>
-            <p>Customize the content of emails sent by the system during core events.</p>
-            <form action="/admin/email_settings" method="POST" class="no-history-form">
-                {% for template in email_templates %}
-                <div class="template-card">
-                    <h4 style="margin: 0 0 10px 0; color: #2e7d32;">Event: {{ template[1] }}</h4>
-                    <input type="hidden" name="event_type" value="{{ template[1] }}">
-                    
-                    <div style="margin-bottom: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div>
-                            <label style="font-weight: bold; font-size: 0.8rem;">Trigger Event:</label>
-                            <select name="trigger_event" style="width: 100%; padding: 5px;">
-                                <option value="Manual" {{ 'selected' if template[4] == 'Manual' }}>Manual / Other</option>
-                                <option value="Plan Purchased" {{ 'selected' if template[4] == 'Plan Purchased' }}>Plan Purchased</option>
-                                <option value="VIP Added" {{ 'selected' if template[4] == 'VIP Added' }}>VIP Added</option>
-                                <option value="VIP Removed" {{ 'selected' if template[4] == 'VIP Removed' }}>VIP Removed</option>
-                                <option value="Registration" {{ 'selected' if template[4] == 'Registration' }}>Registration</option>
-                                <option value="Admin Reply" {{ 'selected' if template[4] == 'Admin Reply' }}>Admin Reply</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="font-weight: bold; font-size: 0.8rem;">Link to Plan (Optional):</label>
-                            <select name="template_plan_id" style="width: 100%; padding: 5px;">
-                                <option value="None">No Specific Plan</option>
-                                {% for p in plans %}
-                                <option value="{{ p[0] }}" {{ 'selected' if template[5] == p[0] }}>{{ p[1] }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom: 10px;">
-                        <label style="font-weight: bold; font-size: 0.9rem;">Subject Line:</label><br>
-                        <input type="text" name="subject" value="{{ template[2] }}" required style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
-                    </div>
-                    
-                    <div>
-                        <label style="font-weight: bold; font-size: 0.9rem;">Email Body:</label> <span class="placeholder-hint">(Use {{ '{{name}}' }} for personalization)</span><br>
-                        <textarea name="body" rows="4" required style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">{{ template[3] }}</textarea>
-                    </div>
+            <div class="email-config-section">
+                <h3>Saved Templates</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <tr>
+                            <th>ID</th>
+                            <th>Event Type</th>
+                            <th>Subject</th>
+                            <th>Trigger</th>
+                            <th>Actions</th>
+                        </tr>
+                        {% for template in email_templates %}
+                        <tr>
+                            <td>{{ template[0] }}</td>
+                            <td>{{ template[1] }}</td>
+                            <td>{{ template[2] }}</td>
+                            <td>{{ template[4] }}</td>
+                            <td>
+                                <button type="button" style="background-color: #2e7d32; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer;">Edit</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
                 </div>
-                {% endfor %}
-                <button type="submit" style="background-color: #2e7d32; color: white; padding: 15px 30px;">Save All Template Changes</button>
-            </form>
+            </div>
         </div>
-    </div> <!-- End Email Section -->
     </div> <!-- Close section-emails -->
 
     <!-- Section 4: Global Settings -->
