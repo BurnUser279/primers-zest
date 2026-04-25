@@ -269,7 +269,7 @@
 
     <div class="sidebar" id="sideDrawer">
         <h2>Admin Menu</h2>
-        <a href="{{ url_for('admin_dashboard') }}" style="background-color: #333;">Member Roster</a>
+        <a href="javascript:void(0)" onclick="toggleSection('section-roster'); toggleMenu();" style="background-color: #333;">Member Roster</a>
         <a href="javascript:void(0)" onclick="toggleSection('section-plans'); toggleMenu();">Subscription Plans</a>
         <a href="javascript:void(0)" onclick="toggleSection('section-emails'); toggleMenu();">Email Logs & Templates</a>
         <a href="/admin/settings">Global Admin Settings</a>
@@ -330,13 +330,13 @@
     <div class="container">
         <!-- Master Navigation Menu -->
         <div class="admin-nav">
-            <button class="nav-btn" onclick="toggleSection('section-roster')">Member Roster</button>
+            <a href="javascript:void(0)" onclick="toggleSection('section-roster');" class="nav-btn" style="display:inline-block; text-align:center; text-decoration:none; box-sizing:border-box;">Member Roster</a>
             <button class="nav-btn" onclick="toggleSection('section-plans')">Subscription Plans</button>
-            <a href="{{ url_for('admin_send_custom_email') }}" class="nav-btn" style="display:inline-block; text-align:center; text-decoration:none; box-sizing:border-box;">Send Mail</a>
+            <a href="javascript:void(0)" onclick="toggleSection('section-emails');" class="nav-btn" style="display:inline-block; text-align:center; text-decoration:none; box-sizing:border-box;">Send Mail</a>
         </div>
 
         <!-- Section 1: Member Roster -->
-        <div id="section-roster" class="accordion-content">
+        <div id="section-roster" class="accordion-content" style="display: block;">
             <h2>VIP Club - Member Roster</h2>
         <div class="table-wrapper">
             <table>
@@ -577,6 +577,7 @@
             </form>
         </div>
     </div> <!-- End Email Section -->
+    </div> <!-- Close section-emails -->
 
     <!-- Section 4: Global Settings -->
     <div id="section-settings" class="accordion-content">
