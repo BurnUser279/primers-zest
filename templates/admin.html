@@ -292,6 +292,8 @@
             window.toggleSection = function(id) {
                 const sections = ['section-roster', 'section-plans', 'section-emails', 'section-settings'];
                 const target = document.getElementById(id);
+                console.log("Attempting to toggle:", id);
+                console.log("Target element found:", target);
 
                 if (!target) return;
 
