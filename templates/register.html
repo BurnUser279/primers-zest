@@ -85,6 +85,16 @@
             <label>Mobile Number:</label>
             <input type="tel" name="mobile" pattern="[+0-9]+" required placeholder="+123456789">
 
+            <label>Country:</label>
+            <select id="country" name="country" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 1rem; margin-bottom: 20px; font-family: inherit;">
+                <option value="" disabled selected>Select your country</option>
+            </select>
+
+            <label>State / Province / Region:</label>
+            <select id="state" name="state" required disabled style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 1rem; margin-bottom: 20px; font-family: inherit; background: #f5f5f5; color: #999;">
+                <option value="" disabled selected>Select your country first</option>
+            </select>
+
             <label>Age:</label>
             <input type="number" name="age" required placeholder="25">
 
@@ -142,6 +152,47 @@
             var customBox = document.getElementById("customGenderBox");
             customBox.style.display = dropdown.value === "Other" ? "block" : "none";
         }
+
+        const locationData = {
+            "United States": ["Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware","Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts","Michigan","Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey","New Mexico","New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"],
+            "United Kingdom": ["England","Scotland","Wales","Northern Ireland"],
+            "Australia": ["New South Wales","Victoria","Queensland","Western Australia","South Australia","Tasmania","Australian Capital Territory","Northern Territory"],
+            "Canada": ["Alberta","British Columbia","Manitoba","New Brunswick","Newfoundland and Labrador","Northwest Territories","Nova Scotia","Nunavut","Ontario","Prince Edward Island","Quebec","Saskatchewan","Yukon"],
+            "Germany": ["Baden-Württemberg","Bavaria","Berlin","Brandenburg","Bremen","Hamburg","Hesse","Lower Saxony","Mecklenburg-Vorpommern","North Rhine-Westphalia","Rhineland-Palatinate","Saarland","Saxony","Saxony-Anhalt","Schleswig-Holstein","Thuringia"],
+            "France": ["Auvergne-Rhône-Alpes","Bourgogne-Franche-Comté","Brittany","Centre-Val de Loire","Corsica","Grand Est","Hauts-de-France","Île-de-France","Normandy","Nouvelle-Aquitaine","Occitanie","Pays de la Loire","Provence-Alpes-Côte d'Azur"],
+            "Spain": ["Andalusia","Aragon","Asturias","Balearic Islands","Basque Country","Canary Islands","Cantabria","Castile and León","Castilla-La Mancha","Catalonia","Extremadura","Galicia","La Rioja","Madrid","Murcia","Navarre","Valencia"],
+            "Italy": ["Abruzzo","Basilicata","Calabria","Campania","Emilia-Romagna","Friuli Venezia Giulia","Lazio","Liguria","Lombardy","Marche","Molise","Piedmont","Puglia","Sardinia","Sicily","Trentino-Alto Adige","Tuscany","Umbria","Valle d'Aosta","Veneto"],
+            "Brazil": ["Acre","Alagoas","Amapá","Amazonas","Bahia","Ceará","Espírito Santo","Goiás","Maranhão","Mato Grosso","Mato Grosso do Sul","Minas Gerais","Pará","Paraíba","Paraná","Pernambuco","Piauí","Rio de Janeiro","Rio Grande do Norte","Rio Grande do Sul","Rondônia","Roraima","Santa Catarina","São Paulo","Sergipe","Tocantins"],
+            "Mexico": ["Aguascalientes","Baja California","Baja California Sur","Campeche","Chiapas","Chihuahua","Coahuila","Colima","Durango","Guanajuato","Guerrero","Hidalgo","Jalisco","Mexico City","Mexico State","Michoacán","Morelos","Nayarit","Nuevo León","Oaxaca","Puebla","Querétaro","Quintana Roo","San Luis Potosí","Sinaloa","Sonora","Tabasco","Tamaulipas","Tlaxcala","Veracruz","Yucatán","Zacatecas"],
+            "Japan": ["Aichi","Akita","Aomori","Chiba","Ehime","Fukui","Fukuoka","Fukushima","Gifu","Gunma","Hiroshima","Hokkaido","Hyogo","Ibaraki","Ishikawa","Iwate","Kagawa","Kagoshima","Kanagawa","Kochi","Kumamoto","Kyoto","Mie","Miyagi","Miyazaki","Nagano","Nagasaki","Nara","Niigata","Oita","Okayama","Okinawa","Osaka","Saga","Saitama","Shiga","Shimane","Shizuoka","Tochigi","Tokushima","Tokyo","Tottori","Toyama","Wakayama","Yamagata","Yamaguchi","Yamanashi"]
+        };
+
+        const countrySelect = document.getElementById('country');
+        const stateSelect = document.getElementById('state');
+
+        // Populate country dropdown
+        Object.keys(locationData).forEach(function(country) {
+            const opt = document.createElement('option');
+            opt.value = country;
+            opt.textContent = country;
+            countrySelect.appendChild(opt);
+        });
+
+        // Populate state dropdown on country change
+        countrySelect.addEventListener('change', function() {
+            const selectedCountry = this.value;
+            const regions = locationData[selectedCountry] || [];
+            stateSelect.innerHTML = '<option value="" disabled selected>Select your region</option>';
+            regions.forEach(function(region) {
+                const opt = document.createElement('option');
+                opt.value = region;
+                opt.textContent = region;
+                stateSelect.appendChild(opt);
+            });
+            stateSelect.disabled = false;
+            stateSelect.style.background = 'white';
+            stateSelect.style.color = '#333';
+        });
     </script>
 </body>
 

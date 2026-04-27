@@ -104,7 +104,9 @@ def init_db():
                   is_verified BOOLEAN DEFAULT FALSE,
                   is_active BOOLEAN DEFAULT TRUE,
                   failed_attempts INTEGER DEFAULT 0,
-                  is_locked BOOLEAN DEFAULT FALSE)''')
+                  is_locked BOOLEAN DEFAULT FALSE,
+                  country VARCHAR(100),
+                  state VARCHAR(100))''')
 
     c.execute('''CREATE TABLE IF NOT EXISTS chatrooms
                  (id SERIAL PRIMARY KEY,
@@ -247,9 +249,11 @@ def register():
 
             conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
             c = conn.cursor()
+            member_country = request.form.get('country', '').strip()
+            member_state = request.form.get('state', '').strip()
             # Adding is_verified column usage (assuming it's added to schema)
-            c.execute("INSERT INTO members (email, mobile, fullname, username, age, gender, travel, income, medical, password_hash, membership_tier, is_verified) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Regular', FALSE) RETURNING id",
-                      (email, request.form['mobile'], final_fullname, request.form['username'], request.form['age'], final_gender, request.form['travel'], request.form['income'], request.form['medical'], hashed_pw))
+            c.execute("INSERT INTO members (email, mobile, fullname, username, age, gender, travel, income, medical, password_hash, membership_tier, is_verified, country, state) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Regular', FALSE, %s, %s) RETURNING id",
+                      (email, request.form['mobile'], final_fullname, request.form['username'], request.form['age'], final_gender, request.form['travel'], request.form['income'], request.form['medical'], hashed_pw, member_country, member_state))
             new_user_id = c.fetchone()[0]
             
             # Send Registration Email (In a real system, this would include a token)
