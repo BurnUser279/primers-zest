@@ -85,6 +85,7 @@ def add_header(response):
 def init_db():
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor()
+    # --- PARENT TABLES (no foreign key dependencies) ---
     c.execute('''CREATE TABLE IF NOT EXISTS members
                  (id SERIAL PRIMARY KEY,
                   email TEXT NOT NULL UNIQUE,
@@ -104,7 +105,31 @@ def init_db():
                   is_active BOOLEAN DEFAULT TRUE,
                   failed_attempts INTEGER DEFAULT 0,
                   is_locked BOOLEAN DEFAULT FALSE)''')
-    
+
+    c.execute('''CREATE TABLE IF NOT EXISTS chatrooms
+                 (id SERIAL PRIMARY KEY,
+                  room_name TEXT NOT NULL,
+                  created_by_admin_id INTEGER,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS subscription_plans
+                 (id SERIAL PRIMARY KEY,
+                  plan_name TEXT NOT NULL,
+                  price REAL NOT NULL)''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS system_settings
+                 (id SERIAL PRIMARY KEY,
+                  support_email TEXT)''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS email_templates
+                 (id SERIAL PRIMARY KEY,
+                  event_type TEXT NOT NULL UNIQUE,
+                  subject TEXT NOT NULL,
+                  body TEXT NOT NULL,
+                  trigger_event TEXT DEFAULT 'Manual',
+                  plan_id INTEGER)''')
+
+    # --- CHILD TABLES (depend on parent tables above) ---
     c.execute('''CREATE TABLE IF NOT EXISTS verification_tokens
                  (id SERIAL PRIMARY KEY,
                   user_id INTEGER NOT NULL,
@@ -112,7 +137,7 @@ def init_db():
                   is_used BOOLEAN DEFAULT FALSE,
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                   FOREIGN KEY(user_id) REFERENCES members(id))''')
-                  
+
     c.execute('''CREATE TABLE IF NOT EXISTS donations
                  (id SERIAL PRIMARY KEY,
                   member_id INTEGER NOT NULL,
@@ -121,7 +146,7 @@ def init_db():
                   status TEXT DEFAULT 'Pending',
                   admin_reply TEXT,
                   FOREIGN KEY(member_id) REFERENCES members(id))''')
-                  
+
     c.execute('''CREATE TABLE IF NOT EXISTS tickets
                  (id SERIAL PRIMARY KEY,
                   user_id INTEGER NOT NULL,
@@ -142,6 +167,7 @@ def init_db():
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                   FOREIGN KEY(ticket_id) REFERENCES tickets(id))''')
 
+    # chatroom_messages depends on both chatrooms and members
     c.execute('''CREATE TABLE IF NOT EXISTS chatroom_messages
                  (id SERIAL PRIMARY KEY,
                   room_id INTEGER NOT NULL,
@@ -151,15 +177,9 @@ def init_db():
                   FOREIGN KEY(room_id) REFERENCES chatrooms(id),
                   FOREIGN KEY(sender_id) REFERENCES members(id))''')
 
-    c.execute('''CREATE TABLE IF NOT EXISTS subscription_plans
-                 (id SERIAL PRIMARY KEY,
-                  plan_name TEXT NOT NULL,
-                  price REAL NOT NULL)''')
-    
-    c.execute('''CREATE TABLE IF NOT EXISTS system_settings
-                 (id SERIAL PRIMARY KEY,
-                  support_email TEXT)''')
-                  
+    # Seed chatrooms default row
+    c.execute("INSERT INTO chatrooms (room_name) SELECT 'VIP Lounge' WHERE NOT EXISTS (SELECT 1 FROM chatrooms WHERE room_name = 'VIP Lounge');")
+
     # Ensure Official Admin Member exists for technical sender identity
     dummy_hash = generate_password_hash('AdminPostIdentity2026')
     c.execute("INSERT INTO members (email, mobile, fullname, username, age, gender, travel, income, password_hash, membership_tier) SELECT 'admin@system.local', '0000000000', 'Official Admin', 'AdminMaster', 99, 'System', 'N/A', 'Infinite', %s, 'VIP' WHERE NOT EXISTS (SELECT 1 FROM members WHERE username = 'AdminMaster');", (dummy_hash,))
