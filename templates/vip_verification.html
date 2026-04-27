@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>VIP Verification - Authenticity Check</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f8f9fa; margin: 0; padding: 20px; color: #333; }
+        .main-container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .warning-block { background: #fff3cd; border-left: 5px solid #ffc107; padding: 20px; margin-bottom: 30px; border-radius: 4px; }
+        .warning-block p { margin: 0; color: #856404; font-weight: 500; line-height: 1.6; }
+        h1 { margin-top: 0; font-size: 1.8rem; color: #1a1a1a; margin-bottom: 20px; }
+        .verification-form { display: flex; flex-direction: column; gap: 25px; }
+        .rule-item { padding: 20px; background: #f9f9f9; border-radius: 12px; border: 1px solid #eee; }
+        .rule-label { display: block; font-weight: 600; margin-bottom: 12px; font-size: 1.1rem; color: #1a1a1a; }
+        textarea { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 1rem; margin-bottom: 15px; font-family: inherit; resize: vertical; }
+        input[type="file"] { width: 100%; padding: 10px; background: white; border: 1px dashed #ccc; border-radius: 8px; cursor: pointer; }
+        .submit-btn { padding: 16px; background: #1a1a1a; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: 0.3s; margin-top: 20px; }
+        .submit-btn:hover { background: #333; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
+        /* Chat Box Styles */
+        .chat-section { margin-top: 60px; border-top: 2px solid #eee; padding-top: 40px; }
+        .chat-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .chat-header h2 { margin: 0; font-size: 1.4rem; color: #1a1a1a; }
+        .chat-window { height: 300px; overflow-y: auto; background: #fdfdfd; border: 1px solid #eee; border-radius: 12px; padding: 20px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .chat-input-area { display: flex; gap: 10px; }
+        .chat-input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; }
+        .send-btn { padding: 0 25px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .send-btn:hover { background: #0056b3; }
+        
+        @media (max-width: 600px) {
+            .main-container { padding: 20px; }
+            h1 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-container">
+        <div class="warning-block">
+            <p>To join the VIP club, we need to verify one more step to confirm your authenticity and to protect our members and yourself. Please fill in the details below.</p>
+        </div>
+
+        <h1>Verification Requirements</h1>
+        
+        <form action="/submit_vip_verification" method="POST" enctype="multipart/form-data" class="verification-form">
+            <input type="hidden" name="plan_id" value="{{ plan_id }}">
+            
+            {% for rule in rules %}
+            <div class="rule-item">
+                <label class="rule-label">{{ rule[1] }}</label>
+                <textarea name="text_input_{{ rule[0] }}" rows="3" placeholder="Provide details here..."></textarea>
+                <input type="file" name="files_{{ rule[0] }}" multiple accept="image/*,.pdf,.doc,.docx">
+            </div>
+            {% endfor %}
+
+            <button type="submit" class="submit-btn">Submit Verification for Approval</button>
+        </form>
+
+        <div class="chat-section">
+            <div class="chat-header">
+                <h2>Pre-Payment Concierge Chat</h2>
+                <span style="color: #666; font-size: 0.9rem;">Ask any questions before proceeding</span>
+            </div>
+            <div class="chat-window" id="chatWindow">
+                <div style="background: #e9ecef; padding: 10px 15px; border-radius: 12px; align-self: flex-start; max-width: 80%; font-size: 0.95rem;">
+                    Hello! I'm your VIP onboarding assistant. Feel free to ask any questions about the verification process or membership tiers.
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Type your message here...">
+                <button class="send-btn" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const window = document.getElementById('chatWindow');
+            if (input.value.trim() !== '') {
+                const msg = document.createElement('div');
+                msg.style.cssText = "background: #1a1a1a; color: white; padding: 10px 15px; border-radius: 12px; align-self: flex-end; max-width: 80%; font-size: 0.95rem;";
+                msg.textContent = input.value;
+                window.appendChild(msg);
+                input.value = '';
+                window.scrollTop = window.scrollHeight;
+            }
+        }
+        
+        // Allow enter key to send
+        document.getElementById('chatInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+
+</html>

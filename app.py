@@ -683,6 +683,27 @@ def admin_delete_vip_field(field_id):
     
     return redirect(url_for('admin_dashboard'))
 
+@app.route('/vip_verification/<int:plan_id>')
+def vip_verification(plan_id):
+    if not session.get('member_id'):
+        return redirect(url_for('member_login'))
+    
+    user_id = session['member_id']
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    
+    # Fetch user's country
+    c.execute("SELECT country FROM members WHERE id = %s", (user_id,))
+    user_row = c.fetchone()
+    user_country = user_row['country'] if user_row else 'Global'
+    
+    # Fetch verification rules for user's country or Global
+    c.execute("SELECT * FROM vip_verification_fields WHERE target_country = %s OR target_country = 'Global'", (user_country,))
+    rules = c.fetchall()
+    conn.close()
+    
+    return render_template('vip_verification.html', rules=rules, plan_id=plan_id)
+
 @app.route('/admin/settings', methods=['POST'])
 def admin_settings():
     if not session.get('is_admin'):
