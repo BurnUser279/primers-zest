@@ -658,16 +658,28 @@ def admin_add_vip_field():
         return redirect(url_for('admin_login'))
     
     label = request.form.get('label')
-    field_type = request.form.get('field_type')
     target_country = request.form.get('target_country', 'Global')
     
-    if label and field_type:
+    if label:
         conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
         c = conn.cursor()
         c.execute("INSERT INTO vip_verification_fields (label, field_type, target_country) VALUES (%s, %s, %s)",
-                  (label, field_type, target_country))
+                  (label, 'combined', target_country))
         conn.commit()
         conn.close()
+    
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/vip_fields/delete/<int:field_id>', methods=['POST'])
+def admin_delete_vip_field(field_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+    
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    c.execute("DELETE FROM vip_verification_fields WHERE id = %s", (field_id,))
+    conn.commit()
+    conn.close()
     
     return redirect(url_for('admin_dashboard'))
 

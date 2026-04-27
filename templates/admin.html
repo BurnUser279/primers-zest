@@ -595,13 +595,6 @@
                     
                     <div style="display: flex; gap: 15px;">
                         <div style="flex: 1;">
-                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Field Type:</label>
-                            <select name="field_type" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-                                <option value="text">Text Input</option>
-                                <option value="file">File Upload</option>
-                            </select>
-                        </div>
-                        <div style="flex: 1;">
                             <label style="display: block; margin-bottom: 5px; font-weight: bold;">Target Country:</label>
                             <select name="target_country" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
                                 <option value="Global">Global</option>
@@ -630,8 +623,8 @@
                             <tr style="background-color: #1a1a1a; color: #fbbc04;">
                                 <th style="padding: 12px; border: 1px solid #333;">ID</th>
                                 <th style="padding: 12px; border: 1px solid #333;">Label</th>
-                                <th style="padding: 12px; border: 1px solid #333;">Type</th>
                                 <th style="padding: 12px; border: 1px solid #333;">Country</th>
+                                <th style="padding: 12px; border: 1px solid #333;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -639,8 +632,12 @@
                             <tr>
                                 <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">{{ field[0] }}</td>
                                 <td style="padding: 12px; border: 1px solid #ddd;">{{ field[1] }}</td>
-                                <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">{{ field[2]|upper }}</td>
                                 <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">{{ field[3] }}</td>
+                                <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">
+                                    <form action="/admin/vip_fields/delete/{{ field[0] }}" method="POST" onsubmit="return confirm('Delete this verification rule?');">
+                                        <button type="submit" style="background-color: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete</button>
+                                    </form>
+                                </td>
                             </tr>
                             {% else %}
                             <tr>
