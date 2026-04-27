@@ -185,6 +185,28 @@ def init_db():
                   FOREIGN KEY(room_id) REFERENCES chatrooms(id),
                   FOREIGN KEY(sender_id) REFERENCES members(id))''')
 
+    c.execute('''CREATE TABLE IF NOT EXISTS vip_submissions
+                 (id SERIAL PRIMARY KEY,
+                  user_id INTEGER NOT NULL,
+                  plan_id INTEGER NOT NULL,
+                  status VARCHAR(50) DEFAULT 'pending',
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  FOREIGN KEY(user_id) REFERENCES members(id))''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS vip_submission_data
+                 (id SERIAL PRIMARY KEY,
+                  submission_id INTEGER REFERENCES vip_submissions(id),
+                  field_id INTEGER REFERENCES vip_verification_fields(id),
+                  text_response TEXT,
+                  file_paths TEXT)''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS vip_pre_payment_chats
+                 (id SERIAL PRIMARY KEY,
+                  submission_id INTEGER REFERENCES vip_submissions(id),
+                  sender_id INTEGER,
+                  message TEXT,
+                  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
     # Seed chatrooms default row
     c.execute("INSERT INTO chatrooms (room_name) SELECT 'VIP Lounge' WHERE NOT EXISTS (SELECT 1 FROM chatrooms WHERE room_name = 'VIP Lounge');")
 
@@ -703,6 +725,50 @@ def vip_verification(plan_id):
     conn.close()
     
     return render_template('vip_verification.html', rules=rules, plan_id=plan_id)
+
+@app.route('/submit_vip_verification', methods=['POST'])
+def submit_vip_verification():
+    if not session.get('member_id'):
+        return redirect(url_for('member_login'))
+    
+    user_id = session['member_id']
+    plan_id = request.form.get('plan_id')
+    
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    
+    # Create submission
+    c.execute("INSERT INTO vip_submissions (user_id, plan_id) VALUES (%s, %s) RETURNING id", (user_id, plan_id))
+    submission_id = c.fetchone()[0]
+    
+    # Fetch rules again to process inputs
+    c.execute("SELECT country FROM members WHERE id = %s", (user_id,))
+    user_country = c.fetchone()[0] or 'Global'
+    c.execute("SELECT id FROM vip_verification_fields WHERE target_country = %s OR target_country = 'Global'", (user_country,))
+    rules = c.fetchall()
+    
+    for rule in rules:
+        field_id = rule[0]
+        text_resp = request.form.get(f'text_input_{field_id}')
+        
+        # Handle files
+        uploaded_files = request.files.getlist(f'files_{field_id}')
+        saved_paths = []
+        for file in uploaded_files:
+            if file and file.filename:
+                fname = f"vip_{submission_id}_{field_id}_{uuid.uuid4().hex}_{secure_filename(file.filename)}"
+                fpath = os.path.join(app.config['UPLOAD_FOLDER'], fname)
+                file.save(fpath)
+                saved_paths.append(fpath)
+        
+        c.execute("INSERT INTO vip_submission_data (submission_id, field_id, text_response, file_paths) VALUES (%s, %s, %s, %s)",
+                  (submission_id, field_id, text_resp, ",".join(saved_paths)))
+    
+    conn.commit()
+    conn.close()
+    
+    flash("Verification submitted successfully. Please use the chat below for any queries while waiting for admin approval.")
+    return redirect(url_for('vip_verification', plan_id=plan_id))
 
 @app.route('/admin/settings', methods=['POST'])
 def admin_settings():
