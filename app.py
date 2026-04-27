@@ -131,6 +131,12 @@ def init_db():
                   trigger_event TEXT DEFAULT 'Manual',
                   plan_id INTEGER)''')
 
+    c.execute('''CREATE TABLE IF NOT EXISTS vip_verification_fields
+                 (id SERIAL PRIMARY KEY,
+                  label VARCHAR(255) NOT NULL,
+                  field_type VARCHAR(50) NOT NULL,
+                  target_country VARCHAR(100) DEFAULT 'Global')''')
+
     # --- CHILD TABLES (depend on parent tables above) ---
     c.execute('''CREATE TABLE IF NOT EXISTS verification_tokens
                  (id SERIAL PRIMARY KEY,
@@ -639,9 +645,31 @@ def admin_dashboard():
 
     c.execute("SELECT * FROM email_templates ORDER BY id")
     all_templates = c.fetchall()
+
+    c.execute("SELECT * FROM vip_verification_fields ORDER BY id")
+    vip_fields = c.fetchall()
     conn.close()
 
-    return render_template('admin.html', members=all_members, donations=all_donations, plans=all_plans, email_templates=all_templates)
+    return render_template('admin.html', members=all_members, donations=all_donations, plans=all_plans, email_templates=all_templates, vip_fields=vip_fields)
+
+@app.route('/admin/vip_fields/add', methods=['POST'])
+def admin_add_vip_field():
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+    
+    label = request.form.get('label')
+    field_type = request.form.get('field_type')
+    target_country = request.form.get('target_country', 'Global')
+    
+    if label and field_type:
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        c = conn.cursor()
+        c.execute("INSERT INTO vip_verification_fields (label, field_type, target_country) VALUES (%s, %s, %s)",
+                  (label, field_type, target_country))
+        conn.commit()
+        conn.close()
+    
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/settings', methods=['POST'])
 def admin_settings():

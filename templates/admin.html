@@ -272,6 +272,7 @@
         <a href="javascript:void(0)" onclick="toggleSection('section-roster'); toggleMenu();" style="background-color: #333;">Member Roster</a>
         <a href="javascript:void(0)" onclick="toggleSection('section-plans'); toggleMenu();">Subscription Plans</a>
         <a href="javascript:void(0)" onclick="toggleSection('section-emails'); toggleMenu();">Email Logs & Templates</a>
+        <a href="javascript:void(0)" onclick="toggleSection('section-vip-rules'); toggleMenu();">VIP Verification Rules</a>
         <a href="/admin/settings">Global Admin Settings</a>
         <a href="/vip_lounge" style="border: 1px solid gold; color: gold;">Join VIP Lounge</a>
         <hr style="width: 100%; border: 0; border-top: 1px solid #333; margin: 15px 0;">
@@ -290,7 +291,7 @@
 
             // Accordion Toggle Logic
             window.toggleSection = function(id) {
-                const sections = ['section-roster', 'section-plans', 'section-emails', 'section-settings'];
+                const sections = ['section-roster', 'section-plans', 'section-emails', 'section-settings', 'section-vip-rules'];
                 const target = document.getElementById(id);
                 console.log("Attempting to toggle:", id);
                 console.log("Target element found:", target);
@@ -580,6 +581,78 @@
             </div>
         </div>
     </div> <!-- Close section-emails -->
+
+    <!-- Section: VIP Verification Rules -->
+    <div id="section-vip-rules" class="accordion-content">
+        <div class="container">
+            <div class="email-config-section">
+                <h3>Add Dynamic Verification Field</h3>
+                <form action="/admin/vip_fields/add" method="POST" style="display: flex; flex-direction: column; gap: 15px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Field Label:</label>
+                        <input type="text" name="label" required placeholder="e.g. Passport Number, Utility Bill" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    
+                    <div style="display: flex; gap: 15px;">
+                        <div style="flex: 1;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Field Type:</label>
+                            <select name="field_type" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option value="text">Text Input</option>
+                                <option value="file">File Upload</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Target Country:</label>
+                            <select name="target_country" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option value="Global">Global</option>
+                                <option value="United States">United States</option>
+                                <option value="United Kingdom">United Kingdom</option>
+                                <option value="Australia">Australia</option>
+                                <option value="Canada">Canada</option>
+                                <option value="Germany">Germany</option>
+                                <option value="France">France</option>
+                                <option value="Spain">Spain</option>
+                                <option value="Italy">Italy</option>
+                                <option value="Brazil">Brazil</option>
+                                <option value="Mexico">Mexico</option>
+                                <option value="Japan">Japan</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" style="background-color: #fbbc04; color: black; font-weight: bold; padding: 12px; border: none; border-radius: 4px; cursor: pointer; transition: 0.3s;">Add Verification Field</button>
+                </form>
+
+                <h3 style="margin-top: 40px;">Active Verification Requirements</h3>
+                <div class="table-wrapper">
+                    <table style="width: 100%; border-collapse: collapse; background: white;">
+                        <thead>
+                            <tr style="background-color: #1a1a1a; color: #fbbc04;">
+                                <th style="padding: 12px; border: 1px solid #333;">ID</th>
+                                <th style="padding: 12px; border: 1px solid #333;">Label</th>
+                                <th style="padding: 12px; border: 1px solid #333;">Type</th>
+                                <th style="padding: 12px; border: 1px solid #333;">Country</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for field in vip_fields %}
+                            <tr>
+                                <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">{{ field[0] }}</td>
+                                <td style="padding: 12px; border: 1px solid #ddd;">{{ field[1] }}</td>
+                                <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">{{ field[2]|upper }}</td>
+                                <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">{{ field[3] }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" style="padding: 20px; text-align: center; color: #666;">No verification fields configured.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Section 4: Global Settings -->
     <div id="section-settings" class="accordion-content">
