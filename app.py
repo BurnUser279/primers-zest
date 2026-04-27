@@ -108,6 +108,10 @@ def init_db():
                   country VARCHAR(100),
                   state VARCHAR(100))''')
 
+    # Force migration for existing members table
+    c.execute("ALTER TABLE members ADD COLUMN IF NOT EXISTS country VARCHAR(100);")
+    c.execute("ALTER TABLE members ADD COLUMN IF NOT EXISTS state VARCHAR(100);")
+
     c.execute('''CREATE TABLE IF NOT EXISTS chatrooms
                  (id SERIAL PRIMARY KEY,
                   room_name TEXT NOT NULL,
