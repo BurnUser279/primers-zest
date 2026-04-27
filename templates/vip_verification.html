@@ -60,40 +60,46 @@
         <div class="chat-section">
             <div class="chat-header">
                 <h2>Pre-Payment Concierge Chat</h2>
-                <span style="color: #666; font-size: 0.9rem;">Ask any questions before proceeding</span>
+                {% if submission_id %}
+                <span style="color: #2e7d32; font-size: 0.9rem;">● Live Chat Active</span>
+                {% else %}
+                <span style="color: #666; font-size: 0.9rem;">Submit verification to activate chat</span>
+                {% endif %}
             </div>
             <div class="chat-window" id="chatWindow">
                 <div style="background: #e9ecef; padding: 10px 15px; border-radius: 12px; align-self: flex-start; max-width: 80%; font-size: 0.95rem;">
-                    Hello! I'm your VIP onboarding assistant. Feel free to ask any questions about the verification process or membership tiers.
+                    Hello! I'm your VIP onboarding assistant. Once you submit your verification details, you can chat with us here for any queries.
                 </div>
+                {% for chat in chats %}
+                <div style="background: {% if chat.sender_id == 0 %}#e9ecef{% else %}#1a1a1a{% endif %}; 
+                            color: {% if chat.sender_id == 0 %}#333{% else %}white{% endif %}; 
+                            padding: 10px 15px; border-radius: 12px; 
+                            align-self: {% if chat.sender_id == 0 %}flex-start{% else %}flex-end{% endif %}; 
+                            max-width: 80%; font-size: 0.95rem;">
+                    {{ chat.message }}
+                    <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 5px; text-align: right;">
+                        {{ chat.timestamp.strftime('%H:%M') }}
+                    </div>
+                </div>
+                {% endfor %}
             </div>
-            <div class="chat-input-area">
-                <input type="text" class="chat-input" id="chatInput" placeholder="Type your message here...">
-                <button class="send-btn" onclick="sendMessage()">Send</button>
+            {% if submission_id %}
+            <form action="/vip_chat/send/{{ submission_id }}" method="POST" class="chat-input-area">
+                <input type="text" name="message" class="chat-input" id="chatInput" placeholder="Type your message here..." required>
+                <button type="submit" class="send-btn">Send</button>
+            </form>
+            {% else %}
+            <div class="chat-input-area" style="opacity: 0.5; pointer-events: none;">
+                <input type="text" class="chat-input" placeholder="Submit form to unlock chat..." disabled>
+                <button class="send-btn" disabled>Send</button>
             </div>
+            {% endif %}
         </div>
     </div>
 
     <script>
-        function sendMessage() {
-            const input = document.getElementById('chatInput');
-            const window = document.getElementById('chatWindow');
-            if (input.value.trim() !== '') {
-                const msg = document.createElement('div');
-                msg.style.cssText = "background: #1a1a1a; color: white; padding: 10px 15px; border-radius: 12px; align-self: flex-end; max-width: 80%; font-size: 0.95rem;";
-                msg.textContent = input.value;
-                window.appendChild(msg);
-                input.value = '';
-                window.scrollTop = window.scrollHeight;
-            }
-        }
-        
-        // Allow enter key to send
-        document.getElementById('chatInput').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
+        const win = document.getElementById('chatWindow');
+        win.scrollTop = win.scrollHeight;
     </script>
 </body>
 

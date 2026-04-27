@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin - Review Submission #{{ submission.id }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        .grid-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 400px; gap: 30px; }
+        .review-panel, .chat-panel { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h1, h2 { color: #1a1a1a; margin-top: 0; }
+        .user-info { background: #fafafa; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #eee; }
+        .data-item { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #f0f0f0; }
+        .data-label { font-weight: bold; color: #555; display: block; margin-bottom: 8px; font-size: 0.9rem; text-transform: uppercase; }
+        .data-text { background: #fff; padding: 12px; border-radius: 6px; border: 1px solid #ddd; display: block; margin-bottom: 10px; }
+        .file-links { display: flex; flex-wrap: wrap; gap: 10px; }
+        .file-btn { background: #e9ecef; color: #495057; text-decoration: none; padding: 8px 15px; border-radius: 6px; font-size: 0.85rem; border: 1px solid #ced4da; transition: 0.2s; }
+        .file-btn:hover { background: #dee2e6; }
+        
+        .chat-window { height: 500px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding: 15px; background: #fdfdfd; border: 1px solid #eee; border-radius: 8px; margin-bottom: 20px; }
+        .msg { padding: 10px 15px; border-radius: 12px; max-width: 85%; font-size: 0.95rem; line-height: 1.4; }
+        .msg-admin { align-self: flex-end; background: #1a1a1a; color: white; }
+        .msg-user { align-self: flex-start; background: #e9ecef; color: #333; }
+        .chat-form { display: flex; gap: 10px; }
+        .chat-input { flex: 1; padding: 12px; border-radius: 6px; border: 1px solid #ddd; font-family: inherit; }
+        .send-btn { background: #fbbc04; color: black; border: none; padding: 0 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        
+        @media (max-width: 900px) {
+            .grid-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="grid-container">
+        <div class="review-panel">
+            <a href="/admin/vip_requests" style="text-decoration: none; color: #666; font-weight: 500;">← Back to Inbox</a>
+            <h1 style="margin-top: 20px;">Review Submission #{{ submission.id }}</h1>
+            
+            <div class="user-info">
+                <p>User: <strong>{{ submission.username }}</strong> ({{ submission.fullname }})</p>
+                <p>Email: <strong>{{ submission.email }}</strong></p>
+                <p>Country: <strong>{{ submission.country }}</strong></p>
+                <p>Status: <strong style="color: #d97706;">{{ submission.status|upper }}</strong></p>
+            </div>
+
+            <h2>Verification Data</h2>
+            {% for item in data %}
+            <div class="data-item">
+                <span class="data-label">{{ item.label }}</span>
+                {% if item.text_response %}
+                <div class="data-text">{{ item.text_response }}</div>
+                {% endif %}
+                
+                {% if item.file_paths %}
+                <div class="file-links">
+                    {% for path in item.file_paths.split(',') %}
+                    <a href="/{{ path }}" target="_blank" class="file-btn">📎 View File {{ loop.index }}</a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="chat-panel">
+            <h2>Concierge Chat</h2>
+            <div class="chat-window" id="chatWindow">
+                {% for chat in chats %}
+                <div class="msg {% if chat.sender_id == 0 %}msg-admin{% else %}msg-user{% endif %}">
+                    {{ chat.message }}
+                    <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 5px; text-align: right;">
+                        {{ chat.timestamp.strftime('%H:%M') }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <form action="/vip_chat/send/{{ submission.id }}" method="POST" class="chat-form">
+                <input type="text" name="message" class="chat-input" placeholder="Type a message..." required>
+                <button type="submit" class="send-btn">Reply</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        const win = document.getElementById('chatWindow');
+        win.scrollTop = win.scrollHeight;
+    </script>
+</body>
+</html>

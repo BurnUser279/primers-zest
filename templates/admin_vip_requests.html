@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin - VIP Requests Inbox</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        h1 { color: #1a1a1a; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 25px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #1a1a1a; color: #fbbc04; text-align: left; padding: 15px; font-weight: 600; }
+        td { padding: 15px; border-bottom: 1px solid #eee; }
+        tr:hover { background: #fafafa; }
+        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; text-transform: uppercase; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .review-btn { background: #1a1a1a; color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 0.9rem; transition: 0.3s; }
+        .review-btn:hover { background: #333; transform: translateY(-1px); }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #666; text-decoration: none; font-weight: 500; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/admin" class="back-link">← Back to Dashboard</a>
+        <h1>VIP Verification Inbox</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Country</th>
+                    <th>Status</th>
+                    <th>Submitted At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in requests %}
+                <tr>
+                    <td>#{{ req.id }}</td>
+                    <td><strong>{{ req.username }}</strong></td>
+                    <td>{{ req.country }}</td>
+                    <td><span class="status-badge status-{{ req.status }}">{{ req.status }}</span></td>
+                    <td>{{ req.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <a href="/admin/vip_requests/{{ req.id }}" class="review-btn">Review & Chat</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 40px; color: #888;">No VIP requests found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

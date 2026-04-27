@@ -722,9 +722,20 @@ def vip_verification(plan_id):
     # Fetch verification rules for user's country or Global
     c.execute("SELECT * FROM vip_verification_fields WHERE target_country = %s OR target_country = 'Global'", (user_country,))
     rules = c.fetchall()
+    
+    # Fetch existing submission and chat history
+    c.execute("SELECT id FROM vip_submissions WHERE user_id = %s AND plan_id = %s ORDER BY created_at DESC LIMIT 1", (user_id, plan_id))
+    submission = c.fetchone()
+    submission_id = submission['id'] if submission else None
+    
+    chats = []
+    if submission_id:
+        c.execute("SELECT * FROM vip_pre_payment_chats WHERE submission_id = %s ORDER BY timestamp ASC", (submission_id,))
+        chats = c.fetchall()
+    
     conn.close()
     
-    return render_template('vip_verification.html', rules=rules, plan_id=plan_id)
+    return render_template('vip_verification.html', rules=rules, plan_id=plan_id, chats=chats, submission_id=submission_id)
 
 @app.route('/submit_vip_verification', methods=['POST'])
 def submit_vip_verification():
@@ -769,6 +780,77 @@ def submit_vip_verification():
     
     flash("Verification submitted successfully. Please use the chat below for any queries while waiting for admin approval.")
     return redirect(url_for('vip_verification', plan_id=plan_id))
+
+@app.route('/admin/vip_requests')
+def admin_vip_requests():
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+    
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    c.execute("""
+        SELECT vs.id, m.username, m.country, vs.status, vs.created_at 
+        FROM vip_submissions vs
+        JOIN members m ON vs.user_id = m.id
+        ORDER BY vs.created_at DESC
+    """)
+    requests = c.fetchall()
+    conn.close()
+    return render_template('admin_vip_requests.html', requests=requests)
+
+@app.route('/admin/vip_requests/<int:sub_id>')
+def admin_vip_review(sub_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+    
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    
+    # Submission details
+    c.execute("""
+        SELECT vs.*, m.username, m.fullname, m.email, m.country 
+        FROM vip_submissions vs
+        JOIN members m ON vs.user_id = m.id
+        WHERE vs.id = %s
+    """, (sub_id,))
+    submission = c.fetchone()
+    
+    # Submission data with labels
+    c.execute("""
+        SELECT vsd.*, vf.label 
+        FROM vip_submission_data vsd
+        JOIN vip_verification_fields vf ON vsd.field_id = vf.id
+        WHERE vsd.submission_id = %s
+    """, (sub_id,))
+    data = c.fetchall()
+    
+    # Chat history
+    c.execute("SELECT * FROM vip_pre_payment_chats WHERE submission_id = %s ORDER BY timestamp ASC", (sub_id,))
+    chats = c.fetchall()
+    conn.close()
+    
+    return render_template('admin_vip_review.html', submission=submission, data=data, chats=chats)
+
+@app.route('/vip_chat/send/<int:sub_id>', methods=['POST'])
+def vip_chat_send(sub_id):
+    is_admin = session.get('is_admin')
+    user_id = session.get('member_id')
+    
+    if not is_admin and not user_id:
+        return redirect(url_for('member_login'))
+    
+    message = request.form.get('message')
+    sender_id = 0 if is_admin else user_id # 0 for admin
+    
+    if message:
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        c = conn.cursor()
+        c.execute("INSERT INTO vip_pre_payment_chats (submission_id, sender_id, message) VALUES (%s, %s, %s)",
+                  (sub_id, sender_id, message))
+        conn.commit()
+        conn.close()
+    
+    return redirect(request.referrer or url_for('admin_dashboard'))
 
 @app.route('/admin/settings', methods=['POST'])
 def admin_settings():
