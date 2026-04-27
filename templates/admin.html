@@ -359,6 +359,8 @@
                     <th>Gender</th>
                     <th>Travel</th>
                     <th>Income Tier</th>
+                    <th>Country</th>
+                    <th>State</th>
                     <th>Chat</th>
                     <th>Membership Tier</th>
                     <th>Actions</th>
@@ -377,8 +379,10 @@
                     <td>{{ member[4] }}</td>
                     <td>{{ member[5] }}</td>
                     <td>{{ member[6] }}</td>
-                    <td>{{ member[7] }}</td>
-                    <td>{{ member[8] }}</td>
+                    <td>{{ member['travel'] }}</td>
+                    <td>{{ member['income'] }}</td>
+                    <td>{{ member['country'] }}</td>
+                    <td>{{ member['state'] }}</td>
                     <td>
                         {{ member[9] }}
                         {% if member[9] %}

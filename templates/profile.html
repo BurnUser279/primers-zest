@@ -31,6 +31,8 @@
             <p><strong>Gender:</strong> {{ member['gender'] }}</p>
             <p><strong>Travel Preference:</strong> {{ member['travel'] }}</p>
             <p><strong>Income Bracket:</strong> {{ member['income'] }}</p>
+            <p><strong>Country:</strong> {{ member['country'] }}</p>
+            <p><strong>State / Region:</strong> {{ member['state'] }}</p>
             <p><strong>Medical Details:</strong> {{ member['medical'] }}</p>
             <p><strong>Membership Tier:</strong> <span class="tier-display {% if member['membership_tier'] == 'VIP' %}tier-vip{% else %}tier-standard{% endif %}">{{ member['membership_tier'] }}</span></p>
         {% else %}
