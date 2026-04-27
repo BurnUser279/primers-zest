@@ -58,27 +58,30 @@
             <label>Username:</label>
             <input type="text" name="username" required placeholder="johndoe24">
 
-            <label>Set Password:</label>
-            <div class="pass-container" style="position: relative;">
-                <input type="password" name="password" id="signup-password" required placeholder="••••••••">
-                <span onclick="togglePasswordVisibility('signup-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; display: flex; align-items: center;">
-                    <svg class="eye-svg" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                        <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                </span>
+            <div class="pass-container">
+                <div style="position: relative; display: block;">
+                    <input type="password" name="password" id="signup-password" required placeholder="••••••••" style="width: 100%; padding-right: 40px;">
+                    <span onclick="togglePasswordVisibility('signup-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <svg class="eye-svg" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </span>
+                </div>
                 <small style="display: block; color: #666; margin-top: 5px;">Password must be at least 8 characters long, including 1 number and 1 symbol.</small>
             </div>
 
             <label>Confirm Password:</label>
-            <div class="pass-container" style="position: relative;">
-                <input type="password" name="confirm_password" id="confirm-password" required placeholder="••••••••">
-                <span onclick="togglePasswordVisibility('confirm-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; display: flex; align-items: center;">
-                    <svg class="eye-svg" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                        <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                </span>
+            <div class="pass-container">
+                <div style="position: relative; display: block;">
+                    <input type="password" name="confirm_password" id="confirm-password" required placeholder="••••••••" style="width: 100%; padding-right: 40px;">
+                    <span onclick="togglePasswordVisibility('confirm-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <svg class="eye-svg" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </span>
+                </div>
                 <small style="display: block; color: #666; margin-top: 5px;">Password must be at least 8 characters long, including 1 number and 1 symbol.</small>
             </div>
 
