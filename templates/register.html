@@ -33,20 +33,21 @@
 <body class="vip-theme">
     <a href="/" class="back-link">&larr; Return</a>
 
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <div class="flash-overlay" id="flashOverlay">
-            <div class="flash-modal">
-                {% for message in messages %}
-                  <p>{{ message | safe }}</p>
-                {% endfor %}
-                <button class="close-btn" onclick="document.getElementById('flashOverlay').style.display='none'">Close</button>
-            </div>
-        </div>
-      {% endif %}
-    {% endwith %}
+
 
     <div class="register-card">
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="flash-overlay" id="flashOverlay">
+                <div class="flash-modal">
+                    {% for message in messages %}
+                      <p>{{ message | safe }}</p>
+                    {% endfor %}
+                    <button class="close-btn" onclick="document.getElementById('flashOverlay').style.display='none'">Close</button>
+                </div>
+            </div>
+          {% endif %}
+        {% endwith %}
         <h2>VIP Registration</h2>
         <form method="POST">
             <label>Email Address:</label>
@@ -58,6 +59,7 @@
             <label>Username:</label>
             <input type="text" name="username" required placeholder="johndoe24">
 
+            <label>Password:</label>
             <div class="pass-container">
                 <div style="position: relative; display: block;">
                     <input type="password" name="password" id="signup-password" required placeholder="••••••••" style="width: 100%; padding-right: 40px;">

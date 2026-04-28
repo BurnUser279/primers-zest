@@ -33,20 +33,21 @@
 <body class="vip-theme">
     <a href="/" class="back-link">&larr; Return</a>
 
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <div class="flash-overlay" id="flashOverlay">
-            <div class="flash-modal">
-                {% for message in messages %}
-                  <p>{{ message | safe }}</p>
-                {% endfor %}
-                <button class="close-btn" onclick="document.getElementById('flashOverlay').style.display='none'">Close</button>
-            </div>
-        </div>
-      {% endif %}
-    {% endwith %}
+
 
     <div class="login-card">
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="flash-overlay" id="flashOverlay">
+                <div class="flash-modal">
+                    {% for message in messages %}
+                      <p>{{ message | safe }}</p>
+                    {% endfor %}
+                    <button class="close-btn" onclick="document.getElementById('flashOverlay').style.display='none'">Close</button>
+                </div>
+            </div>
+          {% endif %}
+        {% endwith %}
         <h2>Club Member Portal</h2>
         <form action="/login" method="POST">
             <label>Email Address:</label>
