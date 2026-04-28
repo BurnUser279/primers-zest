@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html>
+{% extends "layout.html" %}
 
-<head>
-    <title>Member Dashboard</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% block title %}Member Dashboard{% endblock %}
+
+{% block extra_head %}
     <style>
         body {
             margin: 0;
@@ -346,58 +345,10 @@
             box-shadow: 0 5px 15px rgba(251, 188, 4, 0.4);
         }
 
-        /* VIP Theme Styles */
-        .vip-theme {
-            background-color: #0a0a0a !important;
-            color: #e0e0e0 !important;
-        }
-        .vip-theme .top-nav, 
-        .vip-theme .sidebar, 
-        .vip-theme .main-content, 
-        .vip-theme .plan-card, 
-        .vip-theme table, 
-        .vip-theme .modal-content,
-        .vip-theme .vip-lounge {
-            background: #140505 !important;
-            border-color: #7a0000 !important;
-            color: #e0e0e0 !important;
-        }
-        .vip-theme .nav-btn, 
-        .vip-theme button, 
-        .vip-theme .modal-btn,
-        .vip-theme .fixed-hamburger {
-            background-color: #7a0000 !important;
-            color: white !important;
-            border-color: #7a0000 !important;
-        }
-        .vip-theme .nav-btn:hover, 
-        .vip-theme button:hover, 
-        .vip-theme .modal-btn:hover,
-        .vip-theme .fixed-hamburger:hover {
-            background-color: #5e17eb !important;
-            box-shadow: 0 0 15px #5e17eb !important;
-        }
-        .vip-theme a {
-            color: #7a0000 !important;
-        }
-        .vip-theme a:hover {
-            color: #5e17eb !important;
-        }
-        .vip-theme th {
-            background-color: #1a0808 !important;
-            color: #e0e0e0 !important;
-        }
-        .vip-theme td {
-            border-color: #2a1010 !important;
-        }
-        .vip-theme h1, .vip-theme h2, .vip-theme h3 {
-            color: #7a0000 !important;
-        }
     </style>
-</head>
+{% endblock %}
 
-<body class="{% if membership_tier == 'VIP' %}vip-theme{% endif %}">
-
+{% block content %}
     <div class="fixed-hamburger" onclick="toggleMenu()">&#9776;</div>
 
     <div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>

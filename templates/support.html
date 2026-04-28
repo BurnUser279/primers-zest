@@ -1,8 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Unified Support Ticketing</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% extends "layout.html" %}
+
+{% block title %}Unified Support Ticketing{% endblock %}
+
+{% block extra_head %}
     <style>
         @media screen and (max-width: 768px) {
             body { padding: 10px; }
@@ -19,8 +19,11 @@
         button:hover { background: #45a049; }
         a { display: block; text-align: center; margin-top: 10px; color: #333; text-decoration: none; }
     </style>
-</head>
-<body>
+{% endblock %}
+
+{% block content %}
+
+
     <div class="container">
         {% with messages = get_flashed_messages() %}
           {% if messages %}
@@ -61,5 +64,4 @@
         </form>
         <a href="/dashboard">Back to Dashboard</a>
     </div>
-</body>
-</html>
+{% endblock %}

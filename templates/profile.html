@@ -1,8 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>User Profile</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% extends "layout.html" %}
+
+{% block title %}User Profile{% endblock %}
+
+{% block extra_head %}
     <style>
         @media screen and (max-width: 768px) {
             body { padding: 10px; }
@@ -18,8 +18,9 @@
         .tier-vip { color: #b8860b; } /* Goldenrod for visibility */
         .tier-standard { color: #333; }
     </style>
-</head>
-<body>
+{% endblock %}
+
+{% block content %}
     <div class="container">
         <h2>Your Profile</h2>
         {% if member %}
@@ -41,5 +42,4 @@
         <br>
         <a href="/dashboard" class="button">Back to Dashboard</a>
     </div>
-</body>
-</html>
+{% endblock %}

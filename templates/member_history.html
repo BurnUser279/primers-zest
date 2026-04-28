@@ -1,8 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Chat History - Primer's Zest</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% extends "layout.html" %}
+
+{% block title %}Chat History - Primer's Zest{% endblock %}
+
+{% block extra_head %}
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
@@ -23,8 +23,11 @@
         .back-link { display: inline-block; margin-bottom: 20px; color: #1a73e8; text-decoration: none; font-weight: 500; }
         .back-link:hover { text-decoration: underline; }
     </style>
-</head>
-<body>
+{% endblock %}
+
+{% block content %}
+
+
     <div class="container">
         <a href="/dashboard" class="back-link">&larr; Back to Dashboard</a>
         <h1>Your Chat & Support History</h1>
@@ -105,5 +108,4 @@
             </form>
         </div>
     </div>
-</body>
-</html>
+{% endblock %}

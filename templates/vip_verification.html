@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html>
+{% extends "layout.html" %}
 
-<head>
-    <title>VIP Verification - Authenticity Check</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% block title %}VIP Verification - Authenticity Check{% endblock %}
+
+{% block extra_head %}
     <style>
         body { font-family: 'Inter', sans-serif; background: #f8f9fa; margin: 0; padding: 20px; color: #333; }
         .main-container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
@@ -33,9 +32,12 @@
             h1 { font-size: 1.5rem; }
         }
     </style>
-</head>
+{% endblock %}
 
-<body>
+{% block content %}
+
+
+
     <div class="main-container">
         <div class="warning-block">
             <p>To join the VIP club, we need to verify one more step to confirm your authenticity and to protect our members and yourself. Please fill in the details below.</p>
@@ -101,6 +103,4 @@
         const win = document.getElementById('chatWindow');
         win.scrollTop = win.scrollHeight;
     </script>
-</body>
-
-</html>
+{% endblock %}
