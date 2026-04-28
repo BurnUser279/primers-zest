@@ -502,7 +502,7 @@ def member_dashboard():
     current_tier = status_row[0] if status_row else 'Regular'
     admin_reply = status_row[1] if status_row else None
     user_proof = status_row[2] if status_row else None
-    c.execute("SELECT plan_name, price, features FROM subscription_plans ORDER BY id")
+    c.execute("SELECT plan_name, price, features, id FROM subscription_plans ORDER BY id")
     plans = c.fetchall()
     
     # Fetch active slideshows
@@ -531,6 +531,12 @@ def request_payment_details():
         INSERT INTO tickets (user_id, category, message, status) 
         VALUES (%s, %s, %s, %s)
     """, (member_id, 'Payment Detail Request', message, 'Open'))
+    
+    # Insert Admin Notification
+    c.execute("""
+        INSERT INTO admin_notifications (member_id, action_type, message) 
+        VALUES (%s, %s, %s)
+    """, (member_id, 'Plan Request', f"A user has requested payment details for the {plan_name} plan."))
     
     conn.commit()
     conn.close()
