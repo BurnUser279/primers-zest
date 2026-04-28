@@ -10,17 +10,30 @@
         }
     </style>
 </head>
-<body style="text-align: center; font-family: sans-serif; padding-top: 100px;">
-    <h1>Welcome to the VIP Club</h1>
-    <p>Please log in to your account or register to join us.</p>
-    <br><br>
-    
-    <a href="/register">
-        <button style="padding: 15px 30px; font-size: 16px; margin: 10px; cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 5px;">Register Now</button>
-    </a>
-    
-    <a href="/login">
-        <button style="padding: 15px 30px; font-size: 16px; margin: 10px; cursor: pointer; background-color: #008CBA; color: white; border: none; border-radius: 5px;">Member Login</button>
-    </a>
+<body class="vip-theme" style="text-align: center; font-family: 'Inter', sans-serif; padding-top: 100px; display: flex; flex-direction: column; min-height: 100vh;">
+    <div style="flex: 1;">
+        <h1 style="font-weight: 900; letter-spacing: -1px; margin-bottom: 0;">PRIMERS ZEST APP</h1>
+        <h1 style="margin-top: 5px;">Welcome to the VIP Club</h1>
+        <p style="color: #888; font-size: 1.1rem;">Please log in to your account or register to join us.</p>
+        <br><br>
+        
+        <a href="/register" style="text-decoration: none;">
+            <button style="padding: 16px 40px; font-size: 18px; margin: 10px; cursor: pointer; background-color: #7a0000; color: white; border: none; border-radius: 30px; font-weight: bold; transition: 0.3s; box-shadow: 0 4px 15px rgba(122, 0, 0, 0.3);">Register Now</button>
+        </a>
+        
+        <a href="/login" style="text-decoration: none;">
+            <button style="padding: 16px 40px; font-size: 18px; margin: 10px; cursor: pointer; background-color: #5e17eb; color: white; border: none; border-radius: 30px; font-weight: bold; transition: 0.3s; box-shadow: 0 4px 15px rgba(94, 23, 235, 0.3);">Member Login</button>
+        </a>
+    </div>
+
+    <footer style="padding: 40px 20px; border-top: 1px solid #222; color: #555; font-size: 0.9rem;">
+        {{ footer_info }}
+    </footer>
+
+    <style>
+        .vip-theme { background-color: #0a0a0a !important; color: #e0e0e0 !important; }
+        button:hover { transform: scale(1.05); }
+    </style>
 </body>
 </html>
+

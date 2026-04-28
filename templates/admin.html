@@ -275,7 +275,7 @@
         <a href="javascript:void(0)" onclick="toggleSection('section-vip-rules'); toggleMenu();">VIP Verification Rules</a>
         <a href="javascript:void(0)" onclick="toggleSection('section-notifications'); toggleMenu();" style="border: 1px solid #fbbc04;">Notification Center</a>
         <a href="javascript:void(0)" onclick="toggleSection('section-slideshows'); toggleMenu();" style="border: 1px solid #00c853; color: #00c853;">Club Slideshows</a>
-        <a href="/admin/settings">Global Admin Settings</a>
+        <a href="javascript:void(0)" onclick="toggleSection('section-global-settings'); toggleMenu();">Global Admin Settings</a>
         <a href="/vip_lounge" style="border: 1px solid gold; color: gold;">Join VIP Lounge</a>
         <hr style="width: 100%; border: 0; border-top: 1px solid #333; margin: 15px 0;">
         <a href="/admin/logout" style="color: #ff6b6b; font-weight: bold;">Logout & Lock Vault</a>
@@ -293,7 +293,7 @@
 
             // Accordion Toggle Logic
             window.toggleSection = function(id) {
-                const sections = ['section-roster', 'section-plans', 'section-emails', 'section-settings', 'section-vip-rules', 'section-notifications', 'section-slideshows'];
+                const sections = ['section-roster', 'section-plans', 'section-emails', 'section-settings', 'section-vip-rules', 'section-notifications', 'section-slideshows', 'section-global-settings'];
                 const target = document.getElementById(id);
                 console.log("Attempting to toggle:", id);
                 console.log("Target element found:", target);
@@ -339,6 +339,21 @@
     </script>
 
     <div class="container">
+        <!-- GLOBAL ADMIN SETTINGS SECTION -->
+        <div id="section-global-settings" class="accordion-content">
+            <div class="card" style="background: #fff; padding: 25px; border-radius: 12px; margin-top: 30px; border: 1px solid #ddd; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <h2>Global Site Settings</h2>
+                <p>Manage high-level configurations for the entire membership portal.</p>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                
+                <form action="/admin/settings/update" method="POST">
+                    <label style="display: block; font-weight: bold; margin-bottom: 10px;">Global Footer Information:</label>
+                    <textarea name="footer_info" rows="4" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; margin-bottom: 20px;" placeholder="Enter the text that will appear in the footer of public pages...">Welcome to Primers Zest App. All rights reserved.</textarea>
+                    <button type="submit" style="background: #1a1a1a; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">Save Global Settings</button>
+                </form>
+            </div>
+        </div>
+
         <!-- Master Navigation Menu -->
         <div class="admin-nav">
             <a href="javascript:void(0)" onclick="toggleSection('section-roster');" class="nav-btn" style="display:inline-block; text-align:center; text-decoration:none; box-sizing:border-box;">Member Roster</a>

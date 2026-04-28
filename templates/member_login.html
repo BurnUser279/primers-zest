@@ -30,7 +30,7 @@
     </style>
 </head>
 
-<body>
+<body class="vip-theme">
     <a href="/" class="back-link">&larr; Return</a>
 
     {% with messages = get_flashed_messages() %}
@@ -81,6 +81,20 @@
             }
         };
     </script>
+    <footer style="padding: 40px 20px; border-top: 1px solid #222; color: #555; font-size: 0.9rem; text-align: center; width: 100%;">
+        {{ footer_info }}
+    </footer>
+
+    <style>
+        .vip-theme { background-color: #0a0a0a !important; color: #e0e0e0 !important; }
+        .vip-theme .login-card { background: #140505 !important; border: 1px solid #7a0000 !important; }
+        .vip-theme h2, .vip-theme label { color: #7a0000 !important; }
+        .vip-theme input { background: #1a0808 !important; border-color: #333 !important; color: white !important; }
+        .vip-theme button[type="submit"] { background: #7a0000 !important; }
+        .vip-theme button[type="submit"]:hover { background: #5e17eb !important; box-shadow: 0 0 15px #5e17eb; }
+        .vip-theme .back-link { color: #888 !important; }
+        .vip-theme p { color: #888 !important; }
+    </style>
 </body>
 
 </html>

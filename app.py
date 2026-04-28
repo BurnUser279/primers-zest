@@ -223,6 +223,14 @@ def init_db():
                   is_active BOOLEAN DEFAULT TRUE,
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
 
+    c.execute('''CREATE TABLE IF NOT EXISTS site_settings
+                 (id SERIAL PRIMARY KEY,
+                  setting_key VARCHAR(50) UNIQUE,
+                  setting_value TEXT)''')
+
+    # Seed site_settings default row
+    c.execute("INSERT INTO site_settings (setting_key, setting_value) VALUES ('footer_info', 'Welcome to Primers Zest App. All rights reserved.') ON CONFLICT (setting_key) DO NOTHING;")
+
     # Seed chatrooms default row
     c.execute("INSERT INTO chatrooms (room_name) SELECT 'VIP Lounge' WHERE NOT EXISTS (SELECT 1 FROM chatrooms WHERE room_name = 'VIP Lounge');")
 
@@ -249,24 +257,31 @@ with app.app_context():
     init_db()
 
 @app.route('/')
-def landing():
-    return render_template('landing.html')
+def index():
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    c.execute("SELECT setting_value FROM site_settings WHERE setting_key = 'footer_info'")
+    footer_info = c.fetchone()[0]
+    conn.close()
+    return render_template('landing.html', footer_info=footer_info)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    c.execute("SELECT setting_value FROM site_settings WHERE setting_key = 'footer_info'")
+    footer_info = c.fetchone()[0]
+    
     if request.method == 'POST':
         try:
             email = request.form.get('email', '').strip()
             
             # Step 3: Strict database check for existing emails first
-            conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
-            c = conn.cursor()
             c.execute("SELECT id FROM members WHERE email = %s", (email,))
             if c.fetchone():
                 conn.close()
                 flash("Error: This email is already registered. Please login or use a different email.")
                 return redirect(url_for('register'))
-            conn.close()
 
             final_fullname = request.form['fullname'].strip()
             if len(final_fullname.split()) < 2:
@@ -291,8 +306,6 @@ def register():
                 
             hashed_pw = generate_password_hash(raw_password)
 
-            conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
-            c = conn.cursor()
             member_country = request.form.get('country', '').strip()
             member_state = request.form.get('state', '').strip()
             # Adding is_verified column usage (assuming it's added to schema)
@@ -311,8 +324,11 @@ def register():
             flash('WELCOME TO PRIMERS ZEST APP, WHERE YOUR FANTASIES BECOME YOUR REALITIES.', 'success')
             return redirect(url_for('member_login'))
         except Exception as e:
+            conn.close()
             return f"System Crash Report: {str(e)}"
-    return render_template('register.html')
+    
+    conn.close()
+    return render_template('register.html', footer_info=footer_info)
 
 @app.route('/verify_email/<token>')
 def verify_email(token):
@@ -353,12 +369,15 @@ def verify_email(token):
 
 @app.route('/login', methods=['GET', 'POST'])
 def member_login():
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    c.execute("SELECT setting_value FROM site_settings WHERE setting_key = 'footer_info'")
+    footer_info = c.fetchone()[0]
+
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
         
-        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
-        c = conn.cursor()
         c.execute("SELECT id, fullname, password_hash, is_verified, is_active, is_locked, failed_attempts FROM members WHERE email = %s", (email,))
         member = c.fetchone()
         
@@ -371,7 +390,7 @@ def member_login():
                 support_email = c.fetchone()[0]
                 conn.close()
                 flash(f'Your account has been frozen, contact the admin through <a href="mailto:{support_email}">{support_email}</a> for details on how to unfreeze your account.')
-                return redirect(url_for('member_login'))
+                return render_template('member_login.html', footer_info=footer_info)
             
             if check_password_hash(hashed_pw, password):
                 if not is_active:
@@ -418,7 +437,22 @@ def member_login():
             flash("Invalid Email or Password.")
             return redirect(url_for('member_login'))
             
-    return render_template('member_login.html')
+    return render_template('member_login.html', footer_info=footer_info)
+
+@app.route('/admin/settings/update', methods=['POST'])
+def admin_settings_update():
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+    
+    footer_info = request.form.get('footer_info')
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    c.execute("UPDATE site_settings SET setting_value = %s WHERE setting_key = 'footer_info'", (footer_info,))
+    conn.commit()
+    conn.close()
+    flash("Global settings updated successfully.")
+    return redirect(url_for('admin_dashboard'))
+
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def member_dashboard():
