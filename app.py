@@ -300,7 +300,8 @@ def register():
                 
             conn.commit()
             conn.close()
-            flash("ACCOUNT CREATED SUCCESSFULLY" " WELCOME TO PRIMERS ZEST APP, WHERE YOUR FANTASIES BECOME YOUR REALITIES.")
+            flash('ACCOUNT CREATED SUCCESSFULLY', 'success')
+            flash('WELCOME TO PRIMERS ZEST APP, WHERE YOUR FANTASIES BECOME YOUR REALITIES.', 'success')
             return redirect(url_for('member_login'))
         except Exception as e:
             return f"System Crash Report: {str(e)}"
