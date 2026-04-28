@@ -713,6 +713,11 @@
                             <td>{{ n.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                             <td>
                                 {% if not n.is_read %}
+                                    {% if n.action_type == 'VIP Verification' %}
+                                    <a href="/admin/vip_requests" style="display: inline-block; background-color: #7a0000; color: white; padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; text-decoration: none; margin-bottom: 5px;">Review VIP</a>
+                                    {% elif n.action_type == 'Plan Request' %}
+                                    <a href="/admin/user/{{ n.member_id }}" style="display: inline-block; background-color: #5e17eb; color: white; padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; text-decoration: none; margin-bottom: 5px;">View Member</a>
+                                    {% endif %}
                                 <form action="/admin/notifications/read/{{ n.id }}" method="POST">
                                     <button type="submit" style="background-color: #fbbc04; color: black; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">Mark as Read</button>
                                 </form>
