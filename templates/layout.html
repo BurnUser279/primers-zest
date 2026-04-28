@@ -58,7 +58,7 @@
     </style>
 </head>
 
-<body class="{% if membership_tier == 'VIP' or (member and member['membership_tier'] == 'VIP') %}vip-theme{% endif %}">
+<body class="{% if session.get('membership_tier') == 'VIP' or (member is defined and member.get('membership_tier') == 'VIP') %}vip-theme{% endif %}">
     {% block content %}{% endblock %}
 </body>
 </html>
