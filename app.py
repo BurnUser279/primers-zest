@@ -206,10 +206,15 @@ def init_db():
 
     c.execute('''CREATE TABLE IF NOT EXISTS vip_pre_payment_chats
                  (id SERIAL PRIMARY KEY,
-                  submission_id INTEGER REFERENCES vip_submissions(id),
-                  sender_id INTEGER,
-                  message TEXT,
                   timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS admin_notifications
+                 (id SERIAL PRIMARY KEY,
+                  member_id INTEGER REFERENCES members(id),
+                  action_type VARCHAR(100),
+                  message TEXT,
+                  is_read BOOLEAN DEFAULT FALSE,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
 
     # Seed chatrooms default row
     c.execute("INSERT INTO chatrooms (room_name) SELECT 'VIP Lounge' WHERE NOT EXISTS (SELECT 1 FROM chatrooms WHERE room_name = 'VIP Lounge');")
@@ -295,7 +300,7 @@ def register():
                 
             conn.commit()
             conn.close()
-            flash("Account created successfully. Please check your email to verify your account before logging in.")
+            flash("ACCOUNT CREATED SUCCESSFULLY" " WELCOME TO PRIMERS ZEST APP, WHERE YOUR FANTASIES BECOME YOUR REALITIES.")
             return redirect(url_for('member_login'))
         except Exception as e:
             return f"System Crash Report: {str(e)}"
@@ -674,9 +679,29 @@ def admin_dashboard():
 
     c.execute("SELECT * FROM vip_verification_fields ORDER BY id")
     vip_fields = c.fetchall()
+
+    c.execute("""
+        SELECT an.*, m.username 
+        FROM admin_notifications an
+        JOIN members m ON an.member_id = m.id
+        ORDER BY an.created_at DESC
+    """)
+    notifications = c.fetchall()
     conn.close()
 
-    return render_template('admin.html', members=all_members, donations=all_donations, plans=all_plans, email_templates=all_templates, vip_fields=vip_fields)
+    return render_template('admin.html', members=all_members, donations=all_donations, plans=all_plans, email_templates=all_templates, vip_fields=vip_fields, notifications=notifications)
+
+@app.route('/admin/notifications/read/<int:n_id>', methods=['POST'])
+def admin_mark_read(n_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+    
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    c.execute("UPDATE admin_notifications SET is_read = TRUE WHERE id = %s", (n_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/vip_fields/add', methods=['POST'])
 def admin_add_vip_field():
@@ -755,6 +780,10 @@ def submit_vip_verification():
     # Create submission
     c.execute("INSERT INTO vip_submissions (user_id, plan_id) VALUES (%s, %s) RETURNING id", (user_id, plan_id))
     submission_id = c.fetchone()[0]
+    
+    # Insert Admin Notification
+    c.execute("INSERT INTO admin_notifications (member_id, action_type, message) VALUES (%s, %s, %s)",
+              (user_id, 'VIP Verification', 'A new VIP verification request has been submitted and is awaiting review.'))
     
     # Fetch rules again to process inputs
     c.execute("SELECT country FROM members WHERE id = %s", (user_id,))

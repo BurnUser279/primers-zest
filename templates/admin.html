@@ -273,6 +273,7 @@
         <a href="javascript:void(0)" onclick="toggleSection('section-plans'); toggleMenu();">Subscription Plans</a>
         <a href="javascript:void(0)" onclick="toggleSection('section-emails'); toggleMenu();">Email Logs & Templates</a>
         <a href="javascript:void(0)" onclick="toggleSection('section-vip-rules'); toggleMenu();">VIP Verification Rules</a>
+        <a href="javascript:void(0)" onclick="toggleSection('section-notifications'); toggleMenu();" style="border: 1px solid #fbbc04;">Notification Center</a>
         <a href="/admin/settings">Global Admin Settings</a>
         <a href="/vip_lounge" style="border: 1px solid gold; color: gold;">Join VIP Lounge</a>
         <hr style="width: 100%; border: 0; border-top: 1px solid #333; margin: 15px 0;">
@@ -291,7 +292,7 @@
 
             // Accordion Toggle Logic
             window.toggleSection = function(id) {
-                const sections = ['section-roster', 'section-plans', 'section-emails', 'section-settings', 'section-vip-rules'];
+                const sections = ['section-roster', 'section-plans', 'section-emails', 'section-settings', 'section-vip-rules', 'section-notifications'];
                 const target = document.getElementById(id);
                 console.log("Attempting to toggle:", id);
                 console.log("Target element found:", target);
@@ -668,6 +669,49 @@
                     <p>Current Admin Identity: <strong>AdminMaster</strong></p>
                     <p>Support Email: <strong>support@yourdomain.com</strong> (Manage in settings)</p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 5: Notifications -->
+    <div id="section-notifications" class="accordion-content">
+        <div class="container">
+            <h2>Admin Notification Center</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Message</th>
+                            <th>Timestamp</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for n in notifications %}
+                        <tr style="{% if not n.is_read %}font-weight: bold; background-color: #fff9e6;{% endif %}">
+                            <td>{{ n.username }}</td>
+                            <td>{{ n.action_type }}</td>
+                            <td>{{ n.message }}</td>
+                            <td>{{ n.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                {% if not n.is_read %}
+                                <form action="/admin/notifications/read/{{ n.id }}" method="POST">
+                                    <button type="submit" style="background-color: #fbbc04; color: black; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">Mark as Read</button>
+                                </form>
+                                {% else %}
+                                <span style="color: #888; font-size: 12px;">Read</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" style="padding: 20px; text-align: center; color: #666;">No notifications.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
