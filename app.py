@@ -845,6 +845,10 @@ def vip_verification(plan_id):
         c.execute("SELECT * FROM vip_pre_payment_chats WHERE submission_id = %s ORDER BY timestamp ASC", (submission_id,))
         chats = c.fetchall()
     
+    # Trigger automatic admin notification for interest
+    c.execute("INSERT INTO admin_notifications (member_id, action_type, message) VALUES (%s, 'VIP Interest', 'User has entered the VIP verification room and is waiting for instructions.')", (user_id,))
+    
+    conn.commit()
     conn.close()
     
     return render_template('vip_verification.html', rules=rules, plan_id=plan_id, chats=chats, submission_id=submission_id)
