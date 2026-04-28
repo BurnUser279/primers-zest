@@ -216,6 +216,13 @@ def init_db():
                   is_read BOOLEAN DEFAULT FALSE,
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
 
+    c.execute('''CREATE TABLE IF NOT EXISTS club_slideshows
+                 (id SERIAL PRIMARY KEY,
+                  image_path VARCHAR(255) NOT NULL,
+                  info_text TEXT,
+                  is_active BOOLEAN DEFAULT TRUE,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
     # Seed chatrooms default row
     c.execute("INSERT INTO chatrooms (room_name) SELECT 'VIP Lounge' WHERE NOT EXISTS (SELECT 1 FROM chatrooms WHERE room_name = 'VIP Lounge');")
 
@@ -497,9 +504,14 @@ def member_dashboard():
     user_proof = status_row[2] if status_row else None
     c.execute("SELECT plan_name, price, features FROM subscription_plans ORDER BY id")
     plans = c.fetchall()
+    
+    # Fetch active slideshows
+    c.execute("SELECT image_path, info_text FROM club_slideshows WHERE is_active = TRUE ORDER BY created_at DESC")
+    slides = c.fetchall()
+    
     conn.close()
         
-    return render_template('dashboard.html', fullname=session.get('member_fullname'), donations=my_donations, tickets=my_tickets, membership_tier=current_tier, vip_admin_reply=admin_reply, vip_user_proof=user_proof, plans=plans)
+    return render_template('dashboard.html', fullname=session.get('member_fullname'), donations=my_donations, tickets=my_tickets, membership_tier=current_tier, vip_admin_reply=admin_reply, vip_user_proof=user_proof, plans=plans, slides=slides)
 
 @app.route('/request_payment_details', methods=['POST'])
 def request_payment_details():
@@ -732,6 +744,30 @@ def admin_delete_vip_field(field_id):
     c.execute("DELETE FROM vip_verification_fields WHERE id = %s", (field_id,))
     conn.commit()
     conn.close()
+    
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/slideshow/add', methods=['POST'])
+def admin_add_slideshow():
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+        
+    image = request.files.get('image')
+    info_text = request.form.get('info_text')
+    
+    if image and image.filename != '':
+        filename = secure_filename(image.filename)
+        filename = f"slide_{int(time.time())}_{filename}"
+        image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        image.save(image_path)
+        db_path = f"static/uploads/{filename}"
+        
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        c = conn.cursor()
+        c.execute("INSERT INTO club_slideshows (image_path, info_text) VALUES (%s, %s)", (db_path, info_text))
+        conn.commit()
+        conn.close()
+        flash("Slideshow entry added successfully.")
     
     return redirect(url_for('admin_dashboard'))
 

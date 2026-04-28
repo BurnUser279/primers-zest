@@ -456,7 +456,16 @@
 
         <div style="background-color: #f0f0f0; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
             <h3>Club Information & Announcements</h3>
-            <p>[Placeholder for club information and weekly slideshows]</p>
+            <div class="slideshow-container" style="margin-top: 20px;">
+                {% for slide in slides %}
+                <div class="slide" style="margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px;">
+                    <img src="/{{ slide[0] }}" alt="Club News" style="width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                    <p style="margin-top: 15px; font-weight: bold; color: #333; font-size: 1.1rem; line-height: 1.5;">{{ slide[1] }}</p>
+                </div>
+                {% else %}
+                <p style="color: #888; text-align: center; padding: 20px;">No club broadcasts available at the moment.</p>
+                {% endfor %}
+            </div>
         </div>
 
         <h3 style="margin-top: 30px; text-transform: uppercase; letter-spacing: 1px; color: #333;">Available VIP

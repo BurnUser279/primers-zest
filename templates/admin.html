@@ -274,6 +274,7 @@
         <a href="javascript:void(0)" onclick="toggleSection('section-emails'); toggleMenu();">Email Logs & Templates</a>
         <a href="javascript:void(0)" onclick="toggleSection('section-vip-rules'); toggleMenu();">VIP Verification Rules</a>
         <a href="javascript:void(0)" onclick="toggleSection('section-notifications'); toggleMenu();" style="border: 1px solid #fbbc04;">Notification Center</a>
+        <a href="javascript:void(0)" onclick="toggleSection('section-slideshows'); toggleMenu();" style="border: 1px solid #00c853; color: #00c853;">Club Slideshows</a>
         <a href="/admin/settings">Global Admin Settings</a>
         <a href="/vip_lounge" style="border: 1px solid gold; color: gold;">Join VIP Lounge</a>
         <hr style="width: 100%; border: 0; border-top: 1px solid #333; margin: 15px 0;">
@@ -292,7 +293,7 @@
 
             // Accordion Toggle Logic
             window.toggleSection = function(id) {
-                const sections = ['section-roster', 'section-plans', 'section-emails', 'section-settings', 'section-vip-rules', 'section-notifications'];
+                const sections = ['section-roster', 'section-plans', 'section-emails', 'section-settings', 'section-vip-rules', 'section-notifications', 'section-slideshows'];
                 const target = document.getElementById(id);
                 console.log("Attempting to toggle:", id);
                 console.log("Target element found:", target);
@@ -712,6 +713,24 @@
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 6: Club Slideshows -->
+    <div id="section-slideshows" class="accordion-content">
+        <div class="container">
+            <h2>Weekly Club Slideshow & Broadcasts</h2>
+            <div class="email-config-section">
+                <form action="/admin/slideshow/add" method="POST" enctype="multipart/form-data">
+                    <label>Select Slide Image:</label>
+                    <input type="file" name="image" accept="image/*" required style="margin-bottom: 20px;">
+                    
+                    <label>Broadcast Message / Information:</label>
+                    <textarea name="info_text" rows="4" placeholder="Enter information text to display below the slide..." required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; margin-bottom: 20px; font-family: inherit;"></textarea>
+                    
+                    <button type="submit" class="nav-btn" style="width: 100%; cursor: pointer;">Upload & Broadcast Slide</button>
+                </form>
             </div>
         </div>
     </div>
