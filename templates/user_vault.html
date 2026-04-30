@@ -127,7 +127,37 @@
         {% endfor %}
 
         <div style="margin-top: 50px; padding-top: 30px; border-top: 2px solid #fbbc04;">
-            <h2 style="color: #333;">Initialize Direct Admin Reply</h2>
+            <h2 style="color: #333;">Concierge Pre-Payment Chat</h2>
+            {% if sub_id %}
+                <div style="height: 300px; overflow-y: auto; background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
+                    {% for chat in concierge_chats %}
+                    <div style="background: {% if chat.sender_id == 0 %}#e3f2fd{% else %}#fff{% endif %}; 
+                                border: 1px solid {% if chat.sender_id == 0 %}#bbdefb{% else %}#ddd{% endif %};
+                                padding: 10px; border-radius: 8px; max-width: 80%;
+                                align-self: {% if chat.sender_id == 0 %}flex-end{% else %}flex-start{% endif %};">
+                        <span style="font-size: 0.75rem; font-weight: bold; display: block; margin-bottom: 5px;">
+                            {% if chat.sender_id == 0 %}Admin{% else %}{{ member_name }}{% endif %}
+                        </span>
+                        <p style="margin: 0; font-size: 0.95rem;">{{ chat.message }}</p>
+                        <span style="font-size: 0.65rem; color: #888; display: block; text-align: right; margin-top: 5px;">
+                            {{ chat.timestamp.strftime('%H:%M') }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                <form action="/vip_chat/send/{{ sub_id }}" method="POST">
+                    <input type="text" name="message" placeholder="Type concierge reply here..." required style="width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #ddd; box-sizing: border-box; margin-bottom: 10px;">
+                    <button type="submit" style="background: #2196f3; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer;">Send Concierge Reply</button>
+                </form>
+            {% else %}
+                <p style="background: #fff3e0; padding: 15px; border-radius: 8px; color: #e65100; border: 1px solid #ffe0b2;">
+                    This member has not entered the VIP verification pipeline yet. No concierge chat available.
+                </p>
+            {% endif %}
+        </div>
+
+        <div style="margin-top: 50px; padding-top: 30px; border-top: 2px solid #fbbc04;">
+            <h2 style="color: #333;">Initialize Direct Admin Reply (Vault History)</h2>
             {% with messages = get_flashed_messages() %}
               {% if messages %}
                 {% for message in messages %}

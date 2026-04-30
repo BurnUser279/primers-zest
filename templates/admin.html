@@ -404,9 +404,14 @@
                     <button type="submit" style="background: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Update Admin Password</button>
                 </form>
 
-                <form action="/admin/settings/update" method="POST">
+                <form action="/admin/settings" method="POST">
+                    <input type="hidden" name="form_type" value="update_footer">
                     <label style="display: block; font-weight: bold; margin-bottom: 10px;">Global Footer Information:</label>
-                    <textarea name="footer_info" rows="4" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; margin-bottom: 20px;" placeholder="Enter the text that will appear in the footer of public pages...">Welcome to Primers Zest App. All rights reserved.</textarea>
+                    <textarea name="footer_info" rows="4" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; margin-bottom: 20px;" placeholder="Enter the text that will appear in the footer of public pages...">{{ settings.footer_info }}</textarea>
+                    
+                    <label style="display: block; font-weight: bold; margin-bottom: 10px;">Concierge Welcome Message (Pre-Payment):</label>
+                    <textarea name="concierge_welcome_msg" rows="4" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; margin-bottom: 20px;" placeholder="Message shown to users entering VIP verification room...">{{ settings.concierge_welcome_msg }}</textarea>
+                    
                     <button type="submit" style="background: #1a1a1a; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">Save Global Settings</button>
                 </form>
             </div>
@@ -586,7 +591,7 @@
                 <tr>
                     <td><strong>{{ plan[1] }}</strong></td>
                     <td>
-                        <form action="/admin/delete_plan/{{ plan[0] }}" method="POST" onsubmit="return confirm('Delete {{ plan[1] }} plan permanently?')">
+                        <form action="/admin/plans/delete/{{ plan[0] }}" method="POST" onsubmit="return confirm('Delete {{ plan[1] }} plan permanently?')">
                             <button type="submit" style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Delete Plan</button>
                         </form>
                     </td>

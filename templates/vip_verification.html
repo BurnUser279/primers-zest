@@ -45,13 +45,13 @@
 
         <h1>Verification Requirements</h1>
         <p style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 5px solid #2196f3; color: #0d47a1; margin-bottom: 25px;">
-            An admin has been automatically notified of your arrival. Please use the live chat below to request your specific verification requirements and payment details.
+            {{ welcome_msg }}
         </p>
         
         <form action="/submit_vip_verification" method="POST" enctype="multipart/form-data" class="verification-form">
             <input type="hidden" name="plan_id" value="{{ plan_id }}">
             
-            {% for rule in rules %}
+            {% for rule in fields %}
             <div class="rule-item">
                 <label class="rule-label">{{ rule[1] }}</label>
                 <textarea name="text_input_{{ rule[0] }}" rows="3" placeholder="Provide details here..."></textarea>

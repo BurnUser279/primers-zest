@@ -228,8 +228,9 @@ def init_db():
                   setting_key VARCHAR(50) UNIQUE,
                   setting_value TEXT)''')
 
-    # Seed site_settings default row
+    # Seed site_settings default rows
     c.execute("INSERT INTO site_settings (setting_key, setting_value) VALUES ('footer_info', 'Welcome to Primers Zest App. All rights reserved.') ON CONFLICT (setting_key) DO NOTHING;")
+    c.execute("INSERT INTO site_settings (setting_key, setting_value) VALUES ('concierge_welcome_msg', 'An admin has been automatically notified of your arrival. Please use the live chat below to request your specific verification requirements and payment details.') ON CONFLICT (setting_key) DO NOTHING;")
 
     # Seed chatrooms default row
     c.execute("INSERT INTO chatrooms (room_name) SELECT 'VIP Lounge' WHERE NOT EXISTS (SELECT 1 FROM chatrooms WHERE room_name = 'VIP Lounge');")
@@ -779,9 +780,12 @@ def admin_dashboard():
     c.execute("SELECT * FROM club_slideshows ORDER BY created_at DESC")
     slides = c.fetchall()
     
+    c.execute("SELECT setting_key, setting_value FROM site_settings")
+    settings = {row[0]: row[1] for row in c.fetchall()}
+    
     conn.close()
 
-    return render_template('admin.html', members=all_members, donations=all_donations, plans=all_plans, email_templates=all_templates, vip_fields=vip_fields, notifications=notifications, slides=slides)
+    return render_template('admin.html', members=all_members, donations=all_donations, plans=all_plans, email_templates=all_templates, vip_fields=vip_fields, notifications=notifications, slides=slides, settings=settings)
 
 @app.route('/admin/notifications/read/<int:n_id>', methods=['POST'])
 def admin_mark_read(n_id):
@@ -911,30 +915,28 @@ def vip_verification(plan_id):
     
     # Fetch user's country
     c.execute("SELECT country FROM members WHERE id = %s", (user_id,))
-    user_row = c.fetchone()
-    user_country = user_row['country'] if user_row else 'Global'
+    country = c.fetchone()[0]
     
-    # Fetch verification rules for user's country or Global
-    c.execute("SELECT * FROM vip_verification_fields WHERE target_country = %s OR target_country = 'Global'", (user_country,))
-    rules = c.fetchall()
+    # Fetch concierge welcome message
+    c.execute("SELECT setting_value FROM site_settings WHERE setting_key = 'concierge_welcome_msg'")
+    welcome_msg = c.fetchone()[0]
     
-    # Fetch existing submission and chat history
-    c.execute("SELECT id FROM vip_submissions WHERE user_id = %s AND plan_id = %s ORDER BY created_at DESC LIMIT 1", (user_id, plan_id))
+    # Fetch verification fields for that country
+    c.execute("SELECT * FROM vip_verification_fields WHERE target_country = %s OR target_country = 'Global'", (country,))
+    fields = c.fetchall()
+    
+    # Check if user already has a submission for this plan
+    c.execute("SELECT id FROM vip_submissions WHERE user_id = %s AND plan_id = %s", (user_id, plan_id))
     submission = c.fetchone()
-    submission_id = submission['id'] if submission else None
     
     chats = []
-    if submission_id:
+    if submission:
+        submission_id = submission[0]
         c.execute("SELECT * FROM vip_pre_payment_chats WHERE submission_id = %s ORDER BY timestamp ASC", (submission_id,))
         chats = c.fetchall()
-    
-    # Trigger automatic admin notification for interest
-    c.execute("INSERT INTO admin_notifications (member_id, action_type, message) VALUES (%s, 'VIP Interest', 'User has entered the VIP verification room and is waiting for instructions.')", (user_id,))
-    
-    conn.commit()
+        
     conn.close()
-    
-    return render_template('vip_verification.html', rules=rules, plan_id=plan_id, chats=chats, submission_id=submission_id)
+    return render_template('vip_verification.html', fields=fields, plan_id=plan_id, chats=chats, welcome_msg=welcome_msg)
 
 @app.route('/submit_vip_verification', methods=['POST'])
 def submit_vip_verification():
@@ -1078,12 +1080,28 @@ def admin_settings():
     new_price = request.form.get('new_plan_price')
     new_features = request.form.get('new_plan_features')
     if new_name and new_price:
-        c.execute("INSERT INTO subscription_plans (plan_name, price, features) VALUES (%s, %s, %s)",
-                  (new_name, float(new_price), new_features if new_features else ""))
+        c.execute("SELECT id FROM subscription_plans WHERE plan_name = %s", (new_name,))
+        if not c.fetchone():
+            c.execute("INSERT INTO subscription_plans (plan_name, price, features) VALUES (%s, %s, %s)",
+                      (new_name, float(new_price), new_features if new_features else ""))
     
     conn.commit()
     conn.close()
     flash("Platform settings updated successfully.")
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/plans/delete/<int:plan_id>', methods=['POST'])
+def admin_delete_plan(plan_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+    
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    c.execute("DELETE FROM subscription_plans WHERE id = %s", (plan_id,))
+    conn.commit()
+    conn.close()
+    
+    flash("Subscription plan deleted successfully.")
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/reset/<int:member_id>', methods=['POST'])
@@ -1418,17 +1436,6 @@ def admin_view_user_emails(user_id):
     conn.close()
     return render_template('admin_user_emails.html', logs=logs, member_name=member_name[0], user_id=user_id)
 
-@app.route('/admin/delete_plan/<int:plan_id>', methods=['POST'])
-def admin_delete_plan(plan_id):
-    if not session.get('is_admin'): return redirect(url_for('admin_login'))
-    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
-    c = conn.cursor()
-    c.execute("DELETE FROM subscription_plans WHERE id = %s", (plan_id,))
-    conn.commit()
-    conn.close()
-    flash("Plan deleted successfully.")
-    return redirect(url_for('admin_dashboard'))
-
 @app.route('/admin/user/<int:user_id>')
 def admin_user_profile(user_id):
     if not session.get('is_admin'): return redirect(url_for('admin_login'))
@@ -1514,6 +1521,18 @@ def admin_global_settings():
                 c.execute("UPDATE system_settings SET support_email = %s WHERE id = 1", (support_email,))
                 conn.commit()
                 flash("Support email updated successfully.")
+        
+        elif form_type == 'update_footer':
+            footer_info = request.form.get('footer_info')
+            concierge_msg = request.form.get('concierge_welcome_msg')
+            
+            if footer_info:
+                c.execute("UPDATE site_settings SET setting_value = %s WHERE setting_key = 'footer_info'", (footer_info,))
+            if concierge_msg:
+                c.execute("UPDATE site_settings SET setting_value = %s WHERE setting_key = 'concierge_welcome_msg'", (concierge_msg,))
+            
+            conn.commit()
+            flash("Global settings updated.")
         
         elif form_type == 'update_password':
             curr_pass = request.form.get('current_password')
@@ -1694,12 +1713,23 @@ def admin_user_vault(member_id):
             if row[6]: vault_history[t_id]['admin_attachments'].append(row[5])
             else: vault_history[t_id]['user_attachments'].append(row[5])
             
+    # Fetch concierge chat history (pre-payment)
+    c.execute("SELECT id FROM vip_submissions WHERE user_id = %s ORDER BY created_at DESC LIMIT 1", (member_id,))
+    submission = c.fetchone()
+    concierge_chats = []
+    sub_id = None
+    if submission:
+        sub_id = submission[0]
+        c.execute("SELECT * FROM vip_pre_payment_chats WHERE submission_id = %s ORDER BY timestamp ASC", (sub_id,))
+        concierge_chats = c.fetchall()
+
     c.execute("SELECT fullname FROM members WHERE id = %s", (member_id,))
     member_row = c.fetchone()
     member_name = member_row[0] if member_row else "Unknown Member"
+    
     conn.close()
     
-    return render_template('user_vault.html', vault_history=list(vault_history.values()), member_id=member_id, member_name=member_name)
+    return render_template('user_vault.html', member_id=member_id, member_name=member_name, vault_history=list(vault_history.values()), concierge_chats=concierge_chats, sub_id=sub_id)
 
 @app.route('/admin/logout')
 def admin_logout():
