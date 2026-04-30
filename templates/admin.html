@@ -335,6 +335,18 @@
                     });
                 });
             });
+            
+            window.togglePasswordVisibility = function(inputId, iconSpan) {
+                const input = document.getElementById(inputId);
+                const svg = iconSpan.querySelector('svg');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    if (svg) svg.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+                } else {
+                    input.type = 'password';
+                    if (svg) svg.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+                }
+            };
         });
     </script>
 
@@ -346,6 +358,48 @@
                 <p>Manage high-level configurations for the entire membership portal.</p>
                 <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
                 
+                <form action="/admin/settings" method="POST" style="margin-bottom: 30px; padding-bottom: 30px; border-bottom: 1px solid #eee;">
+                    <input type="hidden" name="form_type" value="update_password">
+                    <h4 style="margin-top: 0;">Update Admin Credentials</h4>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; font-weight: bold; margin-bottom: 5px;">Current Admin Password:</label>
+                        <div style="position: relative;">
+                            <input type="password" name="current_password" id="admin-current" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                            <span onclick="togglePasswordVisibility('admin-current', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; display: flex; align-items: center;">
+                                <svg class="eye-svg" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </span>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; font-weight: bold; margin-bottom: 5px;">New Admin Password:</label>
+                        <div style="position: relative;">
+                            <input type="password" name="new_password" id="admin-new" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                            <span onclick="togglePasswordVisibility('admin-new', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; display: flex; align-items: center;">
+                                <svg class="eye-svg" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </span>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; font-weight: bold; margin-bottom: 5px;">Confirm New Password:</label>
+                        <div style="position: relative;">
+                            <input type="password" name="confirm_password" id="admin-confirm" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                            <span onclick="togglePasswordVisibility('admin-confirm', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; display: flex; align-items: center;">
+                                <svg class="eye-svg" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </span>
+                        </div>
+                    </div>
+                    <button type="submit" style="background: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Update Admin Password</button>
+                </form>
+
                 <form action="/admin/settings/update" method="POST">
                     <label style="display: block; font-weight: bold; margin-bottom: 10px;">Global Footer Information:</label>
                     <textarea name="footer_info" rows="4" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; margin-bottom: 20px;" placeholder="Enter the text that will appear in the footer of public pages...">Welcome to Primers Zest App. All rights reserved.</textarea>
