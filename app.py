@@ -206,7 +206,15 @@ def init_db():
 
     c.execute('''CREATE TABLE IF NOT EXISTS vip_pre_payment_chats
                  (id SERIAL PRIMARY KEY,
+                  submission_id INTEGER REFERENCES vip_submissions(id),
+                  sender_id INTEGER,
+                  message TEXT,
                   timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    # Migration: add columns to existing vip_pre_payment_chats tables
+    c.execute("ALTER TABLE vip_pre_payment_chats ADD COLUMN IF NOT EXISTS submission_id INTEGER REFERENCES vip_submissions(id);")
+    c.execute("ALTER TABLE vip_pre_payment_chats ADD COLUMN IF NOT EXISTS sender_id INTEGER;")
+    c.execute("ALTER TABLE vip_pre_payment_chats ADD COLUMN IF NOT EXISTS message TEXT;")
 
     c.execute('''CREATE TABLE IF NOT EXISTS admin_notifications
                  (id SERIAL PRIMARY KEY,
