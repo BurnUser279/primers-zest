@@ -258,6 +258,10 @@
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        .unread-row {
+            font-weight: bold;
+            background-color: #fff9e6 !important;
+        }
     </style>
 </head>
 
@@ -760,7 +764,7 @@
                     </thead>
                     <tbody>
                         {% for n in notifications %}
-                        <tr style="{% if not n.is_read %}font-weight: bold; background-color: #fff9e6;{% endif %}">
+                        <tr class="{% if not n.is_read %}unread-row{% endif %}">
                             <td>{{ n.username }}</td>
                             <td>{{ n.action_type }}</td>
                             <td>{{ n.message }}</td>
@@ -807,6 +811,21 @@
                     
                     <button type="submit" class="nav-btn" style="width: 100%; cursor: pointer;">Upload & Broadcast Slide</button>
                 </form>
+            </div>
+
+            <h3 style="margin-top: 40px;">Active Broadcasts</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
+                {% for slide in slides %}
+                <div class="template-card" style="display: flex; flex-direction: column; height: 100%; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 1px solid #ddd; padding: 15px; background: #fff; border-radius: 8px;">
+                    <img src="/{{ slide.image_path }}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 6px; margin-bottom: 15px;" alt="Slide Thumbnail">
+                    <p style="flex-grow: 1; font-size: 0.95rem; color: #444; margin-bottom: 15px; line-height: 1.4;">{{ slide.info_text }}</p>
+                    <form action="/admin/slides/delete/{{ slide.id }}" method="POST" onsubmit="return confirm('Delete this broadcast slide?');" style="margin-top: auto;">
+                        <button type="submit" style="width: 100%; background-color: #ff4444; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s;">Delete Slide</button>
+                    </form>
+                </div>
+                {% else %}
+                <p style="grid-column: 1 / -1; text-align: center; color: #888; padding: 40px; background: #f9f9f9; border-radius: 8px; border: 1px dashed #ccc;">No active broadcasts found.</p>
+                {% endfor %}
             </div>
         </div>
     </div>

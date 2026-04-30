@@ -746,9 +746,13 @@ def admin_dashboard():
         ORDER BY an.created_at DESC
     """)
     notifications = c.fetchall()
+    
+    c.execute("SELECT * FROM club_slideshows ORDER BY created_at DESC")
+    slides = c.fetchall()
+    
     conn.close()
 
-    return render_template('admin.html', members=all_members, donations=all_donations, plans=all_plans, email_templates=all_templates, vip_fields=vip_fields, notifications=notifications)
+    return render_template('admin.html', members=all_members, donations=all_donations, plans=all_plans, email_templates=all_templates, vip_fields=vip_fields, notifications=notifications, slides=slides)
 
 @app.route('/admin/notifications/read/<int:n_id>', methods=['POST'])
 def admin_mark_read(n_id):
@@ -815,6 +819,20 @@ def admin_add_slideshow():
         conn.close()
         flash("Slideshow entry added successfully.")
     
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/slides/delete/<int:slide_id>', methods=['POST'])
+def admin_delete_slide(slide_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+        
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    c.execute("DELETE FROM club_slideshows WHERE id = %s", (slide_id,))
+    conn.commit()
+    conn.close()
+    
+    flash("Slideshow entry deleted.")
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/vip_verification/<int:plan_id>')
