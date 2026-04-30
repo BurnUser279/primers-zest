@@ -758,10 +758,25 @@ def admin_dashboard():
 
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    c.execute("""
-        SELECT m.*, 
-        (SELECT message FROM tickets t WHERE t.user_id = m.id ORDER BY created_at DESC LIMIT 1) as latest_ticket 
+
+    sort_by = request.args.get('sort_by', 'newest')
+
+    if sort_by == 'oldest':
+        order_clause = "ORDER BY m.id ASC"
+    elif sort_by == 'name_asc':
+        order_clause = "ORDER BY m.fullname ASC"
+    elif sort_by == 'vip':
+        order_clause = "ORDER BY (m.membership_tier = 'VIP') DESC, m.id DESC"
+    elif sort_by == 'tier':
+        order_clause = "ORDER BY m.membership_tier ASC, m.id DESC"
+    else:  # default: newest
+        order_clause = "ORDER BY m.id DESC"
+
+    c.execute(f"""
+        SELECT m.*,
+        (SELECT message FROM tickets t WHERE t.user_id = m.id ORDER BY created_at DESC LIMIT 1) as latest_ticket
         FROM members m
+        {order_clause}
     """)
     all_members = c.fetchall()
     
