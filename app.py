@@ -659,6 +659,35 @@ def member_profile():
     conn.close()
     return render_template('profile.html', member=member)
 
+@app.route('/profile/change_password', methods=['POST'])
+def change_password():
+    if 'member_id' not in session:
+        return redirect(url_for('member_login'))
+        
+    curr_pass = request.form.get('current_password')
+    new_pass = request.form.get('new_password')
+    conf_pass = request.form.get('confirm_password')
+    
+    if new_pass != conf_pass:
+        flash("New passwords do not match.")
+        return redirect(url_for('member_profile'))
+        
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    c.execute("SELECT password_hash FROM members WHERE id = %s", (session['member_id'],))
+    row = c.fetchone()
+    
+    if row and check_password_hash(row[0], curr_pass):
+        hashed = generate_password_hash(new_pass)
+        c.execute("UPDATE members SET password_hash = %s WHERE id = %s", (hashed, session['member_id']))
+        conn.commit()
+        flash("Password updated successfully.")
+    else:
+        flash("Incorrect current password.")
+        
+    conn.close()
+    return redirect(url_for('member_profile'))
+
 @app.route('/support', methods=['GET', 'POST'])
 def support():
     if 'member_id' not in session:
@@ -834,6 +863,42 @@ def admin_delete_slide(slide_id):
     
     flash("Slideshow entry deleted.")
     return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/slides/edit/<int:slide_id>', methods=['GET', 'POST'])
+def admin_edit_slide(slide_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+        
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    
+    if request.method == 'POST':
+        info_text = request.form.get('info_text')
+        image = request.files.get('image')
+        
+        if image and image.filename != '':
+            filename = secure_filename(image.filename)
+            filename = f"slide_{int(time.time())}_{filename}"
+            image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            image.save(image_path)
+            db_path = f"static/uploads/{filename}"
+            c.execute("UPDATE club_slideshows SET image_path = %s, info_text = %s WHERE id = %s", (db_path, info_text, slide_id))
+        else:
+            c.execute("UPDATE club_slideshows SET info_text = %s WHERE id = %s", (info_text, slide_id))
+            
+        conn.commit()
+        conn.close()
+        flash("Slideshow entry updated.")
+        return redirect(url_for('admin_dashboard'))
+    
+    c.execute("SELECT * FROM club_slideshows WHERE id = %s", (slide_id,))
+    slide = c.fetchone()
+    conn.close()
+    
+    if not slide:
+        return "Slide not found."
+        
+    return render_template('edit_slide.html', slide=slide)
 
 @app.route('/vip_verification/<int:plan_id>')
 def vip_verification(plan_id):

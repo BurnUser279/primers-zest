@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+
+{% block title %}Edit Slide{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid #eee;">
+    <h2 style="color: #1a1a1a; margin-bottom: 25px; border-bottom: 3px solid #fbbc04; padding-bottom: 10px; display: inline-block;">Edit Broadcast Slide</h2>
+    
+    <form action="/admin/slides/edit/{{ slide.id }}" method="POST" enctype="multipart/form-data">
+        <div style="margin-bottom: 25px;">
+            <label style="display: block; font-weight: bold; margin-bottom: 10px; color: #333;">Current Thumbnail:</label>
+            <img src="{{ url_for('static', filename=slide.image_path.replace('static/', '')) }}" style="width: 200px; height: 120px; object-fit: cover; border-radius: 8px; border: 2px solid #fbbc04; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" alt="Current Slide">
+        </div>
+
+        <div style="margin-bottom: 25px;">
+            <label style="display: block; font-weight: bold; margin-bottom: 10px; color: #333;">Replace Image (Optional):</label>
+            <input type="file" name="image" accept="image/*" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; background: #fafafa;">
+        </div>
+        
+        <div style="margin-bottom: 25px;">
+            <label style="display: block; font-weight: bold; margin-bottom: 10px; color: #333;">Broadcast Message:</label>
+            <textarea name="info_text" rows="5" required style="width: 100%; padding: 15px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-family: inherit; font-size: 1rem; line-height: 1.5;">{{ slide.info_text }}</textarea>
+        </div>
+        
+        <div style="display: flex; gap: 15px; margin-top: 30px;">
+            <button type="submit" style="flex: 2; background: #1a1a1a; color: #fbbc04; font-weight: bold; padding: 15px; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Save Changes</button>
+            <a href="/admin" style="flex: 1; text-align: center; background: #eee; color: #666; font-weight: bold; padding: 15px; border-radius: 8px; text-decoration: none; transition: 0.3s; font-size: 1rem; display: flex; align-items: center; justify-content: center;">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
