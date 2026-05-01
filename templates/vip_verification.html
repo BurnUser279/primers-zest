@@ -99,7 +99,7 @@
                 {% endfor %}
             </div>
             {% if submission_id %}
-            <form action="/vip_chat/send/{{ submission_id }}" method="POST" class="chat-input-area" enctype="multipart/form-data">
+            <form id="ajaxChatForm" class="chat-input-area" enctype="multipart/form-data">
                 <input type="text" name="message" class="chat-input" id="chatInput" placeholder="Type your message here...">
                 <input type="file" name="chat_media" accept="image/*" style="max-width: 200px; font-size: 0.8rem; margin: 0 10px;">
                 <button type="submit" class="send-btn">Send</button>
@@ -116,5 +116,49 @@
     <script>
         const win = document.getElementById('chatWindow');
         win.scrollTop = win.scrollHeight;
+
+        {% if submission_id %}
+        const chatForm = document.getElementById('ajaxChatForm');
+        if (chatForm) {
+            chatForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(chatForm);
+                const submitBtn = chatForm.querySelector('.send-btn');
+                submitBtn.disabled = true;
+                
+                fetch('/vip_chat/send/{{ submission_id }}', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => {
+                    chatForm.reset();
+                    submitBtn.disabled = false;
+                    pollChats(); // update immediately
+                }).catch(error => {
+                    console.error('Error sending chat:', error);
+                    submitBtn.disabled = false;
+                });
+            });
+        }
+
+        function pollChats() {
+            fetch(window.location.href)
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newChatWindow = doc.getElementById('chatWindow');
+                    if (newChatWindow) {
+                        const isScrolledToBottom = win.scrollHeight - win.clientHeight <= win.scrollTop + 50;
+                        win.innerHTML = newChatWindow.innerHTML;
+                        if (isScrolledToBottom) {
+                            win.scrollTop = win.scrollHeight;
+                        }
+                    }
+                })
+                .catch(err => console.error('Polling error:', err));
+        }
+
+        setInterval(pollChats, 5000);
+        {% endif %}
     </script>
 {% endblock %}

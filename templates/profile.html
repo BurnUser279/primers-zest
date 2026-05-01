@@ -8,15 +8,49 @@
             body { padding: 10px; }
             .container { width: 100%; padding: 15px; box-sizing: border-box; }
             a.button { padding: 15px; width: 100%; text-align: center; box-sizing: border-box; font-size: 18px; }
+            .profile-grid { grid-template-columns: 1fr !important; gap: 5px !important; }
+            .profile-value { margin-bottom: 10px; }
         }
-        body { font-family: sans-serif; padding: 20px; background-color: #f4f4f4; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h2 { text-align: center; }
-        p { font-size: 16px; margin-bottom: 10px; }
-        a.button { display: inline-block; padding: 10px 15px; background: #333; color: white; text-decoration: none; border-radius: 4px; }
-        .tier-display { font-weight: bold; }
-        .tier-vip { color: #b8860b; } /* Goldenrod for visibility */
-        .tier-standard { color: #333; }
+        body { font-family: 'Inter', sans-serif; padding: 20px; }
+        .container { 
+            max-width: 700px; margin: 0 auto; padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        h2, h3 { text-align: center; font-weight: 600; letter-spacing: 0.5px; }
+        
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .profile-label {
+            font-weight: 600;
+            color: inherit;
+            opacity: 0.8;
+            align-self: center;
+        }
+        .profile-value {
+            font-size: 16px;
+            font-weight: 500;
+            padding: 10px 15px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+            word-break: break-word;
+        }
+        .tier-display { font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .tier-vip { color: #fbbc04; text-shadow: 0 0 10px rgba(251, 188, 4, 0.3); } 
+        .tier-standard { color: #888; }
     </style>
 {% endblock %}
 
@@ -24,20 +58,45 @@
     <div class="container">
         <h2>Your Profile</h2>
         {% if member %}
-            <p><strong>Full Name:</strong> {{ member['fullname'] }}</p>
-            <p><strong>Username:</strong> {{ member['username'] }}</p>
-            <p><strong>Email:</strong> {{ member['email'] }}</p>
-            <p><strong>Mobile:</strong> {{ member['mobile'] }}</p>
-            <p><strong>Age:</strong> {{ member['age'] }}</p>
-            <p><strong>Gender:</strong> {{ member['gender'] }}</p>
-            <p><strong>Travel Preference:</strong> {{ member['travel'] }}</p>
-            <p><strong>Income Bracket:</strong> {{ member['income'] }}</p>
-            <p><strong>Country:</strong> {{ member['country'] }}</p>
-            <p><strong>State / Region:</strong> {{ member['state'] }}</p>
-            <p><strong>Medical Details:</strong> {{ member['medical'] }}</p>
-            <p><strong>Membership Tier:</strong> <span class="tier-display {% if member['membership_tier'] == 'VIP' %}tier-vip{% else %}tier-standard{% endif %}">{{ member['membership_tier'] }}</span></p>
+            <div class="profile-grid">
+                <div class="profile-label">Full Name:</div>
+                <div class="profile-value">{{ member['fullname'] }}</div>
+                
+                <div class="profile-label">Username:</div>
+                <div class="profile-value">{{ member['username'] }}</div>
+                
+                <div class="profile-label">Email:</div>
+                <div class="profile-value">{{ member['email'] }}</div>
+                
+                <div class="profile-label">Mobile:</div>
+                <div class="profile-value">{{ member['mobile'] }}</div>
+                
+                <div class="profile-label">Age:</div>
+                <div class="profile-value">{{ member['age'] }}</div>
+                
+                <div class="profile-label">Gender:</div>
+                <div class="profile-value">{{ member['gender'] }}</div>
+                
+                <div class="profile-label">Travel Preference:</div>
+                <div class="profile-value">{{ member['travel'] }}</div>
+                
+                <div class="profile-label">Income Bracket:</div>
+                <div class="profile-value">{{ member['income'] }}</div>
+                
+                <div class="profile-label">Country:</div>
+                <div class="profile-value">{{ member['country'] }}</div>
+                
+                <div class="profile-label">State / Region:</div>
+                <div class="profile-value">{{ member['state'] }}</div>
+                
+                <div class="profile-label">Medical Details:</div>
+                <div class="profile-value">{{ member['medical'] }}</div>
+                
+                <div class="profile-label">Membership Tier:</div>
+                <div class="profile-value"><span class="tier-display {% if member['membership_tier'] == 'VIP' %}tier-vip{% else %}tier-standard{% endif %}">{{ member['membership_tier'] }}</span></div>
+            </div>
         {% else %}
-            <p>No profile data found.</p>
+            <p style="text-align: center;">No profile data found.</p>
         {% endif %}
         <br>
         <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;">
