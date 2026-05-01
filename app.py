@@ -1346,7 +1346,7 @@ def admin_manual_vip(member_id):
         return redirect(url_for('admin_login'))
         
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
-    c = conn.cursor()
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     
     # Directly update membership tier first
     c.execute("UPDATE members SET membership_tier = 'VIP', vip_since = CURRENT_TIMESTAMP WHERE id = %s", (member_id,))
@@ -1355,7 +1355,7 @@ def admin_manual_vip(member_id):
     c.execute("SELECT id FROM vip_submissions WHERE user_id = %s", (member_id,))
     sub_check = c.fetchone()
     if sub_check:
-        c.execute("UPDATE vip_submissions SET status = 'approved' WHERE id = %s", (sub_check[0],))
+        c.execute("UPDATE vip_submissions SET status = 'approved' WHERE id = %s", (sub_check['id'],))
         
     # Start a new VIP period
     c.execute("INSERT INTO vip_periods (user_id, start_time) VALUES (%s, CURRENT_TIMESTAMP)", (member_id,))
@@ -1365,10 +1365,10 @@ def admin_manual_vip(member_id):
     m_row = c.fetchone()
     if m_row:
         try:
-            safe_name = m_row[1] if m_row[1] else "VIP Member"
+            safe_name = m_row['fullname'] if m_row['fullname'] else "VIP Member"
             subj, body = get_templated_email('VIP_Welcome', safe_name)
             if subj:
-                send_email_notification(m_row[0], subj, body, user_id=m_row[2])
+                send_email_notification(m_row['email'], subj, body, user_id=m_row['id'])
         except Exception as e:
             print(f"Error sending VIP Welcome email: {e}")
             
@@ -1382,14 +1382,16 @@ def admin_manual_vip(member_id):
 def admin_toggle_vip(user_id):
     if not session.get('is_admin'): return redirect(url_for('admin_login'))
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
-    c = conn.cursor()
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     c.execute("SELECT membership_tier, email, fullname FROM members WHERE id = %s", (user_id,))
     user = c.fetchone()
     if not user:
         conn.close()
         return "User not found", 404
     
-    current_tier, email, fullname = user
+    current_tier = user['membership_tier']
+    email = user['email']
+    fullname = user['fullname']
     new_tier = 'VIP' if current_tier != 'VIP' else 'Regular'
     
     if new_tier == 'VIP':
