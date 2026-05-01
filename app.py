@@ -207,12 +207,14 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS vip_pre_payment_chats
                  (id SERIAL PRIMARY KEY,
                   submission_id INTEGER REFERENCES vip_submissions(id),
+                  member_id INTEGER REFERENCES members(id),
                   sender_id INTEGER,
                   message TEXT,
                   timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
 
     # Migration: add columns to existing vip_pre_payment_chats tables
     c.execute("ALTER TABLE vip_pre_payment_chats ADD COLUMN IF NOT EXISTS submission_id INTEGER REFERENCES vip_submissions(id);")
+    c.execute("ALTER TABLE vip_pre_payment_chats ADD COLUMN IF NOT EXISTS member_id INTEGER REFERENCES members(id);")
     c.execute("ALTER TABLE vip_pre_payment_chats ADD COLUMN IF NOT EXISTS sender_id INTEGER;")
     c.execute("ALTER TABLE vip_pre_payment_chats ADD COLUMN IF NOT EXISTS message TEXT;")
 
@@ -952,14 +954,12 @@ def vip_verification(plan_id):
     c.execute("SELECT id FROM vip_submissions WHERE user_id = %s AND plan_id = %s", (user_id, plan_id))
     submission = c.fetchone()
     
-    chats = []
-    if submission:
-        submission_id = submission[0]
-        c.execute("SELECT * FROM vip_pre_payment_chats WHERE submission_id = %s ORDER BY timestamp ASC", (submission_id,))
-        chats = c.fetchall()
+    # Fetch chat history using member_id, decoupling from submission state
+    c.execute("SELECT * FROM vip_pre_payment_chats WHERE member_id = %s ORDER BY timestamp ASC", (user_id,))
+    chats = c.fetchall()
         
     conn.close()
-    return render_template('vip_verification.html', fields=fields, plan_id=plan_id, chats=chats, welcome_msg=welcome_msg)
+    return render_template('vip_verification.html', fields=fields, plan_id=plan_id, chats=chats, welcome_msg=welcome_msg, submission_id=user_id)
 
 @app.route('/submit_vip_verification', methods=['POST'])
 def submit_vip_verification():
@@ -1073,8 +1073,17 @@ def vip_chat_send(sub_id):
     if message:
         conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
         c = conn.cursor()
-        c.execute("INSERT INTO vip_pre_payment_chats (submission_id, sender_id, message) VALUES (%s, %s, %s)",
-                  (sub_id, sender_id, message))
+        
+        referrer = request.referrer or ''
+        if '/admin/vip_requests/' in referrer:
+            c.execute("SELECT user_id FROM vip_submissions WHERE id = %s", (sub_id,))
+            row = c.fetchone()
+            member_id = row[0] if row else sub_id
+        else:
+            member_id = sub_id
+
+        c.execute("INSERT INTO vip_pre_payment_chats (member_id, submission_id, sender_id, message) VALUES (%s, NULL, %s, %s)",
+                  (member_id, sender_id, message))
         conn.commit()
         conn.close()
     
@@ -1360,22 +1369,30 @@ def admin_toggle_vip(user_id):
         # Trigger VIP Added email
         c.execute("SELECT subject, body FROM email_templates WHERE trigger_event = 'VIP Added'")
         t = c.fetchone()
-        if t:
-            send_email_notification(email, t[0].replace('{{name}}', fullname), t[1].replace('{{name}}', fullname), user_id=user_id)
-        else:
-            subj, body = get_templated_email('VIP_Welcome', fullname)
-            if subj: send_email_notification(email, subj, body, user_id=user_id)
+        try:
+            safe_name = fullname if fullname else "VIP Member"
+            if t:
+                send_email_notification(email, t[0].replace('{{name}}', safe_name), t[1].replace('{{name}}', safe_name), user_id=user_id)
+            else:
+                subj, body = get_templated_email('VIP_Welcome', safe_name)
+                if subj: send_email_notification(email, subj, body, user_id=user_id)
+        except Exception as e:
+            print(f"Error sending VIP Add email: {e}")
     else:
         c.execute("UPDATE members SET membership_tier = 'Regular' WHERE id = %s", (user_id,))
         c.execute("UPDATE vip_periods SET end_time = CURRENT_TIMESTAMP WHERE user_id = %s AND end_time IS NULL", (user_id,))
         # Trigger VIP Removed email
         c.execute("SELECT subject, body FROM email_templates WHERE trigger_event = 'VIP Removed'")
         t = c.fetchone()
-        if t:
-            send_email_notification(email, t[0].replace('{{name}}', fullname), t[1].replace('{{name}}', fullname), user_id=user_id)
-        else:
-            subj, body = get_templated_email('VIP_Removal', fullname)
-            if subj: send_email_notification(email, subj, body, user_id=user_id)
+        try:
+            safe_name = fullname if fullname else "VIP Member"
+            if t:
+                send_email_notification(email, t[0].replace('{{name}}', safe_name), t[1].replace('{{name}}', safe_name), user_id=user_id)
+            else:
+                subj, body = get_templated_email('VIP_Removal', safe_name)
+                if subj: send_email_notification(email, subj, body, user_id=user_id)
+        except Exception as e:
+            print(f"Error sending VIP Remove email: {e}")
 
     conn.commit()
     conn.close()
@@ -1711,7 +1728,7 @@ def admin_user_vault(member_id):
             content = request.form.get('message_new')
             
             conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
-            c = conn.cursor()
+            c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             # Create a brand new ticket (message) initiated by the admin
             c.execute("INSERT INTO tickets (user_id, category, message, status, admin_reply) VALUES (%s, %s, %s, 'Replied', %s) RETURNING id",
                       (member_id, category, '[PROACTIVE ADMIN MESSAGE]', content))
@@ -1725,7 +1742,7 @@ def admin_user_vault(member_id):
             media_files = request.files.getlist('admin_media')
             
             conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
-            c = conn.cursor()
+            c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             
             # Find the most recent open ticket for this member
             c.execute("SELECT id FROM tickets WHERE user_id = %s AND status = 'Open' ORDER BY created_at DESC LIMIT 1", (member_id,))
@@ -1754,7 +1771,7 @@ def admin_user_vault(member_id):
             return redirect(url_for('admin_user_vault', member_id=member_id))
 
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
-    c = conn.cursor()
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     c.execute("""
         SELECT t.id, t.category, t.message, t.status, t.admin_reply, a.file_path, a.uploaded_by_admin, t.created_at
         FROM tickets t 
@@ -1782,15 +1799,10 @@ def admin_user_vault(member_id):
             if row[6]: vault_history[t_id]['admin_attachments'].append(row[5])
             else: vault_history[t_id]['user_attachments'].append(row[5])
             
-    # Fetch concierge chat history (pre-payment)
-    c.execute("SELECT id FROM vip_submissions WHERE user_id = %s ORDER BY created_at DESC LIMIT 1", (member_id,))
-    submission = c.fetchone()
-    concierge_chats = []
-    sub_id = None
-    if submission:
-        sub_id = submission[0]
-        c.execute("SELECT * FROM vip_pre_payment_chats WHERE submission_id = %s ORDER BY timestamp ASC", (sub_id,))
-        concierge_chats = c.fetchall()
+    # Fetch concierge chat history using member_id decoupled from submissions
+    c.execute("SELECT * FROM vip_pre_payment_chats WHERE member_id = %s ORDER BY timestamp ASC", (member_id,))
+    concierge_chats = c.fetchall()
+    sub_id = member_id # Pass member_id to template so form posts to /vip_chat/send/member_id
 
     c.execute("SELECT fullname FROM members WHERE id = %s", (member_id,))
     member_row = c.fetchone()
