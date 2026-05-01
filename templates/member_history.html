@@ -65,6 +65,16 @@
                 <p>{{ ticket.admin_reply }}</p>
             </div>
             {% endif %}
+
+            {% if single_thread %}
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed #ccc;">
+                <h4>Reply to Admin</h4>
+                <form action="/history/{{ ticket.id }}" method="POST">
+                    <textarea name="reply_message" rows="3" placeholder="Type your reply here..." required style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ddd;"></textarea>
+                    <button type="submit" style="margin-top: 10px; padding: 10px 20px; background: #34a853; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Send Reply</button>
+                </form>
+            </div>
+            {% endif %}
         </div>
         {% endfor %}
 

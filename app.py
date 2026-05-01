@@ -1589,6 +1589,52 @@ def member_logout():
     session.pop('member_fullname', None)
     return redirect(url_for('member_login'))
 
+@app.route('/history/<int:ticket_id>', methods=['GET', 'POST'])
+def member_ticket_thread(ticket_id):
+    if 'member_id' not in session:
+        return redirect(url_for('member_login'))
+        
+    conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+    c = conn.cursor()
+    
+    if request.method == 'POST':
+        reply_message = request.form.get('reply_message')
+        if reply_message:
+            c.execute("UPDATE tickets SET message = message || '\n\n--- User Reply ---\n' || %s, status = 'Open' WHERE id = %s AND user_id = %s", (reply_message, ticket_id, session['member_id']))
+            conn.commit()
+            flash('Reply sent successfully to admin.')
+        return redirect(url_for('member_ticket_thread', ticket_id=ticket_id))
+        
+    c.execute("""
+        SELECT t.id, t.category, t.message, t.status, t.admin_reply, a.file_path, a.uploaded_by_admin, t.created_at
+        FROM tickets t 
+        LEFT JOIN attachments a ON t.id = a.ticket_id 
+        WHERE t.id = %s AND t.user_id = %s 
+        ORDER BY t.created_at DESC
+    """, (ticket_id, session['member_id']))
+    rows = c.fetchall()
+    conn.close()
+    
+    history = {}
+    for row in rows:
+        t_id = row[0]
+        if t_id not in history:
+            history[t_id] = {
+                'id': row[0],
+                'category': row[1],
+                'message': row[2],
+                'status': row[3],
+                'admin_reply': row[4],
+                'admin_attachments': [],
+                'user_attachments': [],
+                'created_at': row[7]
+            }
+        if row[5]:
+            if row[6]: history[t_id]['admin_attachments'].append(row[5])
+            else: history[t_id]['user_attachments'].append(row[5])
+            
+    return render_template('member_history.html', history=list(history.values()), single_thread=True, ticket_id=ticket_id)
+
 @app.route('/history', methods=['GET', 'POST'])
 def member_history():
     if 'member_id' not in session:
@@ -1776,8 +1822,8 @@ def vip_lounge():
         member_data = c.fetchone()
         if not member_data or member_data['membership_tier'] != 'VIP':
             conn.close()
-            return "Unauthorized. VIP Lounge access required."
-            
+            flash("Upgrade to VIP to access the lounge.")
+            return redirect(url_for('member_dashboard'))
         if member_data['vip_since'] is None:
             c.execute("UPDATE members SET vip_since = CURRENT_TIMESTAMP WHERE id = %s", (member_id,))
             conn.commit()
