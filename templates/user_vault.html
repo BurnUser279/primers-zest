@@ -145,7 +145,7 @@
                     </div>
                     {% endfor %}
                 </div>
-                <form action="/vip_chat/send/{{ sub_id }}" method="POST">
+                <form action="/vip_chat/send/{{ member['id'] }}" method="POST">
                     <input type="text" name="message" placeholder="Type concierge reply here..." required style="width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #ddd; box-sizing: border-box; margin-bottom: 10px;">
                     <button type="submit" style="background: #2196f3; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer;">Send Concierge Reply</button>
                 </form>

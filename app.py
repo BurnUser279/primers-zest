@@ -1067,8 +1067,8 @@ def admin_vip_review(sub_id):
     
     return render_template('admin_vip_review.html', submission=submission, data=data, chats=chats)
 
-@app.route('/vip_chat/send/<int:sub_id>', methods=['POST'])
-def vip_chat_send(sub_id):
+@app.route('/vip_chat/send/<int:member_id>', methods=['POST'])
+def vip_chat_send(member_id):
     is_admin = session.get('is_admin')
     user_id = session.get('member_id')
     
@@ -1083,14 +1083,6 @@ def vip_chat_send(sub_id):
         conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
         c = conn.cursor()
         
-        referrer = request.referrer or ''
-        if '/admin/vip_requests/' in referrer:
-            c.execute("SELECT user_id FROM vip_submissions WHERE id = %s", (sub_id,))
-            row = c.fetchone()
-            member_id = row[0] if row else sub_id
-        else:
-            member_id = sub_id
-
         media_path = None
         if chat_media and chat_media.filename != '':
             filename = secure_filename(chat_media.filename)
@@ -1401,7 +1393,7 @@ def admin_toggle_vip(user_id):
         c.execute("SELECT id FROM vip_submissions WHERE user_id = %s", (user_id,))
         sub_check = c.fetchone()
         if sub_check:
-            c.execute("UPDATE vip_submissions SET status = 'approved' WHERE id = %s", (sub_check[0],))
+            c.execute("UPDATE vip_submissions SET status = 'approved' WHERE id = %s", (sub_check['id'],))
             
         c.execute("INSERT INTO vip_periods (user_id, start_time) VALUES (%s, CURRENT_TIMESTAMP)", (user_id,))
         # Trigger VIP Added email
@@ -1410,7 +1402,7 @@ def admin_toggle_vip(user_id):
         try:
             safe_name = fullname if fullname else "VIP Member"
             if t:
-                send_email_notification(email, t[0].replace('{{name}}', safe_name), t[1].replace('{{name}}', safe_name), user_id=user_id)
+                send_email_notification(email, t['subject'].replace('{{name}}', safe_name), t['body'].replace('{{name}}', safe_name), user_id=user_id)
             else:
                 subj, body = get_templated_email('VIP_Welcome', safe_name)
                 if subj: send_email_notification(email, subj, body, user_id=user_id)
@@ -1425,7 +1417,7 @@ def admin_toggle_vip(user_id):
         try:
             safe_name = fullname if fullname else "VIP Member"
             if t:
-                send_email_notification(email, t[0].replace('{{name}}', safe_name), t[1].replace('{{name}}', safe_name), user_id=user_id)
+                send_email_notification(email, t['subject'].replace('{{name}}', safe_name), t['body'].replace('{{name}}', safe_name), user_id=user_id)
             else:
                 subj, body = get_templated_email('VIP_Removal', safe_name)
                 if subj: send_email_notification(email, subj, body, user_id=user_id)

@@ -102,7 +102,7 @@
             <form id="ajaxChatForm" class="chat-input-wrapper" enctype="multipart/form-data" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 10px; background: #fff; border-top: 1px solid #ddd; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
                 <input type="text" name="message" class="chat-input" id="chatInput" placeholder="Type your message here..." style="flex: 1; min-width: 200px;">
                 <input type="file" name="chat_media" accept="image/*" style="max-width: 100%; font-size: 0.8rem;">
-                <button type="submit" class="send-btn" style="flex-shrink: 0;">Send</button>
+                <button type="submit" class="send-btn" style="flex-shrink: 0; padding: 12px 24px !important; font-size: 16px !important; font-weight: bold; border-radius: 8px; min-width: 100px;">Send</button>
             </form>
             {% else %}
             <div class="chat-input-area" style="opacity: 0.5; pointer-events: none;">
@@ -117,7 +117,6 @@
         const win = document.getElementById('chatWindow');
         win.scrollTop = win.scrollHeight;
 
-        {% if submission_id %}
         const chatForm = document.getElementById('ajaxChatForm');
         if (chatForm) {
             chatForm.addEventListener('submit', function(e) {
@@ -126,10 +125,11 @@
                 const submitBtn = chatForm.querySelector('.send-btn');
                 submitBtn.disabled = true;
                 
-                fetch('/vip_chat/send/{{ submission_id }}', {
+                fetch('/vip_chat/send/{{ session.member_id }}', {
                     method: 'POST',
                     body: formData
                 }).then(response => {
+                    if (!response.ok) throw new Error('Server Error');
                     chatForm.reset();
                     submitBtn.disabled = false;
                     pollChats(); // update immediately
@@ -159,6 +159,5 @@
         }
 
         setInterval(pollChats, 5000);
-        {% endif %}
     </script>
 {% endblock %}
