@@ -808,9 +808,17 @@ def admin_dashboard():
     c.execute("SELECT setting_key, setting_value FROM site_settings")
     settings = {row[0]: row[1] for row in c.fetchall()}
     
+    c.execute("""
+        SELECT DISTINCT m.id, m.fullname, m.email, m.membership_tier
+        FROM members m
+        JOIN vip_pre_payment_chats vpc ON m.id = vpc.member_id
+        ORDER BY m.id DESC
+    """)
+    active_chats = c.fetchall()
+    
     conn.close()
 
-    return render_template('admin.html', members=all_members, donations=all_donations, plans=all_plans, email_templates=all_templates, vip_fields=vip_fields, notifications=notifications, slides=slides, settings=settings)
+    return render_template('admin.html', members=all_members, donations=all_donations, plans=all_plans, email_templates=all_templates, vip_fields=vip_fields, notifications=notifications, slides=slides, settings=settings, active_chats=active_chats)
 
 @app.route('/admin/notifications/read/<int:n_id>', methods=['POST'])
 def admin_mark_read(n_id):
@@ -1068,9 +1076,10 @@ def vip_chat_send(sub_id):
         return redirect(url_for('member_login'))
     
     message = request.form.get('message')
+    chat_media = request.files.get('chat_media')
     sender_id = 0 if is_admin else user_id # 0 for admin
     
-    if message:
+    if message or chat_media:
         conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
         c = conn.cursor()
         
@@ -1082,8 +1091,15 @@ def vip_chat_send(sub_id):
         else:
             member_id = sub_id
 
-        c.execute("INSERT INTO vip_pre_payment_chats (member_id, submission_id, sender_id, message) VALUES (%s, NULL, %s, %s)",
-                  (member_id, sender_id, message))
+        media_path = None
+        if chat_media and chat_media.filename != '':
+            filename = secure_filename(chat_media.filename)
+            filename = f"chat_{member_id}_{uuid.uuid4().hex}_{filename}"
+            chat_media.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            media_path = f"/static/uploads/{filename}"
+
+        c.execute("INSERT INTO vip_pre_payment_chats (member_id, submission_id, sender_id, message, media_path) VALUES (%s, NULL, %s, %s, %s)",
+                  (member_id, sender_id, message or '', media_path))
         conn.commit()
         conn.close()
     
@@ -1331,7 +1347,16 @@ def admin_manual_vip(member_id):
         
     conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
     c = conn.cursor()
+    
+    # Directly update membership tier first
     c.execute("UPDATE members SET membership_tier = 'VIP', vip_since = CURRENT_TIMESTAMP WHERE id = %s", (member_id,))
+    
+    # Only attempt to approve submission if it exists
+    c.execute("SELECT id FROM vip_submissions WHERE user_id = %s", (member_id,))
+    sub_check = c.fetchone()
+    if sub_check:
+        c.execute("UPDATE vip_submissions SET status = 'approved' WHERE id = %s", (sub_check[0],))
+        
     # Start a new VIP period
     c.execute("INSERT INTO vip_periods (user_id, start_time) VALUES (%s, CURRENT_TIMESTAMP)", (member_id,))
     
@@ -1339,9 +1364,13 @@ def admin_manual_vip(member_id):
     c.execute("SELECT email, fullname, id FROM members WHERE id = %s", (member_id,))
     m_row = c.fetchone()
     if m_row:
-        subj, body = get_templated_email('VIP_Welcome', m_row[1])
-        if subj:
-            send_email_notification(m_row[0], subj, body, user_id=m_row[2])
+        try:
+            safe_name = m_row[1] if m_row[1] else "VIP Member"
+            subj, body = get_templated_email('VIP_Welcome', safe_name)
+            if subj:
+                send_email_notification(m_row[0], subj, body, user_id=m_row[2])
+        except Exception as e:
+            print(f"Error sending VIP Welcome email: {e}")
             
     conn.commit()
     conn.close()
@@ -1365,6 +1394,13 @@ def admin_toggle_vip(user_id):
     
     if new_tier == 'VIP':
         c.execute("UPDATE members SET membership_tier = 'VIP', vip_since = CURRENT_TIMESTAMP WHERE id = %s", (user_id,))
+        
+        # Only attempt to approve submission if it exists
+        c.execute("SELECT id FROM vip_submissions WHERE user_id = %s", (user_id,))
+        sub_check = c.fetchone()
+        if sub_check:
+            c.execute("UPDATE vip_submissions SET status = 'approved' WHERE id = %s", (sub_check[0],))
+            
         c.execute("INSERT INTO vip_periods (user_id, start_time) VALUES (%s, CURRENT_TIMESTAMP)", (user_id,))
         # Trigger VIP Added email
         c.execute("SELECT subject, body FROM email_templates WHERE trigger_event = 'VIP Added'")

@@ -430,6 +430,34 @@
 
         <!-- Section 1: Member Roster -->
         <div id="section-roster" class="accordion-content" style="display: block;">
+        <h2>Active Concierge Chats</h2>
+        <div class="table-wrapper" style="margin-bottom: 40px;">
+            <table>
+                <tr>
+                    <th>Member ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Tier</th>
+                    <th>Action</th>
+                </tr>
+                {% for chat_member in active_chats %}
+                <tr>
+                    <td>{{ chat_member[0] }}</td>
+                    <td>{{ chat_member[1] }}</td>
+                    <td>{{ chat_member[2] }}</td>
+                    <td>{{ chat_member[3] }}</td>
+                    <td>
+                        <a href="/admin/vault/{{ chat_member[0] }}" class="button" style="background: #2196f3; color: white; padding: 6px 12px; border-radius: 4px; text-decoration: none;">Open Vault / Reply</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #666;">No active concierge chats.</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
         <h2>VIP Club - Member Roster</h2>
         <form method="GET" action="/admin" style="margin-bottom: 15px;">
             <label style="font-weight: bold; margin-right: 8px;">Sort By:</label>

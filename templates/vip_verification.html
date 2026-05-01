@@ -87,6 +87,11 @@
                             align-self: {% if chat.sender_id != session['member_id'] %}flex-start{% else %}flex-end{% endif %}; 
                             max-width: 80%; font-size: 0.95rem;">
                     {{ chat.message }}
+                    {% if chat.media_path %}
+                    <div style="margin-top: 8px;">
+                        <a href="{{ chat.media_path }}" target="_blank" style="color: inherit; text-decoration: underline; font-size: 0.85rem;">View Attached Media</a>
+                    </div>
+                    {% endif %}
                     <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 5px; text-align: right;">
                         {{ chat.timestamp.strftime('%H:%M') }}
                     </div>
@@ -94,8 +99,9 @@
                 {% endfor %}
             </div>
             {% if submission_id %}
-            <form action="/vip_chat/send/{{ submission_id }}" method="POST" class="chat-input-area">
-                <input type="text" name="message" class="chat-input" id="chatInput" placeholder="Type your message here..." required>
+            <form action="/vip_chat/send/{{ submission_id }}" method="POST" class="chat-input-area" enctype="multipart/form-data">
+                <input type="text" name="message" class="chat-input" id="chatInput" placeholder="Type your message here...">
+                <input type="file" name="chat_media" accept="image/*" style="max-width: 200px; font-size: 0.8rem; margin: 0 10px;">
                 <button type="submit" class="send-btn">Send</button>
             </form>
             {% else %}
