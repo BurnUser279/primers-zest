@@ -1942,6 +1942,18 @@ def trigger_admin_alert():
     flash("Admin was pinged! Assistance is on the way.")
     return redirect(url_for('vip_lounge'))
 
+@app.route('/api/keepalive', methods=['GET'])
+def api_keepalive():
+    try:
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        c = conn.cursor()
+        c.execute("SELECT 1;")
+        c.fetchone()
+        conn.close()
+        return jsonify({"status": "alive", "database": "active"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 if __name__ == '__main__':
     # Auto-migration on startup
     try:
