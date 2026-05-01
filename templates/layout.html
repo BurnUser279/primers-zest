@@ -5,9 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Member Dashboard{% endblock %}</title>
     
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     {% block extra_head %}{% endblock %}
 
     <style>
+        /* Global Premium Styling */
+        body {
+            font-family: 'Inter', sans-serif !important;
+        }
+        .container, .main-content, .main-container {
+            padding: 40px !important;
+        }
+        .button, button, .nav-btn, .submit-btn, .send-btn {
+            background: linear-gradient(135deg, #2b2b2b, #1a1a1a) !important;
+            color: #fff !important;
+            border: none !important;
+            transition: all 0.3s ease;
+        }
+        .button:hover, button:hover, .nav-btn:hover, .submit-btn:hover, .send-btn:hover {
+            background: linear-gradient(135deg, #444, #2b2b2b) !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
+            transform: translateY(-1px);
+        }
+        .fixed-hamburger {
+            z-index: 1000 !important;
+        }
+        .flash-msg, .flash-container, .flash-overlay {
+            margin-top: 60px !important;
+        }
+
         /* VIP Theme Styles */
         .vip-theme {
             background-color: #0a0a0a !important;
@@ -28,7 +54,7 @@
         .vip-theme button, 
         .vip-theme .modal-btn,
         .vip-theme .fixed-hamburger {
-            background-color: #7a0000 !important;
+            background: linear-gradient(135deg, #7a0000, #500000) !important;
             color: white !important;
             border-color: #7a0000 !important;
         }
@@ -36,7 +62,7 @@
         .vip-theme button:hover, 
         .vip-theme .modal-btn:hover,
         .vip-theme .fixed-hamburger:hover {
-            background-color: #5e17eb !important;
+            background: linear-gradient(135deg, #5e17eb, #3c0c99) !important;
             box-shadow: 0 0 15px #5e17eb !important;
         }
         .vip-theme a {

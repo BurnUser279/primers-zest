@@ -57,9 +57,14 @@
                 <textarea name="text_input_{{ rule[0] }}" rows="3" placeholder="Provide details here..."></textarea>
                 <input type="file" name="files_{{ rule[0] }}" multiple accept="image/*,.pdf,.doc,.docx">
             </div>
+            {% else %}
+            <div class="rule-item">
+                <label class="rule-label">Verification Evidence (Optional)</label>
+                <input type="file" name="general_files" multiple accept="image/*,.pdf,.doc,.docx">
+            </div>
             {% endfor %}
 
-            <button type="submit" class="submit-btn">Submit Verification for Approval</button>
+            <button type="submit" class="submit-btn">Click to start verification chat process</button>
         </form>
 
         <div class="chat-section">
@@ -76,10 +81,10 @@
                     Hello! I'm your VIP onboarding assistant. Once you submit your verification details, you can chat with us here for any queries.
                 </div>
                 {% for chat in chats %}
-                <div style="background: {% if chat.sender_id == 0 %}#e9ecef{% else %}#1a1a1a{% endif %}; 
-                            color: {% if chat.sender_id == 0 %}#333{% else %}white{% endif %}; 
+                <div style="background: {% if chat.sender_id != session['member_id'] %}#e9ecef{% else %}#1a1a1a{% endif %}; 
+                            color: {% if chat.sender_id != session['member_id'] %}#333{% else %}white{% endif %}; 
                             padding: 10px 15px; border-radius: 12px; 
-                            align-self: {% if chat.sender_id == 0 %}flex-start{% else %}flex-end{% endif %}; 
+                            align-self: {% if chat.sender_id != session['member_id'] %}flex-start{% else %}flex-end{% endif %}; 
                             max-width: 80%; font-size: 0.95rem;">
                     {{ chat.message }}
                     <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 5px; text-align: right;">
