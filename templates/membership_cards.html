@@ -1,0 +1,422 @@
+{% extends "layout.html" %}
+
+{% block title %}Get Membership Card - Primer's Zest{% endblock %}
+
+{% block extra_head %}
+<style>
+    .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+        gap: 40px;
+        padding: 40px 0;
+    }
+
+    .membership-card-item {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 24px;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        box-shadow: var(--shadow-md);
+    }
+
+    .membership-card-item:hover {
+        transform: translateY(-12px);
+        box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+        border-color: var(--primary);
+    }
+
+    /* ── Dynamic Card Component ── */
+    .card-preview-container {
+        width: 100%;
+        padding: 25px;
+        background: #050505;
+        perspective: 1000px;
+    }
+
+    .physical-card {
+        width: 100%;
+        aspect-ratio: 1.586/1; /* ID-1 standard ratio */
+        border-radius: 18px;
+        position: relative;
+        overflow: hidden;
+        padding: 25px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        color: #fff;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 100px rgba(255,255,255,0.05);
+        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        transition: transform 0.6s;
+        transform-style: preserve-3d;
+    }
+
+    /* Tier Specific Gradients */
+    .card-tier-bronze { background: linear-gradient(135deg, #4b2a00 0%, #a05a2c 50%, #633517 100%); }
+    .card-tier-silver { background: linear-gradient(135deg, #2c3e50 0%, #bdc3c7 50%, #7f8c8d 100%); color: #1a1a1a; text-shadow: none; }
+    .card-tier-gold { background: linear-gradient(135deg, #d4af37 0%, #f5d060 50%, #8b6914 100%); color: #1a1a1a; text-shadow: none; }
+    .card-tier-platinum { background: linear-gradient(135deg, #1a1a1a 0%, #4a4a4a 50%, #000 100%); border: 1px solid rgba(255,255,255,0.1); }
+
+    /* Fine Inprint Watermark */
+    .card-watermark {
+        position: absolute;
+        inset: 0;
+        opacity: 0.04;
+        pointer-events: none;
+        background-image: repeating-linear-gradient(
+            -45deg,
+            transparent,
+            transparent 40px,
+            rgba(255,255,255,0.8) 40px,
+            rgba(255,255,255,0.8) 80px
+        );
+        mask-image: linear-gradient(to bottom, black, transparent);
+        z-index: 1;
+    }
+    
+    /* Fine Inprint Watermark - Professional Pattern Approach */
+    .card-inprint-text {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        user-select: none;
+        opacity: 0.12;
+        background-image: radial-gradient(circle, var(--primary) 0.5px, transparent 0.5px);
+        background-size: 15px 15px; /* Subtle dots */
+    }
+
+    .card-tier-gold .card-inprint-text {
+        opacity: 0.08;
+        background: none;
+        mask-image: none;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        font-size: 0.4rem;
+        font-weight: 900;
+        letter-spacing: 1px;
+        padding: 5px;
+        color: #fff;
+        line-height: 1.2;
+        overflow: hidden;
+    }
+    
+    .card-tier-gold .card-inprint-text::before {
+        content: "PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST PRIMERS ZEST";
+        display: block;
+        opacity: 0.4;
+    }
+    
+    /* Overlay Text for Inprints */
+    .inprint-label {
+        position: absolute;
+        font-size: 0.45rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 4px;
+        color: var(--primary);
+        opacity: 0.1;
+        white-space: nowrap;
+        transform: rotate(-90deg) translateX(-50%);
+        left: 10px;
+        top: 50%;
+        z-index: 1;
+    }
+
+    .card-tier-gold .inprint-label {
+        color: #fff;
+        opacity: 0.15;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        z-index: 2;
+    }
+
+    .card-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .logo-mark {
+        width: 32px;
+        height: 32px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        font-size: 1.2rem;
+        backdrop-filter: blur(5px);
+    }
+
+    .card-tier-title {
+        text-align: right;
+    }
+
+    .tier-type {
+        font-size: 0.6rem;
+        font-weight: 800;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        opacity: 0.8;
+    }
+
+    .tier-name-main {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 900;
+        letter-spacing: 1px;
+    }
+
+    .card-chip {
+        width: 45px;
+        height: 35px;
+        background: linear-gradient(135deg, #d4af37, #f5d060);
+        border-radius: 6px;
+        margin: 20px 0;
+        position: relative;
+        z-index: 2;
+        box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+    }
+    .card-chip::after {
+        content: '';
+        position: absolute;
+        inset: 5px;
+        border: 1px solid rgba(0,0,0,0.1);
+        border-radius: 4px;
+        background-image: linear-gradient(to right, transparent 50%, rgba(0,0,0,0.1) 50%),
+                          linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.1) 50%);
+        background-size: 10px 10px;
+    }
+
+    .card-body {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        z-index: 2;
+    }
+
+    .card-holder-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .label-small {
+        font-size: 0.5rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        opacity: 0.7;
+    }
+
+    .holder-name {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .access-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        background: rgba(255,255,255,0.15);
+        border-radius: 4px;
+        font-size: 0.6rem;
+        font-weight: 800;
+        margin-top: 5px;
+    }
+
+    .card-meta-info {
+        text-align: right;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .card-id-number {
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+
+    .card-dates {
+        display: flex;
+        gap: 15px;
+        justify-content: flex-end;
+    }
+
+    .card-contact {
+        position: absolute;
+        bottom: 12px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 0.55rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        opacity: 0.6;
+        z-index: 2;
+    }
+
+    .card-info {
+        padding: 30px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .card-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.6rem;
+        font-weight: 800;
+        margin-bottom: 10px;
+        color: var(--text-main);
+    }
+
+    .card-price {
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin-bottom: 25px;
+        color: var(--primary);
+    }
+
+    .card-price span {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 30px 0;
+        flex: 1;
+    }
+
+    .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+        font-size: 0.95rem;
+        color: var(--text-muted);
+    }
+
+    .feature-item svg {
+        color: var(--primary);
+        flex-shrink: 0;
+    }
+
+    .btn-order {
+        width: 100%;
+        background: var(--primary-gradient);
+        color: #000;
+        border: none;
+        padding: 16px;
+        border-radius: 14px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        box-shadow: 0 4px 15px rgba(212,175,55,0.2);
+    }
+
+    .btn-order:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(212,175,55,0.4);
+    }
+
+    @media (max-width: 480px) {
+        .card-grid { grid-template-columns: 1fr; }
+        .physical-card { padding: 15px; }
+        .holder-name { font-size: 0.9rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="section-header">
+    <div>
+        <h1 style="font-size: 2.2rem; margin-bottom: 10px;">Membership Cards</h1>
+        <p style="color: var(--text-muted); max-width: 600px;">Elevate your status with our exclusive physical membership cards. Each card represents a tier of elite access and executive privileges.</p>
+    </div>
+</div>
+
+<div class="card-grid">
+    {% for card in cards %}
+    <div class="membership-card-item">
+        <div class="card-preview-container">
+            <div class="physical-card card-tier-{{ card.tier_name.split(' ')[0]|lower }}" {% if card.image_path %}style="background: url('{{ card.image_path }}?v={{ range(1, 9999) | random }}') no-repeat center center; background-size: cover; border: none; box-shadow: 0 15px 45px rgba(0,0,0,0.7);"{% endif %}>
+                <div class="card-inprint-text"></div>
+                <div class="inprint-label">PRIMERS ZEST</div>
+                
+                <div class="card-header" style="{% if card.image_path %}display: none;{% endif %}">
+                    <div class="card-logo">
+                        <div class="logo-mark">P</div>
+                        <div style="font-size: 0.7rem; font-weight: 800; letter-spacing: 1px;">PRIMER'S ZEST</div>
+                    </div>
+                    <div class="card-tier-title">
+                        <div class="tier-type">Membership Tier</div>
+                        <div class="tier-name-main">{{ card.tier_name.upper() }}</div>
+                    </div>
+                </div>
+
+                <div class="card-chip" style="{% if card.image_path %}display: none;{% endif %}"></div>
+
+                <div class="card-body">
+                    <div class="card-holder-info">
+                        <div class="label-small" style="{% if card.image_path %}opacity: 0.4; font-size: 0.45rem;{% endif %}">Card Holder</div>
+                        <div class="holder-name" style="{% if card.image_path %}font-size: 1rem; letter-spacing: 1.5px; text-shadow: 0 2px 10px rgba(0,0,0,0.8); color: #fff; font-weight: 600;{% endif %}">{{ member['fullname'] if member else 'ALEXANDER D. REED' }}</div>
+                        <div class="access-badge" style="{% if card.image_path %}background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.1);{% endif %}">EXECUTIVE ACCESS</div>
+                    </div>
+                    
+                    <div class="card-meta-info">
+                        <div class="card-id-number" style="{% if card.image_path %}font-size: 0.75rem; opacity: 0.8; text-shadow: 0 2px 5px rgba(0,0,0,0.5);{% endif %}">PZ-{{ card.tier_name[:3]|upper }}-{{ (member['id'] + 8820 if member else 8821) }}-V902</div>
+                        <div class="card-dates">
+                            <div style="{% if card.image_path %}opacity: 0.6;{% endif %}">
+                                <div class="label-small" style="font-size: 0.4rem;">Since</div>
+                                <div style="font-size: 0.65rem; font-weight: 700;">{{ member['vip_since'].strftime('%Y') if member and member['vip_since'] else '2024' }}</div>
+                            </div>
+                            <div style="{% if card.image_path %}opacity: 0.6;{% endif %}">
+                                <div class="label-small" style="font-size: 0.4rem;">Valid Thru</div>
+                                <div style="font-size: 0.65rem; font-weight: 700;">12/28</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-contact" style="{% if card.image_path %}opacity: 0.25; font-size: 0.45rem; bottom: 8px;{% endif %}">concierge@primerszest.com</div>
+            </div>
+        </div>
+
+        <div class="card-info">
+            <h3 class="card-title">{{ card.tier_name }}</h3>
+            <div class="card-price">${{ "%.0f"|format(card.price) }}<span> / one-time</span></div>
+            
+            <ul class="feature-list">
+                {% for feature in card.features.split(',') %}
+                <li class="feature-item">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"></path></svg>
+                    {{ feature.strip() }}
+                </li>
+                {% endfor %}
+            </ul>
+            
+            <a href="/membership_card/order/{{ card.id }}" class="btn-order" style="display: block; text-align: center; text-decoration: none;">Order Physical Card</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

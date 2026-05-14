@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Primer's Zest{% endblock %}</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    {% block extra_head %}{% endblock %}
+
+    <style>
+        :root {
+            /* Standard Theme - Refined Executive Palette */
+            --bg-body: #fdfdfd;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --primary: #C5A059;
+            --primary-metallic: linear-gradient(135deg, #C5A059 0%, #F5E6AD 25%, #B89B3E 50%, #F5E6AD 75%, #C5A059 100%);
+            --primary-gradient: linear-gradient(135deg, #C5A059 0%, #B89B3E 100%);
+            --primary-soft: rgba(197, 160, 89, 0.1);
+            --border-color: rgba(197, 160, 89, 0.12);
+            --sidebar-width: 280px;
+            --accent: #C5A059;
+            --shadow-sm: 0 2px 10px rgba(0,0,0,0.02), 0 1px 2px rgba(197, 160, 89, 0.05);
+            --shadow-md: 0 20px 40px rgba(0,0,0,0.04), 0 1px 3px rgba(197, 160, 89, 0.08);
+            --shadow-lg: 0 30px 60px rgba(0,0,0,0.08);
+            --radius: 16px;
+
+            /* Rigid Type Scale */
+            --text-xs: 0.75rem;
+            --text-sm: 0.875rem;
+            --text-base: 1rem;
+            --text-lg: 1.125rem;
+            --text-xl: 1.25rem;
+            --text-2xl: 1.5rem;
+            --text-3xl: 1.875rem;
+            --text-4xl: 2.25rem;
+            
+            /* Animations */
+            --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* VIP Theme Overrides - Premium Executive Dark */
+        .vip-theme {
+            --bg-body: #050505;
+            --bg-card: #0d0d0d;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary-metallic: linear-gradient(135deg, #C5A059 0%, #8E7643 50%, #C5A059 100%);
+            --border-color: rgba(197, 160, 89, 0.18);
+            --glass-bg: rgba(13, 13, 13, 0.85);
+            --shadow-md: 0 25px 50px rgba(0, 0, 0, 0.6);
+            --shadow-lg: 0 40px 80px rgba(0, 0, 0, 0.8);
+        }
+
+        .light-theme {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        /* Dynamic Theme Contrast Support */
+        @media (prefers-color-scheme: dark) {
+            .plan-card h3, 
+            .plan-card .price, 
+            .plan-card .features li,
+            .card-inscription,
+            .pricing-text,
+            .toast div,
+            .flash-content p,
+            .alert,
+            .message,
+            .inscription-text {
+                color: #ffffff !important;
+            }
+            .text-dynamic {
+                color: #f1f5f9;
+            }
+        }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.98) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+
+        @keyframes toastIn {
+            from { transform: translateX(100%) scale(0.9); opacity: 0; }
+            to { transform: translateX(0) scale(1); opacity: 1; }
+        }
+
+        .reveal-stagger > * {
+            opacity: 0;
+            animation: fadeInScale 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        .reveal-stagger > *:nth-child(1) { animation-delay: 0.1s; }
+        .reveal-stagger > *:nth-child(2) { animation-delay: 0.2s; }
+        .reveal-stagger > *:nth-child(3) { animation-delay: 0.3s; }
+        .reveal-stagger > *:nth-child(4) { animation-delay: 0.4s; }
+        .reveal-stagger > *:nth-child(5) { animation-delay: 0.5s; }
+
+        .light-theme .nav-item:hover {
+            background: rgba(184, 134, 11, 0.05);
+        }
+
+        .light-theme .premium-table th {
+            background: rgba(0,0,0,0.02);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            margin: 0;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            overflow-x: hidden;
+            min-height: 100vh;
+            color-scheme: dark light;
+        }
+
+        .vip-theme { color-scheme: dark; }
+        .light-theme { color-scheme: light; }
+
+        select option {
+            background-color: var(--bg-card);
+            color: var(--text-main);
+        }
+
+        h1, h2, h3, h4, .brand-font {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+        }
+
+        /* Layout Structure */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            {% if (session.get('member_id') or session.get('is_admin')) and request.endpoint not in ['index', 'member_login', 'admin_login', 'register', 'privacy_policy', 'terms_of_service'] %}
+            margin-left: var(--sidebar-width);
+            {% else %}
+            margin-left: 0;
+            {% endif %}
+        }
+
+        .content-area {
+            padding: 40px;
+            max-width: 1600px; /* Increased for better large-screen utilization */
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .vip-theme .content-area {
+            max-width: 100%; /* Full width for VIPs to feel more immersive */
+        }
+
+        /* Skeleton Shimmer */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(197, 160, 89, 0.05) 25%, rgba(197, 160, 89, 0.1) 50%, rgba(197, 160, 89, 0.05) 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite linear;
+            border-radius: 8px;
+            display: inline-block;
+            min-height: 1em;
+            width: 100%;
+        }
+
+        /* Toast Container */
+        #toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            color: var(--text-main);
+            font-size: var(--text-sm);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 300px;
+            animation: toastIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            pointer-events: auto;
+        }
+
+        .toast.error { border-left: 4px solid #ef4444; }
+        .toast.success { border-left: 4px solid var(--primary); }
+        .toast.info { border-left: 4px solid #3b82f6; }
+
+        /* Custom File Upload */
+        .custom-file-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .file-input-hidden {
+            position: absolute;
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .file-cta {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-main);
+            transition: all 0.2s;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .file-cta:hover {
+            border-color: var(--primary);
+            background: var(--bg-body);
+        }
+
+        .file-cta svg {
+            color: var(--primary);
+        }
+
+        .file-name-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            border: 1px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-family: inherit;
+            font-size: var(--text-sm);
+            text-decoration: none;
+            position: relative;
+            box-shadow: var(--shadow-sm);
+            letter-spacing: 0.02em;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: var(--primary-metallic);
+            background-size: 200% 200%;
+            color: #000;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 20px rgba(197, 160, 89, 0.15);
+        }
+
+        .btn-primary:hover {
+            background-position: right center;
+            box-shadow: 0 15px 30px rgba(197, 160, 89, 0.25);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            background: var(--primary-soft);
+        }
+
+        /* Focus Rings */
+        input:focus, select:focus, textarea:focus, .btn:focus-visible {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(197, 160, 89, 0.12), var(--shadow-sm);
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.8rem;
+        }
+
+        .btn-red {
+            background: #ef4444;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-red:hover {
+            background: #dc2626;
+            box-shadow: 0 10px 20px rgba(239, 68, 68, 0.2);
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        /* VIP Specific Card Enhancements */
+        .vip-theme .stat-card, 
+        .vip-theme .table-card,
+        .vip-theme .announcement-card,
+        .vip-theme .plan-card,
+        .vip-theme .star-card,
+        .vip-theme .booking-card,
+        .vip-theme .card {
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+            position: relative;
+            background: var(--bg-card);
+            border-radius: var(--radius);
+        }
+
+        .vip-theme .stat-card:hover,
+        .vip-theme .star-card:hover {
+            border-color: rgba(197, 160, 89, 0.4);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 20px rgba(197, 160, 89, 0.05);
+            transform: translateY(-5px);
+        }
+
+        /* Glassmorphism utility */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Mobile Header */
+        .mobile-header {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 1500;
+            padding: 0 25px;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .vip-theme .mobile-header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+        }
+
+        .mobile-header .brand-logo {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--primary);
+            text-decoration: none;
+            letter-spacing: 1px;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar-nav {
+            width: var(--sidebar-width);
+            background: var(--bg-card);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 1000;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 30px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .brand-logo {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text-main);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            letter-spacing: -0.5px;
+        }
+
+        .vip-theme .brand-logo {
+            color: var(--primary);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+
+        .nav-links {
+            padding: 25px 15px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .nav-group-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 20px 15px 10px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            color: var(--text-main);
+            text-decoration: none;
+            border-radius: 10px;
+            margin-bottom: 4px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 215, 0, 0.08);
+            color: var(--primary);
+        }
+
+        .vip-theme .nav-item:hover {
+            background: rgba(255, 215, 0, 0.15);
+        }
+
+        .nav-item.active {
+            background: var(--primary-gradient);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.25);
+        }
+
+        .nav-item.vip-link {
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            margin-top: 10px;
+        }
+
+        /* Theme Toggle Button */
+        .theme-toggle-btn {
+            background: rgba(var(--primary), 0.1);
+            border: 1px solid var(--border-color);
+            color: var(--primary);
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            transition: all 0.2s;
+            margin: 20px 15px;
+        }
+
+        .theme-toggle-btn:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            background: rgba(0,0,0,0.02);
+            margin-top: auto;
+        }
+
+        .user-profile-sm {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            background: var(--primary-gradient);
+            color: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .sidebar-nav { 
+                transform: translateX(-100%); 
+                visibility: hidden;
+            }
+            .sidebar-nav.active { 
+                transform: translateX(0); 
+                visibility: visible;
+            }
+            .mobile-header { display: flex; }
+            .main-wrapper { 
+                margin-left: 0 !important; 
+                padding-top: 70px; /* Offset for mobile header */
+                width: 100%;
+            }
+            .content-area { 
+                padding: 20px 15px; 
+                overflow-x: hidden;
+            }
+        }
+
+        /* Global Responsive Utilities */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr !important; }
+            .hide-mobile { display: none !important; }
+            .only-mobile { display: block !important; }
+            .full-mobile { width: 100% !important; }
+        }
+        @media (min-width: 769px) {
+            .only-mobile { display: none !important; }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-body); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+
+        /* Mobile Menu Overlay */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            z-index: 950;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        /* Flash Modal / Notification UI */
+        .flash-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 5000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: opacity 0.3s ease;
+        }
+        .flash-modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.8) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .flash-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 215, 0, 0.1);
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+        }
+        .flash-modal.error .flash-icon, .flash-modal.danger .flash-icon {
+            background: rgba(255, 107, 107, 0.1);
+            color: #ff6b6b;
+        }
+        .flash-content h3 {
+            margin: 0 0 10px;
+            font-size: 1.5rem;
+            color: var(--text-main);
+        }
+        .flash-content p {
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .flash-close {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.3s;
+        }
+        .flash-close:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+        /* Global Footer */
+        .main-footer {
+            margin-top: auto;
+            padding: 80px 40px 40px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+        }
+
+        .footer-trust-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+            padding-bottom: 40px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .trust-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 12px;
+            opacity: 0.8;
+            transition: var(--transition-fast);
+        }
+
+        .trust-item:hover { opacity: 1; transform: translateY(-3px); }
+
+        .trust-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--primary-soft);
+            color: var(--primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.75rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .trust-info h4 {
+            font-size: 0.75rem;
+            color: var(--text-main);
+            margin: 0 0 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .trust-info p {
+            font-size: 0.65rem;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .footer-compliance-block {
+            text-align: center;
+            margin-bottom: 50px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .compliance-badges {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .comp-badge {
+            padding: 6px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            background: rgba(var(--primary), 0.05);
+            color: var(--primary);
+        }
+
+        .compliance-text {
+            font-size: 0.75rem;
+            line-height: 1.8;
+            color: var(--text-muted);
+        }
+
+        .footer-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 30px;
+            font-size: 0.8rem;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 25px;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: var(--transition-fast);
+        }
+
+        .footer-links a:hover { color: var(--primary); }
+
+        .partner-logos {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            opacity: 0.6;
+        }
+
+        .partner-logo {
+            font-weight: 800;
+            font-size: 0.85rem;
+            letter-spacing: -0.5px;
+            color: var(--text-main);
+        }
+
+        @media (max-width: 768px) {
+            .footer-bottom { flex-direction: column; text-align: center; }
+            .footer-links { justify-content: center; }
+            .partner-logos { flex-direction: column; gap: 15px; }
+        }
+    </style>
+</head>
+<body class="{% if session.get('is_admin') or (session.get('member_id') and (session.get('membership_tier') == 'VIP' or (member is defined and member['membership_tier'] == 'VIP'))) %}vip-theme{% endif %}">
+    <div class="app-container">
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+        {% if (session.get('member_id') or session.get('is_admin')) and request.endpoint not in ['index', 'member_login', 'admin_login', 'register', 'privacy_policy', 'terms_of_service', 'landing'] %}
+        <nav class="sidebar-nav" id="sidebarNav">
+            <div class="sidebar-header">
+                <a href="/" class="brand-logo">
+                    {% if session.get('is_admin') and 'admin' in request.path %}
+                    ADMIN <span style="color: var(--text-main);">PORTAL</span>
+                    {% else %}
+                    <span style="color: var(--primary);">P</span>RIMER'S ZEST
+                    {% endif %}
+                </a>
+            </div>
+
+            <div class="nav-links">
+                <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn">
+                    <svg id="themeIcon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"></svg>
+                    <span id="themeText">Switch Mode</span>
+                </button>
+                {% block nav_links %}{% endblock %}
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="user-profile-sm">
+                    <div class="user-avatar">
+                        {% if session.get('is_admin') %}A{% else %}{{ session.get('member_fullname', '?')[0]|upper }}{% endif %}
+                    </div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            {% if session.get('is_admin') and 'admin' in request.path %}Global Admin{% else %}{{ session.get('member_fullname', 'Member') }}{% endif %}
+                        </div>
+                        <a href="/logout" style="font-size: 0.75rem; color: #ff6b6b; text-decoration: none; font-weight: 600;">Secure Logout</a>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; display: flex; gap: 10px; font-size: 0.65rem; color: var(--text-muted);">
+                    <a href="/privacy" style="color: inherit; text-decoration: none;">Privacy</a>
+                    <span>•</span>
+                    <a href="/terms" style="color: inherit; text-decoration: none;">Terms</a>
+                </div>
+            </div>
+        </nav>
+        {% endif %}
+
+        <!-- Global Theme Toggle (Floating for non-sidebar pages) -->
+        {% if request.endpoint in ['landing', 'member_login', 'admin_login', 'register', 'privacy_policy', 'terms_of_service', 'index'] or not (session.get('member_id') or session.get('is_admin')) %}
+        <div style="position: fixed; top: 20px; right: 20px; z-index: 2000;" class="hide-mobile">
+            <button class="theme-toggle-btn" onclick="toggleTheme()" style="margin: 0; background: var(--bg-card); border: 1px solid var(--border-color); box-shadow: var(--shadow-md);">
+                <svg id="themeIconDesktop" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"></svg>
+                <span id="themeTextDesktop">Mode</span>
+            </button>
+        </div>
+        {% endif %}
+        
+        <div class="main-wrapper">
+            <header class="mobile-header">
+                {% if session.get('member_id') or session.get('is_admin') %}
+                <button onclick="toggleSidebar()" style="background: none; border: none; color: var(--text-main); padding: 0; cursor: pointer;">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+                {% else %}
+                <div style="width: 24px;"></div>
+                {% endif %}
+                <a href="/" class="brand-logo" style="color: var(--text-main); font-family: 'Outfit'; font-weight: 800; text-decoration: none;">
+                    <span style="color: var(--primary);">P</span>RIMER'S ZEST
+                </a>
+                <button onclick="toggleTheme()" style="background: none; border: none; color: var(--primary); padding: 0; cursor: pointer;">
+                    <svg id="themeIconMobile" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"></svg>
+                </button>
+            </header>
+
+            <main class="content-area reveal-stagger">
+                <div id="toast-container"></div>
+                
+                {% block content %}{% endblock %}
+            </main>
+
+            <footer class="main-footer" style="position: relative; overflow: hidden; padding: 60px 40px; border-top: 1px solid var(--border-color); background: var(--bg-card);">
+
+                <div class="footer-trust-grid">
+                    <div class="trust-item">
+                        <div class="trust-icon">GDPR</div>
+                        <div class="trust-info">
+                            <h4>Data Privacy</h4>
+                            <p>Regulation (EU) 2016/679 Compliant</p>
+                        </div>
+                    </div>
+                    <div class="trust-item">
+                        <div class="trust-icon">PCI</div>
+                        <div class="trust-info">
+                            <h4>Payment Security</h4>
+                            <p>PCI DSS Level 1 Security Standard</p>
+                        </div>
+                    </div>
+                    <div class="trust-item">
+                        <div class="trust-icon">ISO</div>
+                        <div class="trust-info">
+                            <h4>Information Security</h4>
+                            <p>ISO/IEC 27001 Certified Infrastructure</p>
+                        </div>
+                    </div>
+                    <div class="trust-item">
+                        <div class="trust-icon">GSMA</div>
+                        <div class="trust-info">
+                            <h4>Telecom Standards</h4>
+                            <p>Global Mobile Communication Alliance</p>
+                        </div>
+                    </div>
+                    <div class="trust-item">
+                        <div class="trust-icon">SWIFT</div>
+                        <div class="trust-info">
+                            <h4>Global Banking</h4>
+                            <p>International Financial Messaging Network</p>
+                        </div>
+                    </div>
+                    <div class="trust-item">
+                        <div class="trust-icon">DORA</div>
+                        <div class="trust-info">
+                            <h4>Resilience</h4>
+                            <p>Digital Operational Resilience Act Compliant</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="footer-compliance-block">
+                    <div class="compliance-badges">
+                        <div class="comp-badge">18 U.S.C. 2257</div>
+                        <div class="comp-badge">DMCA COMPLIANT</div>
+                        <div class="comp-badge">RTA APPROVED</div>
+                        <div class="comp-badge">ASACP MEMBER</div>
+                    </div>
+                    <p class="compliance-text">
+                        All rights reserved. Primer's Zest is intended solely for adult membership. We do not encourage or condone illegal conduct. 
+                        All performers and members are strictly in compliance with 18 U.S.C. § 2257 Record-Keeping Requirements. 
+                        Primer's Zest responds to copyright infringement notices within 24 hours in accordance with 17 U.S.C. § 512 (DMCA).<br>
+                        <span style="opacity: 0.7; font-size: 0.7rem; display: block; margin-top: 10px;">
+                            INVITATION ONLY PLATFORM • MANDATORY CONFIDENTIALITY AGREEMENT • END-TO-END ENCRYPTED COMMUNICATIONS
+                        </span>
+                    </p>
+                </div>
+
+                <div class="footer-bottom">
+                    <div class="company-legal">
+                        <p>&copy; 2026 Primer's Zest. All Rights Reserved.</p>
+                        <p style="font-size: 0.7rem; margin-top: 5px;">A Private Executive Concierge Platform.</p>
+                    </div>
+
+                    <div class="footer-links">
+                        <a href="/privacy">Privacy Policy</a>
+                        <a href="/terms">Terms of Service</a>
+                        <a href="/cookies">Cookie Policy</a>
+                        <a href="/support">Support Center</a>
+                    </div>
+
+                    <div class="partner-logos">
+                        <span class="partner-logo">GSMA™</span>
+                        <span class="partner-logo">ITU GLOBAL</span>
+                        <span class="partner-logo">PCI SSC</span>
+                        <span class="partner-logo">SWIFT GPI</span>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            const nav = document.getElementById('sidebarNav');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (nav) {
+                nav.classList.toggle('active');
+                if (window.innerWidth <= 992) {
+                    overlay.style.display = nav.classList.contains('active') ? 'block' : 'none';
+                    setTimeout(() => {
+                        overlay.style.opacity = nav.classList.contains('active') ? '1' : '0';
+                    }, 10);
+                }
+            }
+        }
+        function updateFileName(input) {
+            const fileName = input.files[0] ? input.files[0].name : 'No file chosen';
+            const display = input.parentElement.querySelector('.file-name-text');
+            if (display) display.textContent = fileName;
+        }
+
+        // Theme Toggle Logic
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.classList.contains('light-theme') ? 'light' : 'dark';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            setTheme(newTheme);
+            localStorage.setItem('user-theme', newTheme);
+        }
+
+        function setTheme(theme) {
+            const body = document.body;
+            const sunIcon = '<circle cx="12" cy="12" r="5"></circle><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>';
+            const moonIcon = '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>';
+
+            // Update UI Icons and Texts
+            const icons = [document.getElementById('themeIcon'), document.getElementById('themeIconDesktop'), document.getElementById('themeIconMobile')];
+            const texts = [document.getElementById('themeText'), document.getElementById('themeTextDesktop')];
+
+            if (theme === 'light') {
+                body.classList.add('light-theme');
+                body.classList.remove('vip-theme');
+                icons.forEach(i => { if(i) i.innerHTML = moonIcon; });
+                texts.forEach(t => { if(t) t.textContent = 'Dark Mode'; });
+            } else {
+                body.classList.remove('light-theme');
+                body.classList.add('vip-theme');
+                icons.forEach(i => { if(i) i.innerHTML = sunIcon; });
+                texts.forEach(t => { if(t) t.textContent = 'Light Mode'; });
+            }
+            localStorage.setItem('theme', theme);
+        }
+
+        // Global Auto-expanding Textareas
+        function autoSizeTextarea(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = (textarea.scrollHeight + 2) + 'px';
+        }
+
+        document.addEventListener('input', function(e) {
+            if (e.target.tagName.toLowerCase() === 'textarea') {
+                autoSizeTextarea(e.target);
+            }
+        }, false);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            setTheme(savedTheme);
+            // Size existing textareas
+            document.querySelectorAll('textarea').forEach(autoSizeTextarea);
+        });
+
+        // Handle Back Action - Override browser history to always return to main portal dashboard
+        {% if session.get('member_id') or session.get('is_admin') %}
+        (function() {
+            const dashboardUrl = "{% if session.get('is_admin') %}/admin{% else %}/dashboard{% endif %}";
+            // Only intercept if we are in a sub-page (not the dashboard itself or landing)
+            const currentPath = window.location.pathname;
+            if (currentPath !== dashboardUrl && currentPath !== '/' && currentPath !== '/logout') {
+                history.pushState(null, null, location.href);
+                window.onpopstate = function() {
+                    window.location.href = dashboardUrl;
+                };
+            }
+        })();
+        {% endif %}
+    </script>
+    <!-- Cookie Concierge -->
+    <div id="cookie-banner" style="position: fixed; bottom: 30px; left: 30px; right: 30px; z-index: 9999; display: none;">
+        <div class="glass" style="padding: 20px 30px; border-radius: 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; box-shadow: var(--shadow-md); border: 1px solid var(--border-color);">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="width: 40px; height: 40px; background: rgba(197, 160, 89, 0.1); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 11c0 3.517-2.103 6.542-5.12 7.835M12 11c0-3.517 2.103-6.542 5.12-7.835M12 11V9m0 2l-3-3m3 3l3-3m2 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-main);">
+                    We use essential cookies to maintain your secure session. By continuing, you agree to our <a href="/privacy" style="color: var(--primary); font-weight: 600; text-decoration: none;">Privacy & Cookie Policy</a>.
+                </div>
+            </div>
+            <button onclick="dismissCookies()" class="btn btn-primary btn-sm" style="white-space: nowrap;">Acknowledge</button>
+        </div>
+    </div>
+
+    <script>
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icon = type === 'error' ? '❌' : (type === 'success' ? '✅' : 'ℹ️');
+            
+            toast.innerHTML = `
+                <span>${icon}</span>
+                <div style="flex: 1;">${message}</div>
+                <button onclick="this.parentElement.remove()" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1.2rem; opacity:0.5;">&times;</button>
+            `;
+            
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 500);
+            }, 5000);
+        }
+
+        // Initialize flash messages as toasts
+        document.addEventListener('DOMContentLoaded', () => {
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        showToast("{{ message }}", "{{ 'error' if 'error' in category or 'danger' in category else ('success' if 'success' in category else 'info') }}");
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "C:\Users\HomePC\OneDrive\Documents\Primer's Zest\test_extras.py", line 6, in <module>
+    print(psycopg2.extras.DictCursor)
+          ^^^^^^^^^^^^^^^
+AttributeError: module 'psycopg2' has no attribute 'extras'

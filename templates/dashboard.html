@@ -1,0 +1,394 @@
+{% extends "layout.html" %}
+
+{% block title %}VIP Dashboard - Primer's Zest{% endblock %}
+
+{% block extra_head %}
+
+
+<style>
+    /* Dashboard Cards */
+    .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+        margin-bottom: 40px;
+    }
+
+    @media (max-width: 768px) {
+        .stat-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .stat-card {
+        background: var(--bg-card);
+        padding: 25px;
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-sm);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .vip-theme .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--primary-gradient);
+        opacity: 0.6;
+    }
+
+    @media (max-width: 768px) {
+        .stat-card {
+            padding: 18px;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+        }
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--text-main);
+    }
+
+    /* Tables */
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 15px;
+    }
+
+    @media (max-width: 600px) {
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .section-header .btn {
+            align-self: flex-end;
+            margin-top: -30px; /* Pull "View All" up if title is long */
+        }
+    }
+
+    .table-card {
+        background: var(--bg-card);
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 40px;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .premium-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .premium-table th {
+        background: rgba(255,255,255,0.03);
+        padding: 15px;
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border-color);
+        letter-spacing: 0.5px;
+    }
+
+    .premium-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 0.85rem;
+    }
+
+    .premium-table td:nth-child(2),
+    .premium-table td:nth-child(3),
+    .premium-table td:nth-child(4) {
+        white-space: nowrap;
+    }
+
+    @media (max-width: 768px) {
+        .premium-table th, .premium-table td {
+            padding: 10px 8px;
+            font-size: 0.75rem;
+        }
+        .premium-table td .btn-sm {
+            padding: 6px 10px;
+            font-size: 0.7rem;
+        }
+    }
+
+    .status-pill {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .status-approved { background: #dcfce7; color: #166534; }
+    .status-pending { background: #fef9c3; color: #854d0e; }
+
+
+    /* Slideshow Custom */
+    .announcement-card {
+        background: var(--bg-card);
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        margin-bottom: 40px;
+        position: relative;
+    }
+
+    .slide-image {
+        width: 100%;
+        height: 500px;
+        object-fit: contain;
+        background-color: #111; /* Sleek dark background for letterboxing */
+    }
+
+    @media (max-width: 768px) {
+        .slide-image {
+            height: 300px;
+        }
+    }
+
+    .slide-caption {
+        padding: 25px;
+        text-align: center;
+        background: linear-gradient(transparent, rgba(0,0,0,0.05));
+    }
+
+    /* Tiered Pricing Styles */
+    .plan-card {
+        position: relative;
+        text-align: center;
+        background: var(--bg-card);
+        padding: 40px 30px;
+        border-radius: 20px;
+        border: 1px solid var(--border-color);
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .plan-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+    }
+
+    .plan-tier-badge {
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    /* Bronze Tier */
+    .plan-bronze { border: 1.5px solid #cd7f3244; }
+    .plan-bronze .plan-accent { color: #cd7f32; }
+    .plan-bronze .btn-select { background: #cd7f32; border-color: #cd7f32; }
+
+    /* Silver Tier */
+    .plan-silver { border: 2px solid #94a3b844; }
+    .plan-silver .plan-accent { color: #64748b; }
+    .plan-silver .btn-select { background: #64748b; border-color: #64748b; }
+
+    /* Gold Tier */
+    .plan-gold { 
+        border: 3px solid var(--primary); 
+        transform: scale(1.02);
+        box-shadow: 0 10px 30px rgba(184, 134, 11, 0.1);
+    }
+    .plan-gold .plan-accent { color: var(--primary); }
+    .plan-gold .btn-select { background: var(--primary); border-color: var(--primary); }
+    .plan-gold .plan-tier-badge { background: var(--primary); }
+
+    /* Platinum/Exclusive Tier */
+    .plan-exclusive { 
+        border: 3px solid #1a1a1a; 
+        background: linear-gradient(145deg, #ffffff, #f8f9fa);
+    }
+    .plan-exclusive .plan-accent { color: #1a1a1a; }
+    .plan-exclusive .btn-select { background: #1a1a1a; border-color: #1a1a1a; }
+    .plan-exclusive .plan-tier-badge { background: #1a1a1a; }
+</style>
+{% endblock %}
+
+{% block nav_links %}
+    {% include "member_nav_links.html" %}
+{% endblock %}
+
+{% block content %}
+<div>
+
+    <div class="section-header" style="margin-bottom: 30px;">
+        <div>
+            <h1 style="font-size: 2rem; margin-bottom: 5px;">Dashboard</h1>
+            <p style="color: var(--text-muted);">Welcome back to the executive portal, {{ fullname }}.</p>
+        </div>
+    </div>
+
+    <!-- Announcements Slideshow -->
+    <div class="announcement-card">
+        {% for slide in slides %}
+        <div class="slide" style="display: {% if loop.first %}block{% else %}none{% endif %};">
+            <a href="/vip_verification/{{ plans[0]['id'] if plans|length > 0 else 1 }}">
+                <img src="/{{ slide['image_path'] }}" class="slide-image" alt="Announcements">
+            </a>
+            <div class="slide-caption">
+                <p style="font-weight: 700; font-size: 1.1rem; color: var(--text-main);">{{ slide['info_text'] }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Stats / Status Area -->
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="stat-label">Membership Status</div>
+            <div class="stat-value" style="color: var(--primary);">{{ membership_tier }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Total Contributions</div>
+            <div class="stat-value">${{ "%.2f"|format(donations|sum(attribute='amount')) if donations else "0.00" }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Active Requests</div>
+            <div class="stat-value">{{ tickets|length if tickets else 0 }}</div>
+        </div>
+    </div>
+
+    <!-- Conversation History -->
+    <div class="section-header">
+        <h2 style="font-size: 1.25rem;">Active Support Conversations</h2>
+        <a href="/history" class="btn btn-secondary btn-sm">View All</a>
+    </div>
+    <!-- Billing & Transaction Ledger -->
+    <div class="section-header">
+        <h2 style="font-size: 1.25rem;">Billing & Transaction Ledger</h2>
+    </div>
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="premium-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Method</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for donation in donations %}
+                    <tr>
+                        <td style="color: var(--text-muted);">{{ donation['timestamp'] if donation['timestamp'] else '2026-05-06' }}</td>
+                        <td style="font-weight: 600;">Executive Contribution / Subscription</td>
+                        <td style="font-weight: 700; color: var(--primary);">${{ "%.2f"|format(donation['amount']) }}</td>
+                        <td style="text-transform: uppercase; font-size: 0.7rem;">{{ donation['visibility_preference'] if donation['visibility_preference'] else 'Anonymous' }}</td>
+                        <td>
+                            <span class="status-pill status-{{ donation['status'].lower() }}">{{ donation['status'] }}</span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            No transactions found in your ledger.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Membership Plans -->
+    {% if membership_tier != 'VIP' or request.args.get('show_plans') == '1' %}
+    <div id="upgrade-section" class="section-header">
+        <h2 style="font-size: 1.25rem;">Upgrade Membership</h2>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 35px; margin-bottom: 60px; align-items: stretch; padding-top: 20px;">
+        {% for plan in plans %}
+        {% set p_name = plan['plan_name'].lower() %}
+        {% set tier_class = 'plan-bronze' %}
+        {% if 'silver' in p_name %}{% set tier_class = 'plan-silver' %}
+        {% elif 'gold' in p_name or 'executive' in p_name %}{% set tier_class = 'plan-gold' %}
+        {% elif 'platinum' in p_name or 'elite' in p_name or plan['price'] > 500 %}{% set tier_class = 'plan-exclusive' %}
+        {% endif %}
+
+        <div class="plan-card {{ tier_class }}">
+            {% if tier_class == 'plan-gold' %}
+            <div class="plan-tier-badge">Most Popular</div>
+            {% elif tier_class == 'plan-exclusive' %}
+            <div class="plan-tier-badge">Ultra Premium</div>
+            {% endif %}
+
+            <div>
+                <h3 style="font-size: 1.25rem; margin-bottom: 15px; font-weight: 700;">{{ plan['plan_name'] }}</h3>
+                <div class="plan-accent" style="font-size: 3rem; font-weight: 800; margin: 10px 0;">
+                    <span style="font-size: 1.5rem; vertical-align: top; margin-right: 2px;">$</span>{{ "%.0f"|format(plan['price']) }}
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px;">
+                    Per Executive Year
+                </div>
+                <div style="height: 1px; background: var(--border-color); width: 60px; margin: 25px auto;"></div>
+                <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 35px; padding: 0 10px;">
+                    {{ plan['features'] }}
+                </p>
+            </div>
+            
+            <a href="/vip_verification/{{ plan['id'] }}" class="btn btn-select" style="width: 100%; padding: 15px; font-weight: 700; border-radius: 12px; color: white; text-decoration: none; transition: opacity 0.2s;">
+                Select {{ plan['plan_name'] }}
+            </a>
+        </div>
+        {% else %}
+        <div class="stat-card" style="grid-column: 1 / -1; text-align: center; padding: 60px;">
+            <p style="color: var(--text-muted); font-size: 1.1rem;">No membership plans currently available. Please check back later.</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+    // Basic Slideshow Logic
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    if (slides.length > 1) {
+        setInterval(() => {
+            slides[currentSlide].style.display = 'none';
+            currentSlide = (currentSlide + 1) % slides.length;
+            slides[currentSlide].style.display = 'block';
+        }, 5000);
+    }
+</script>
+{% endblock %}

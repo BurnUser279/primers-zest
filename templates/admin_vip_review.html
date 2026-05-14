@@ -1,0 +1,87 @@
+{% extends "layout.html" %}
+
+{% block title %}Admin - Review Submission #{{ submission.id }} - Primer's Zest{% endblock %}
+
+{% block extra_head %}
+<style>
+    .grid-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 400px; gap: 30px; }
+    .review-panel, .chat-panel { background: var(--bg-card); padding: 30px; border-radius: 20px; border: 1px solid var(--border-color); box-shadow: var(--shadow-md); }
+    .user-info { background: var(--bg-body); padding: 20px; border-radius: 12px; margin-bottom: 30px; border: 1px solid var(--border-color); }
+    .data-item { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+    .data-label { font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 8px; font-size: 0.75rem; text-transform: uppercase; }
+    .data-text { background: var(--bg-card); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); display: block; margin-bottom: 10px; color: var(--text-main); }
+    
+    .chat-window { height: 500px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding: 15px; background: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 20px; }
+    .msg { padding: 12px 18px; border-radius: 15px; max-width: 85%; font-size: 0.95rem; line-height: 1.4; position: relative; }
+    .msg-admin { align-self: flex-end; background: var(--primary-gradient); color: white; border-bottom-right-radius: 4px; }
+    .msg-user { align-self: flex-start; background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); border-bottom-left-radius: 4px; }
+    
+    @media (max-width: 992px) {
+        .grid-container { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="grid-container">
+    <div class="review-panel">
+        <div style="margin-bottom: 25px;">
+            <a href="/admin/vip_requests" class="btn" style="background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 16px;">&larr; Back to Inbox</a>
+        </div>
+        <h1 style="margin-bottom: 25px;">Review Submission #{{ submission.id }}</h1>
+        
+        <div class="user-info">
+            <p style="margin: 0 0 10px 0;">User: <strong>{{ submission.username }}</strong> ({{ submission.fullname }})</p>
+            <p style="margin: 0 0 10px 0;">Email: <strong>{{ submission.email }}</strong></p>
+            <p style="margin: 0 0 10px 0;">Country: <strong>{{ submission.country }}</strong></p>
+            <p style="margin: 0;">Status: <strong style="color: var(--primary);">{{ submission.status|upper }}</strong></p>
+        </div>
+
+        <h2 style="font-size: 1.2rem; margin-bottom: 20px;">Verification Data</h2>
+        {% for item in data %}
+        <div class="data-item">
+            <span class="data-label">{{ item.label }}</span>
+            {% if item.text_response %}
+            <div class="data-text">{{ item.text_response }}</div>
+            {% endif %}
+            
+            {% if item.file_paths %}
+            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                {% for path in item.file_paths.split(',') %}
+                <a href="{{ path }}" target="_blank" class="btn" style="background: var(--bg-body); border: 1px solid var(--border-color); color: var(--primary); font-size: 0.8rem;">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right: 5px;"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                    View File {{ loop.index }}
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="chat-panel">
+        <h2 style="font-size: 1.2rem; margin-bottom: 20px;">Concierge Chat</h2>
+        <div class="chat-window" id="chatWindow">
+            {% for chat in chats %}
+            <div class="msg {% if chat.sender_id == 0 %}msg-admin{% else %}msg-user{% endif %}">
+                {{ chat.message }}
+                <div style="font-size: 0.65rem; opacity: 0.7; margin-top: 8px; text-align: right;">
+                    {{ chat.timestamp|datetimeformat('%H:%M') }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <form action="/vip_chat/send/{{ submission.user_id }}" method="POST" style="display: flex; gap: 10px;">
+            <input type="text" name="message" class="admin-input" placeholder="Type a message..." required style="flex: 1;">
+            <button type="submit" class="btn btn-primary" style="padding: 10px 20px;">Reply</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const win = document.getElementById('chatWindow');
+    if (win) win.scrollTop = win.scrollHeight;
+</script>
+{% endblock %}

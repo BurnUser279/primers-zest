@@ -1,0 +1,158 @@
+{% extends "layout.html" %}
+
+{% block title %}Become a Model - Primer's Zest{% endblock %}
+
+{% block extra_head %}
+<style>
+    .model-container {
+        max-width: 800px;
+        margin: 60px auto;
+        padding: 40px;
+        background: var(--bg-card);
+        border-radius: 24px;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-lg);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .model-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: var(--primary-gradient);
+    }
+
+    .model-icon {
+        width: 80px;
+        height: 80px;
+        background: rgba(197, 160, 89, 0.1);
+        color: var(--primary);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 30px;
+    }
+
+    .model-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--text-main);
+        margin-bottom: 20px;
+        letter-spacing: -1px;
+    }
+
+    .model-description {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        line-height: 1.8;
+        margin-bottom: 40px;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 20px;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin-bottom: 30px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .status-unverified { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    .status-pending { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+    .status-verified { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 40px;
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        border-radius: 14px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 20px rgba(197, 160, 89, 0.2);
+    }
+
+    .action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px rgba(197, 160, 89, 0.4);
+    }
+
+    .wait-box {
+        background: rgba(0,0,0,0.03);
+        border: 1px dashed var(--border-color);
+        padding: 30px;
+        border-radius: 16px;
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="model-container reveal">
+    <div class="model-icon">
+        <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M12 11c0 3.517-2.103 6.542-5.12 7.835M12 11c0-3.517 2.103-6.542 5.12-7.835M12 11V9m0 2l-3-3m3 3l3-3m2 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+    </div>
+
+    {% if kyc_status == 'Verified' %}
+        <div class="status-badge status-verified">Identity Verified</div>
+        <h1 class="model-title">Application Received</h1>
+        <p class="model-description">
+            Your profile has been flagged for our recruitment team. Since your identity is already verified, 
+            you are one step ahead in the selection process.
+        </p>
+        <div class="wait-box">
+            <h3 style="margin-bottom: 10px; color: var(--text-main);">Next Steps</h3>
+            <p style="font-size: 0.95rem; color: var(--text-muted);">
+                Please wait for an administrator to message you via the concierge service to schedule a virtual interview.
+            </p>
+        </div>
+    {% elif kyc_status == 'Pending' %}
+        <div class="status-badge status-pending">Verification Pending</div>
+        <h1 class="model-title">Review in Progress</h1>
+        <p class="model-description">
+            We have received your interest in becoming a model. Your KYC documents are currently under review by our security team.
+        </p>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">
+            Once your identity is confirmed, we will notify you and proceed with the next phase of your application.
+        </p>
+    {% else %}
+        <div class="status-badge status-unverified">Verification Required</div>
+        <h1 class="model-title">Become a Model</h1>
+        <p class="model-description">
+            Join our exclusive roster of elite talent. To maintain the highest standards of safety and authenticity, 
+            all applicants must complete a comprehensive identity verification (KYC) before being considered.
+        </p>
+        
+        <a href="/member/kyc_verify" class="action-btn">
+            Begin KYC Verification
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+            </svg>
+        </a>
+    {% endif %}
+    
+    <div style="margin-top: 40px;">
+        <a href="/dashboard" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 600;">&larr; Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block nav_links %}
+    {% include "member_nav_links.html" %}
+{% endblock %}

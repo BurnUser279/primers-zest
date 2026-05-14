@@ -1,0 +1,115 @@
+{% extends "layout.html" %}
+
+{% block title %}KYC Configurations - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header" style="margin-bottom: 30px;">
+        <h1 style="margin: 0; font-size: 1.8rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px;">Identity &amp; KYC Configuration Engine</h1>
+        <p style="color: var(--text-muted); margin-top: 5px; font-size: 0.9rem;">Define regional verification links, required documents, and post-verification info forms.</p>
+    </div>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div style="padding: 15px; margin-bottom: 20px; border-radius: 8px; font-size: 0.9rem; {% if category == 'error' %}background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5;{% elif category == 'warning' %}background: #fef9c3; color: #854d0e; border: 1px solid #fde047;{% else %}background: rgba(var(--primary-rgb), 0.1); color: var(--primary); border: 1px solid rgba(var(--primary-rgb), 0.3);{% endif %}">
+              {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px;">
+        <!-- Add New Config Form -->
+        <div class="table-card" style="padding: 25px; height: fit-content;">
+            <h2 style="font-size: 1.1rem; margin-top: 0; margin-bottom: 20px; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"></path></svg>
+                Create New KYC Rule
+            </h2>
+            <form action="/admin/kyc_config/add" method="POST">
+                <div class="admin-form-group">
+                    <label>Target Country</label>
+                    <input type="text" name="country" list="country-list" placeholder="Select or type country..." required class="admin-input" style="width: 100%;">
+                    <datalist id="country-list">
+                        <option value="Global">
+                        <option value="United States">
+                        <option value="United Kingdom">
+                        <option value="Canada">
+                        <option value="Australia">
+                        <option value="Germany">
+                        <option value="France">
+                        <option value="India">
+                        <option value="China">
+                        <option value="Japan">
+                        <option value="Brazil">
+                        <option value="Nigeria">
+                        <option value="South Africa">
+                        <option value="United Arab Emirates">
+                        <option value="Singapore">
+                    </datalist>
+                    <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 5px;">Use "Global" as a fallback for countries without specific rules.</p>
+                </div>
+                <div class="admin-form-group">
+                    <label>Documents Required (Comma Separated)</label>
+                    <input type="text" name="documents_required" placeholder="e.g. Passport, Proof of Address" required class="admin-input" style="width: 100%;">
+                </div>
+                <div class="admin-form-group">
+                    <label>External Verification Link (Optional)</label>
+                    <input type="url" name="external_link" placeholder="e.g. https://sumsub.com/verify/..." class="admin-input" style="width: 100%;">
+                    <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 5px;">A third-party link the user will be redirected to after providing documents.</p>
+                </div>
+                <div class="admin-form-group">
+                    <label>Post-Verification Info Required</label>
+                    <input type="text" name="post_info_required" placeholder="e.g. Verification Receipt ID, Reference Code" required class="admin-input" style="width: 100%;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px;">Add KYC Rule</button>
+            </form>
+        </div>
+
+        <!-- Existing Configs List -->
+        <div class="table-card">
+            <div style="padding: 20px; border-bottom: 1px solid var(--border-color);">
+                <h2 style="margin: 0; font-size: 1.1rem;">Active KYC Configurations</h2>
+            </div>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Country</th>
+                        <th>Documents Required</th>
+                        <th>Verification Link</th>
+                        <th>Post-Verify Info</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for config in configs %}
+                    <tr>
+                        <td style="font-weight: 700;">{{ config[1] }}</td>
+                        <td style="font-size: 0.85rem;">{{ config[2] }}</td>
+                        <td>
+                            {% if config[3] %}
+                            <a href="{{ config[3] }}" target="_blank" style="color: var(--primary); font-size: 0.85rem; text-decoration: underline;">Test Link</a>
+                            {% else %}
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">None</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size: 0.85rem;">{{ config[4] }}</td>
+                        <td style="text-align: right;">
+                            <form action="{{ url_for('admin_delete_kyc_config', config_id=config[0]) }}" method="POST" style="display: inline;">
+                                <button type="submit" class="action-btn btn-red" style="cursor:pointer;" onclick="return confirm('Permanently remove this KYC configuration?');">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            No KYC configurations found. Add a "Global" rule to start.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

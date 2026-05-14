@@ -1,0 +1,94 @@
+{% extends "layout.html" %}
+
+{% block title %}Review KYC Submissions - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header" style="margin-bottom: 30px;">
+        <h1 style="margin: 0; font-size: 1.8rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px;">Pending KYC Review Vault</h1>
+        <p style="color: var(--text-muted); margin-top: 5px; font-size: 0.9rem;">Verify member identities by comparing uploaded documents with platform data.</p>
+    </div>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div style="padding: 15px; margin-bottom: 20px; border-radius: 8px; font-size: 0.9rem; {% if category == 'error' %}background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5;{% elif category == 'warning' %}background: #fef9c3; color: #854d0e; border: 1px solid #fde047;{% else %}background: rgba(var(--primary-rgb), 0.1); color: var(--primary); border: 1px solid rgba(var(--primary-rgb), 0.3);{% endif %}">
+              {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="table-card">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Member</th>
+                    <th>Status</th>
+                    <th>Submitted</th>
+                    <th>Initial Docs</th>
+                    <th>Details Provided</th>
+                    <th>Evidence Uploads</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in submissions %}
+                <tr>
+                    <td>
+                        <div style="font-weight: 700; color: var(--text-main);">{{ sub.fullname }}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">@{{ sub.username }}</div>
+                        <a href="/admin/user/{{ sub.user_id }}" target="_blank" style="font-size: 0.7rem; color: var(--primary); text-decoration: underline;">View Profile &rarr;</a>
+                    </td>
+                    <td>
+                        <span class="status-pill {{ sub.status.lower() }}">{{ sub.status }}</span>
+                    </td>
+                    <td style="font-size: 0.85rem;">{{ sub.created_at }}</td>
+                    <td>
+                        {% if sub.documents_path %}
+                        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                            {% for path in sub.documents_path.split(',') %}
+                            <a href="/{{ path }}" target="_blank" class="action-btn" style="padding: 4px 8px; font-size: 0.7rem; background: rgba(var(--primary-rgb), 0.1); white-space: nowrap;">Doc #{{ loop.index }}</a>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <span style="color: var(--text-muted); font-size: 0.8rem;">No Docs</span>
+                        {% endif %}
+                    </td>
+                    <td style="max-width: 200px;">
+                        <div style="font-size: 0.85rem; color: var(--text-main); white-space: pre-wrap;">{{ sub.post_info_data }}</div>
+                    </td>
+                    <td>
+                        {% if sub.post_documents_path %}
+                        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                            {% for path in sub.post_documents_path.split(',') %}
+                            <a href="/{{ path }}" target="_blank" class="action-btn" style="padding: 4px 8px; font-size: 0.7rem; background: rgba(52, 211, 153, 0.1); color: #059669; white-space: nowrap;">Evidence #{{ loop.index }}</a>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <span style="color: var(--text-muted); font-size: 0.8rem;">None</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right;">
+                        <div style="display: flex; gap: 5px; justify-content: flex-end;">
+                            <form action="/admin/kyc/approve/{{ sub.sub_id }}" method="POST">
+                                <button type="submit" class="action-btn btn-green" style="border:none; cursor:pointer;">Approve</button>
+                            </form>
+                            <form action="/admin/kyc/reject/{{ sub.sub_id }}" method="POST">
+                                <button type="submit" class="action-btn btn-red" style="border:none; cursor:pointer;">Reject</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 60px; color: var(--text-muted);">
+                        No pending KYC applications found in the vault.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

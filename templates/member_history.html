@@ -1,0 +1,155 @@
+{% extends "layout.html" %}
+
+{% block title %}Chat History - Primer's Zest{% endblock %}
+
+{% block extra_head %}
+<style>
+
+    .ticket-card {
+        background: var(--bg-card);
+        border-radius: 18px;
+        padding: 25px;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 25px;
+        transition: 0.3s;
+    }
+
+    .ticket-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+        border-color: var(--primary);
+    }
+
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .status-Open { background: #fef9c3; color: #854d0e; }
+    .status-Replied { background: #dcfce7; color: #166534; }
+
+    .msg-box {
+        background: var(--bg-body);
+        padding: 15px;
+        border-radius: 12px;
+        margin-top: 15px;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .admin-reply-box {
+        background: rgba(212, 175, 55, 0.05);
+        border-left: 4px solid var(--primary);
+        padding: 15px;
+        border-radius: 0 12px 12px 0;
+        margin-top: 15px;
+    }
+
+</style>
+{% endblock %}
+
+{% block nav_links %}
+    {% include "member_nav_links.html" %}
+{% endblock %}
+
+{% block content %}
+<div>
+    <div style="margin-bottom: 40px;">
+        <h1 style="font-size: 2.2rem; margin-bottom: 10px;">Conversation History</h1>
+        <p style="color: var(--text-muted);">Review your historical dispatches and concierge responses.</p>
+    </div>
+
+    {% if not history %}
+        <div style="text-align: center; padding: 100px 20px; background: var(--bg-card); border-radius: 20px; border: 1px dashed var(--border-color);">
+            <p style="color: var(--text-muted);">No historical records found. Start a conversation in the Support Center.</p>
+        </div>
+    {% endif %}
+
+    {% for ticket in history %}
+    <div class="ticket-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+            <div>
+                <span style="font-size: 0.75rem; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 1px;">{{ ticket.category }}</span>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">{{ ticket.created_at|datetimeformat }}</div>
+            </div>
+            <span class="status-badge status-{{ ticket.status }}">{{ ticket.status }}</span>
+        </div>
+        
+        <div class="msg-box">
+            <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase;">Member Dispatch:</div>
+            <p style="margin: 0;">{{ ticket.message }}</p>
+            {% if ticket.user_attachments %}
+                <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    {% for file in ticket.user_attachments %}
+                        <a href="{{ file }}" target="_blank" style="font-size: 0.75rem; color: var(--primary); text-decoration: none; padding: 6px 12px; background: rgba(212, 175, 55, 0.05); border-radius: 6px; border: 1px solid rgba(212, 175, 55, 0.1);">Document {{ loop.index }}</a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        {% if ticket.admin_reply %}
+        <div class="admin-reply-box">
+            <div style="font-size: 0.75rem; font-weight: 700; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">Concierge Response:</div>
+            <p style="margin: 0; color: var(--text-main);">{{ ticket.admin_reply }}</p>
+        </div>
+        {% endif %}
+
+        {% if single_thread %}
+        <div style="margin-top: 25px; padding-top: 20px; border-top: 1px dashed var(--border-color);">
+            <h4 style="font-size: 0.9rem; margin-bottom: 15px;">Submit Follow-up</h4>
+            <form action="/history/{{ ticket.id }}" method="POST">
+                <textarea name="reply_message" rows="3" placeholder="Type your follow-up message..." required style="width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-main); font-family: inherit; resize: none;"></textarea>
+                <button type="submit" class="btn btn-primary" style="margin-top: 15px; padding: 12px 25px;">Send Reply</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <div style="margin-top: 60px;">
+        <h2 style="font-size: 1.25rem; margin-bottom: 25px;">New Support Dispatch</h2>
+        <div class="ticket-card" style="max-width: 700px;">
+            <form action="/history" method="POST" enctype="multipart/form-data">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Select Category</label>
+                    <select name="category" required style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-main);">
+                        <option value="Meeting Request">Meeting Request</option>
+                        <option value="Payment Issue">Payment Issue</option>
+                        <option value="Feature Suggestion">Feature Suggestion</option>
+                        <option value="Bug Report">Bug Report</option>
+                        <option value="General Inquiry">General Inquiry</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Detailed Message</label>
+                    <textarea name="message" rows="5" required style="width: 100%; padding: 15px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-main); font-family: inherit; resize: none;"></textarea>
+                </div>
+
+                <div style="margin-bottom: 25px;">
+                    <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Attachments</label>
+                    <input type="file" name="attachment" id="attachment" multiple style="width: 100%; padding: 10px; background: var(--bg-body); border-radius: 10px; border: 1px solid var(--border-color);">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 16px;">Dispatch Request</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('attachment').addEventListener('change', function() {
+        if (this.files.length > 5) {
+            alert("Maximum 5 files allowed.");
+            this.value = "";
+        }
+    });
+    if (window.innerWidth < 992) {
+        document.querySelector('.mobile-nav-toggle').style.display = 'block';
+    }
+</script>
+{% endblock %}

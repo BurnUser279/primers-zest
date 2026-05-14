@@ -1,0 +1,232 @@
+{% extends "layout.html" %}
+
+{% block title %}Book a Star - Primer's Zest{% endblock %}
+
+{% block extra_head %}
+<style>
+    .roster-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 30px;
+        margin-bottom: 50px;
+    }
+    .star-card {
+        background: var(--bg-card);
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .star-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    }
+    .star-img-wrapper {
+        position: relative;
+        height: 350px;
+        background: #000;
+        overflow: hidden;
+    }
+    .media-carousel {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .carousel-item {
+        min-width: 100%;
+        height: 100%;
+        position: relative;
+    }
+    .star-media-content {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.85;
+        transition: opacity 0.3s;
+    }
+    .star-card:hover .star-media-content { opacity: 1; }
+
+    .carousel-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        padding: 0 15px;
+        z-index: 10;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .star-card:hover .carousel-nav { opacity: 1; }
+    .nav-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(0,0,0,0.6);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        pointer-events: auto;
+        border: 1px solid rgba(255,255,255,0.1);
+        backdrop-filter: blur(4px);
+    }
+    .nav-btn:hover { background: var(--primary); color: #000; }
+
+    .carousel-indicators {
+        position: absolute;
+        bottom: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 6px;
+        z-index: 10;
+    }
+    .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.3);
+        transition: 0.3s;
+    }
+    .dot.active { background: var(--primary); width: 15px; border-radius: 4px; }
+
+    .star-info { padding: 25px; }
+    .star-name { font-size: 1.4rem; font-weight: 800; margin-bottom: 5px; color: var(--text-main); }
+    .star-category { font-size: 0.8rem; color: var(--primary); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: block; }
+    .star-bio { font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .star-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 20px; }
+    .star-price { font-weight: 800; font-size: 1.2rem; color: var(--text-main); }
+
+    /* Booking List */
+    .booking-card {
+        background: var(--bg-card);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 15px;
+        border: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    .booking-status {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+    .status-pending { background: rgba(255, 193, 7, 0.1); color: #ffc107; }
+    .status-accepted { background: rgba(40, 167, 69, 0.1); color: #28a745; }
+    .status-delivered { background: rgba(0, 123, 255, 0.1); color: #007bff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="margin-bottom: 40px;">
+        <h1 class="brand-font" style="font-size: 2.5rem; margin-bottom: 10px;">Talent Roster</h1>
+        <p style="color: var(--text-muted); font-size: 1.1rem;">{{ writeup }}</p>
+    </div>
+
+    {% if my_bookings %}
+    <div style="margin-bottom: 50px;">
+        <h2 style="font-size: 1.2rem; margin-bottom: 20px;">My Active Requests</h2>
+        <div class="booking-list">
+            {% for b in my_bookings %}
+            <div class="booking-card">
+                <img src="/{{ b['image_path'] if b['image_path'] else 'static/img/default_star.jpg' }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                <div style="flex: 1;">
+                    <div style="font-weight: 700;">{{ b['star_name'] }}</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">{{ b['created_at'] }}</div>
+                </div>
+                <span class="booking-status status-{{ b['status']|lower }}">{{ b['status'] }}</span>
+                <a href="/star_booking_chat/{{ b['chatroom_id'] }}" class="btn btn-primary btn-sm">Enter Chat</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <h2 style="font-size: 1.2rem; margin-bottom: 25px;">Available Roster</h2>
+    <div class="roster-grid">
+        {% for star in stars %}
+        <div class="star-card" id="star-{{ star.id }}">
+            <div class="star-img-wrapper">
+                <div class="media-carousel" id="carousel-{{ star.id }}">
+                    {% if star.media %}
+                        {% for item in star.media %}
+                        <div class="carousel-item">
+                            {% if item.media_type == 'video' %}
+                            <video src="/{{ item.file_path }}" class="star-media-content" muted loop playsinline onmouseover="this.play()" onmouseout="this.pause()"></video>
+                            {% else %}
+                            <img src="/{{ item.file_path }}" class="star-media-content" alt="{{ star.name }}">
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="carousel-item">
+                            <img src="/{{ star.image_path if star.image_path else 'static/img/default_star.jpg' }}" class="star-media-content" alt="{{ star.name }}">
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if star.media and star.media|length > 1 %}
+                <div class="carousel-nav">
+                    <div class="nav-btn" onclick="moveCarousel({{ star.id }}, -1)">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"></path></svg>
+                    </div>
+                    <div class="nav-btn" onclick="moveCarousel({{ star.id }}, 1)">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                </div>
+                <div class="carousel-indicators" id="dots-{{ star.id }}">
+                    {% for item in star.media %}
+                    <div class="dot {% if loop.first %}active{% endif %}"></div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="star-info">
+                <span class="star-category">{{ star.category }}</span>
+                <h3 class="star-name">{{ star.name }}</h3>
+                <p class="star-bio">{{ star.bio }}</p>
+                <div class="star-footer">
+                    <div class="star-price">${{ star.price }}</div>
+                    <a href="/book_a_star/request/{{ star.id }}" class="btn btn-primary">Book Now</a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div style="grid-column: 1/-1; text-align: center; padding: 60px; background: var(--bg-card); border-radius: 20px;">
+            <p style="color: var(--text-muted);">Our star roster is currently being updated. Please check back shortly.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    const carouselStates = {};
+
+    function moveCarousel(starId, direction) {
+        if (!carouselStates[starId]) carouselStates[starId] = 0;
+        
+        const carousel = document.getElementById('carousel-' + starId);
+        const dots = document.getElementById('dots-' + starId).querySelectorAll('.dot');
+        const itemCount = carousel.children.length;
+        
+        carouselStates[starId] = (carouselStates[starId] + direction + itemCount) % itemCount;
+        
+        const offset = carouselStates[starId] * -100;
+        carousel.style.transform = `translateX(${offset}%)`;
+        
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index === carouselStates[starId]);
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+
+{% block title %}Admin - VIP Requests Inbox - Primer's Zest{% endblock %}
+
+{% block extra_head %}
+<style>
+    .container { max-width: 1000px; margin: 0 auto; }
+    .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; text-transform: uppercase; }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .review-btn { background: var(--text-main); color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 0.9rem; transition: 0.3s; }
+    .review-btn:hover { background: #333; transform: translateY(-1px); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
+        <h1 style="margin: 0;">VIP Verification Inbox</h1>
+        <a href="/admin" class="btn" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main);">Back to Dashboard</a>
+    </div>
+
+    <div class="table-responsive" style="background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden;">
+        <table class="premium-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Country</th>
+                    <th>Status</th>
+                    <th>Submitted At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in requests %}
+                <tr>
+                    <td>#{{ req.id }}</td>
+                    <td><strong>{{ req.username }}</strong></td>
+                    <td>{{ req.country }}</td>
+                    <td><span class="status-badge status-{{ req.status }}">{{ req.status }}</span></td>
+                    <td>{{ req.created_at|datetimeformat }}</td>
+                    <td>
+                        <a href="/admin/vip_requests/{{ req.id }}" class="review-btn">Review & Chat</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">No VIP requests found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

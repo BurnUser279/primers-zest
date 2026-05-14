@@ -1,0 +1,376 @@
+{% extends "layout.html" %}
+
+{% block title %}My Executive Profile - Primer's Zest{% endblock %}
+
+{% block extra_head %}
+<style>
+    .profile-container { max-width: 1200px; margin: 0 auto; }
+    
+    /* Identity Card */
+    .identity-card { 
+        background: var(--bg-card); 
+        border-radius: 24px; 
+        padding: 40px; 
+        border: 1px solid var(--border-color); 
+        box-shadow: var(--shadow-lg);
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+    .identity-card::before {
+        content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: var(--primary-gradient);
+    }
+
+    /* Photo Upload Component */
+    .photo-container { position: relative; width: 120px; height: 120px; flex-shrink: 0; }
+    .profile-photo { 
+        width: 100%; height: 100%; border-radius: 24px; object-fit: cover; 
+        background: var(--primary-gradient); display: flex; align-items: center; 
+        justify-content: center; font-size: 3rem; color: white; font-weight: 800;
+        border: 4px solid var(--bg-card); box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .photo-edit-btn {
+        position: absolute; bottom: -10px; right: -10px; 
+        background: var(--text-main); color: var(--bg-card);
+        width: 36px; height: 36px; border-radius: 50%; display: flex;
+        align-items: center; justify-content: center; cursor: pointer;
+        border: 3px solid var(--bg-card); transition: 0.3s;
+        display: none; /* Hidden by default */
+    }
+    .edit-mode .photo-edit-btn { display: flex; }
+    .photo-edit-btn:hover { transform: scale(1.1); background: var(--primary); }
+
+    /* Completeness Meter */
+    .completeness-box { 
+        background: rgba(var(--primary-rgb), 0.05); 
+        border: 1px solid var(--border-color); 
+        border-radius: 16px; padding: 20px; margin-top: 25px;
+    }
+    .meter-bar { height: 8px; background: var(--border-color); border-radius: 10px; overflow: hidden; margin-top: 10px; }
+    .meter-fill { height: 100%; background: var(--primary-gradient); transition: width 1s ease-in-out; }
+
+    /* Forms & Inputs */
+    .form-section { margin-top: 40px; }
+    .section-title { 
+        font-size: 0.85rem; font-weight: 800; color: var(--text-muted); 
+        text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 25px;
+        display: flex; align-items: center; gap: 10px;
+    }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border-color); }
+
+    .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
+    .field-wrap { display: flex; flex-direction: column; gap: 8px; }
+    .field-label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); }
+    .field-input { 
+        background: var(--bg-body); border: 1px solid var(--border-color); 
+        padding: 12px 16px; border-radius: 12px; color: var(--text-main);
+        font-size: 0.95rem; transition: 0.3s;
+    }
+    .field-input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 4px rgba(255,215,0,0.1); }
+    
+    .bio-textarea { grid-column: 1 / -1; overflow: hidden; }
+
+    /* Edit Mode Toggling */
+    .edit-only { display: none; }
+    .view-only { display: block; font-size: 1.1rem; color: var(--text-main); font-weight: 500; }
+    .edit-mode .edit-only { display: block; }
+    .edit-mode .view-only { display: none; }
+
+    /* Security & Privacy Cards */
+    .security-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px; margin-top: 30px; }
+    .security-card { 
+        background: var(--bg-card); border-radius: 20px; padding: 30px; 
+        border: 1px solid var(--border-color); height: 100%;
+    }
+
+    .kyc-badge {
+        padding: 6px 14px; border-radius: 50px; font-size: 0.75rem; font-weight: 700;
+        display: inline-flex; align-items: center; gap: 6px;
+    }
+
+    @media (max-width: 768px) {
+        .identity-card { padding: 30px 20px; text-align: center; }
+        .photo-container { margin: 0 auto 20px; }
+        .identity-card > div { flex-direction: column; align-items: center; text-align: center; }
+        .completeness-box { margin-top: 15px; }
+        .security-grid { grid-template-columns: 1fr; }
+        .input-grid { grid-template-columns: 1fr; }
+        .field-wrap.bio-textarea { grid-column: 1; }
+        
+        .header-actions { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        .header-actions .btn { width: 100%; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container" id="profileContainer">
+    <form action="/profile" method="POST" enctype="multipart/form-data">
+        <!-- Identity Header Card -->
+        <div class="identity-card">
+            <div style="display: flex; gap: 30px; align-items: flex-start; flex-wrap: wrap;">
+                <div class="photo-container">
+                    {% if member.profile_photo %}
+                    <img src="{{ member.profile_photo }}" class="profile-photo" id="photoPreview">
+                    {% else %}
+                    <div class="profile-photo" id="photoPlaceholder">{{ member.fullname[0]|upper }}</div>
+                    {% endif %}
+                    <label for="photoUpload" class="photo-edit-btn" title="Change Photo">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    </label>
+                    <input type="file" name="profile_photo" id="photoUpload" hidden accept="image/*" onchange="previewImage(this)">
+                </div>
+                
+                <div style="flex: 1; min-width: 250px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px;">
+                        <div>
+                            <h1 style="font-size: 2rem; margin: 0;">{{ member.fullname }}</h1>
+                            <p style="color: var(--text-muted); font-size: 1rem; margin: 5px 0 0;">@{{ member.username }} &bull; {{ member.membership_tier }}</p>
+                        </div>
+                        <div class="header-actions" style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; align-items: center;">
+                                {% if member.kyc_status == 'Verified' %}
+                                <span class="kyc-badge" style="background: #dcfce7; color: #166534;">
+                                    <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                                    KYC Verified
+                                </span>
+                                {% elif member.kyc_status == 'Pending' %}
+                                <span class="kyc-badge" style="background: #fef9c3; color: #854d0e;">KYC Pending Review</span>
+                                {% else %}
+                                <a href="/member/kyc_verify" class="btn btn-secondary" style="font-size: 0.75rem; padding: 6px 14px; background: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid #fca5a5;">Start KYC Verification</a>
+                                {% endif %}
+                            </div>
+                            <button type="button" class="btn btn-primary view-only" onclick="enableEditMode()" style="padding: 10px 20px; font-size: 0.85rem;">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right: 5px;"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                Edit Profile
+                            </button>
+                            <div class="edit-only" style="display: flex; gap: 10px; flex-wrap: wrap; width: 100%; justify-content: flex-end;">
+                                <button type="button" class="btn" onclick="disableEditMode()" style="background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 10px 20px; font-size: 0.85rem;">Cancel</button>
+                                <button type="submit" class="btn btn-primary" style="padding: 10px 20px; font-size: 0.85rem;">Save Changes</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="completeness-box">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">Profile Completeness: <span style="color: var(--primary);">{{ completeness }}%</span></span>
+                            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Rank: {{ status_tier }}</span>
+                        </div>
+                        <div class="meter-bar"><div class="meter-fill" style="width: {{ completeness }}%;"></div></div>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 12px;">
+                            {% if completeness < 100 %}
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="vertical-align: middle; margin-right: 4px;"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Complete your bio and photo to reach <strong>Executive All-Star</strong> status.
+                            {% else %}
+                            🏆 Congratulations! You have achieved peak profile status.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Fields -->
+            <div class="form-section">
+                <div class="section-title">Identity & Public Profile</div>
+                <div class="input-grid">
+                    <div class="field-wrap">
+                        <label class="field-label">Full Legal Name</label>
+                        <div class="view-only">{{ member.fullname }}</div>
+                        <input type="text" name="fullname" value="{{ member.fullname }}" class="field-input edit-only" required>
+                    </div>
+                    <div class="field-wrap">
+                        <label class="field-label">Mobile Identifier</label>
+                        <div class="view-only">{{ member.mobile or 'Not provided' }}</div>
+                        <input type="text" name="mobile" value="{{ member.mobile or '' }}" class="field-input edit-only">
+                    </div>
+                    <div class="field-wrap">
+                        <label class="field-label">Email Address (Read Only)</label>
+                        <div class="view-only">{{ member.email }}</div>
+                        <input type="text" value="{{ member.email }}" class="field-input edit-only" disabled style="opacity: 0.6; cursor: not-allowed;">
+                    </div>
+                    <div class="field-wrap">
+                        <label class="field-label">Location: Country</label>
+                        <div class="view-only">{{ member.country or 'Not provided' }}</div>
+                        <input type="text" name="country" value="{{ member.country or '' }}" class="field-input edit-only">
+                    </div>
+                    <div class="field-wrap">
+                        <label class="field-label">State / Region</label>
+                        <div class="view-only">{{ member.state or 'Not provided' }}</div>
+                        <input type="text" name="state" value="{{ member.state or '' }}" class="field-input edit-only">
+                    </div>
+                    <div class="field-wrap">
+                        <label class="field-label">Wealth / Income Tier</label>
+                        <div class="view-only">{{ member.income or 'Not provided' }}</div>
+                        <select name="income" class="field-input edit-only">
+                            <option value="">Select Tier</option>
+                            <option value="High Net Worth ($1M-$10M)" {% if member.income == 'High Net Worth ($1M-$10M)' %}selected{% endif %}>High Net Worth ($1M-$10M)</option>
+                            <option value="Ultra High Net Worth ($10M-$100M)" {% if member.income == 'Ultra High Net Worth ($10M-$100M)' %}selected{% endif %}>Ultra High Net Worth ($10M-$100M)</option>
+                            <option value="Elite ($100M+)" {% if member.income == 'Elite ($100M+)' %}selected{% endif %}>Elite ($100M+)</option>
+                        </select>
+                    </div>
+                    <div class="field-wrap">
+                        <label class="field-label">Travel Profile</label>
+                        <div class="view-only">{{ member.travel or 'Not provided' }}</div>
+                        <select name="travel" class="field-input edit-only">
+                            <option value="">Select Travel Profile</option>
+                            <option value="Global Explorer" {% if member.travel == 'Global Explorer' %}selected{% endif %}>Global Explorer</option>
+                            <option value="Business Traveler" {% if member.travel == 'Business Traveler' %}selected{% endif %}>Business Traveler</option>
+                            <option value="Occasional Luxury" {% if member.travel == 'Occasional Luxury' %}selected{% endif %}>Occasional Luxury</option>
+                        </select>
+                    </div>
+                    <div class="field-wrap bio-textarea">
+                        <label class="field-label">Personal Bio / "About Me"</label>
+                        <div class="view-only" style="line-height: 1.6; white-space: pre-wrap;">{{ member.bio or 'Tell the community who you are...' }}</div>
+                        <textarea name="bio" rows="1" class="field-input edit-only bio-textarea" placeholder="Tell the community who you are, your interests, and your executive background..." style="overflow:hidden;">{{ member.bio or '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="security-grid">
+        <!-- Security Settings -->
+        <div class="security-card">
+            <h3 style="margin-top: 0; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                Security Changes
+            </h3>
+            <form action="/profile/change_password" method="POST" id="passwordChangeForm">
+                <div class="field-wrap" style="margin-bottom: 20px;">
+                    <label class="field-label">Current Password</label>
+                    <input type="password" name="current_password" required class="field-input">
+                </div>
+                <div class="field-wrap" style="margin-bottom: 20px;">
+                    <label class="field-label">New Secure Password</label>
+                    <input type="password" name="new_password" id="new_password" required class="field-input">
+                    <small id="password-hint" style="font-size: 0.65rem; color: var(--text-muted); margin-top: 5px;">Password must be at least 8 characters and contain at least one number and one symbol.</small>
+                </div>
+                <div class="field-wrap" style="margin-bottom: 25px;">
+                    <label class="field-label">Confirm Password</label>
+                    <input type="password" name="confirm_password" id="confirm_password" required class="field-input">
+                    <small id="password-match-msg" style="font-size: 0.65rem; font-weight: 700; display: block; margin-top: 5px;"></small>
+                </div>
+                <button type="submit" class="btn btn-secondary" style="width: 100%;">Change Password</button>
+            </form>
+        </div>
+
+        <!-- Privacy & Medical -->
+        <div class="security-card" style="border-left: 6px solid #f59e0b;">
+            <h3 style="margin-top: 0; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Private Health Registry
+            </h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 25px;">These details are stored in our encrypted vault and are only accessed by concierges during travel planning or event coordination.</p>
+            
+            <div style="background: var(--bg-body); border-radius: 12px; padding: 20px; border: 1px solid var(--border-color);">
+                <div class="field-label" style="margin-bottom: 8px;">Confidential Medical Notes</div>
+                <div style="font-size: 0.95rem; line-height: 1.6; color: {{ 'var(--text-main)' if member.medical else 'var(--text-muted)' }};">
+                    {{ member.medical or 'No health information provided.' }}
+                </div>
+            </div>
+            
+            <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px;">
+                <div style="background: rgba(245, 158, 11, 0.1); color: #b45309; padding: 10px; border-radius: 50%;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </div>
+                <span style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.4;">
+                    Medical data is <strong>Read-Only</strong> for your protection. To update your health registry, please contact your personal concierge.
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function enableEditMode() {
+    document.getElementById('profileContainer').classList.add('edit-mode');
+}
+
+function disableEditMode() {
+    document.getElementById('profileContainer').classList.remove('edit-mode');
+}
+
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const photoPreview = document.getElementById('photoPreview');
+            const placeholder = document.getElementById('photoPlaceholder');
+            
+            if (photoPreview) {
+                photoPreview.src = e.target.result;
+            } else if (placeholder) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'profile-photo';
+                img.id = 'photoPreview';
+                placeholder.parentNode.replaceChild(img, placeholder);
+            }
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Password Validation
+const newPass = document.getElementById('new_password');
+const confirmPass = document.getElementById('confirm_password');
+const passForm = document.getElementById('passwordChangeForm');
+
+if (newPass && confirmPass && passForm) {
+    function validateProfilePasswords() {
+        const p1 = newPass.value;
+        const p2 = confirmPass.value;
+        const hint = document.getElementById('password-hint');
+        const matchMsg = document.getElementById('password-match-msg');
+        const passRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
+
+        if (passRegex.test(p1)) {
+            hint.style.color = '#10b981';
+        } else {
+            hint.style.color = p1.length > 0 ? '#ef4444' : 'var(--text-muted)';
+        }
+
+        if (p2.length > 0) {
+            if (p1 === p2) {
+                matchMsg.textContent = 'Passwords match';
+                matchMsg.style.color = '#10b981';
+            } else {
+                matchMsg.textContent = 'Passwords do not match';
+                matchMsg.style.color = '#ef4444';
+            }
+        } else {
+            matchMsg.textContent = '';
+        }
+    }
+
+    newPass.addEventListener('input', validateProfilePasswords);
+    confirmPass.addEventListener('input', validateProfilePasswords);
+
+    passForm.addEventListener('submit', function(e) {
+        const p1 = newPass.value;
+        const p2 = confirmPass.value;
+        const passRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
+
+        if (!passRegex.test(p1)) {
+            e.preventDefault();
+            if (window.showToast) {
+                showToast("Password must be at least 8 characters and contain at least one number and one symbol.", "error");
+            } else {
+                alert("Password must be at least 8 characters and contain at least one number and one symbol.");
+            }
+        } else if (p1 !== p2) {
+            e.preventDefault();
+            if (window.showToast) {
+                showToast("Passwords do not match.", "error");
+            } else {
+                alert("Passwords do not match.");
+            }
+        }
+    });
+}
+</script>
+{% endblock %}
+
+{% block nav_links %}
+    {% include "member_nav_links.html" %}
+{% endblock %}

@@ -1,0 +1,156 @@
+{% extends "layout.html" %}
+
+{% block title %}Membership Card Verification - Primer's Zest{% endblock %}
+
+{% block extra_head %}
+<style>
+    .verification-card {
+        background: var(--bg-card);
+        border-radius: 20px;
+        padding: 40px;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-md);
+        margin-bottom: 40px;
+    }
+
+    @media (max-width: 768px) {
+        .verification-card {
+            padding: 25px 20px;
+        }
+    }
+
+    .payment-instruction-box {
+        background: var(--bg-body);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .method-card {
+        padding: 20px 10px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        text-align: center;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        background: var(--bg-body);
+    }
+
+    .payment-method-opt input:checked + .method-card {
+        border-color: var(--primary);
+        background: rgba(255, 215, 0, 0.1);
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block nav_links %}
+    {% include "member_nav_links.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h1 style="font-size: 2.2rem; margin-bottom: 10px;">Membership Card Order</h1>
+        <p style="color: var(--text-muted);">Secure payment for your {{ card_name }} acquisition.</p>
+    </div>
+
+    <div class="verification-card max-w-3xl mx-auto">
+        <div style="background: rgba(255, 215, 0, 0.05); border-left: 4px solid var(--primary); padding: 20px; border-radius: 0 12px 12px 0; margin-bottom: 35px;">
+            <p style="margin: 0; color: var(--text-main); font-weight: 700; font-size: 1.1rem;">Executive Order: {{ card_name }}</p>
+            <p style="margin: 5px 0 0; color: var(--text-muted); font-size: 0.9rem;">Total Amount Due: <strong>${{ "%.2f"|format(price) }}</strong></p>
+        </div>
+        
+        <form action="/membership_card/submit_verification" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="order_id" value="{{ order[0] }}">
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 30px;">
+                <label class="payment-method-opt">
+                    <input type="radio" name="payment_method" value="crypto" style="display: none;" onchange="updatePaymentUI(this.value)">
+                    <div class="method-card">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.407 2.67 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.407-2.67-1M12 16a3 3 0 100-6 3 3 0 000 6z"></path></svg>
+                        <span>Crypto</span>
+                    </div>
+                </label>
+                <label class="payment-method-opt">
+                    <input type="radio" name="payment_method" value="wire" style="display: none;" onchange="updatePaymentUI(this.value)">
+                    <div class="method-card">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                        <span>Bank Transfer</span>
+                    </div>
+                </label>
+                <label class="payment-method-opt">
+                    <input type="radio" name="payment_method" value="giftcard" style="display: none;" onchange="updatePaymentUI(this.value)">
+                    <div class="method-card">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                        <span>Giftcards</span>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Dynamic Instructions -->
+            <div id="crypto-instructions" class="payment-instruction-box" style="display: none;">
+                <h4 style="margin-bottom: 20px; font-size: 0.9rem; color: var(--primary);">EXECUTIVE CRYPTO WALLET</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px;">
+                    {% for wallet in crypto_wallets %}
+                    <label class="payment-method-opt">
+                        <input type="radio" name="crypto_currency" value="{{ wallet[1] }}" style="display: none;" onchange="updateCryptoAddress('{{ wallet[2] }}', '{{ wallet[3] }}')">
+                        <div class="method-card" style="padding: 15px;">
+                            <span>{{ wallet[1] }}</span>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+                <div id="address-display-box" style="display: none; margin-top: 20px;">
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">NETWORK: <strong id="selected-network" style="color: var(--primary);">--</strong></div>
+                    <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; font-family: monospace; font-size: 0.85rem; word-break: break-all; border: 1px solid var(--border-color);">
+                        <span id="wallet-address-text">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="wire-instructions" class="payment-instruction-box" style="display: none;">
+                <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: var(--primary);">BANK TRANSFER DETAILS</h4>
+                <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; font-size: 0.9rem; white-space: pre-wrap;">{{ settings.get('bank_instructions', 'Contact concierge for details.') }}</div>
+            </div>
+
+            <div id="giftcard-instructions" class="payment-instruction-box" style="display: none;">
+                <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: var(--primary);">GIFTCARD DETAILS</h4>
+                <input type="text" name="giftcard_code" placeholder="Enter Giftcard Claim Code..." class="form-control mb-3" style="background: var(--bg-body); color: var(--text-main); border-color: var(--border-color);">
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label d-block mb-2">Upload Payment Receipt / Evidence</label>
+                <input type="file" name="payment_evidence" class="form-control" style="background: var(--bg-body); color: var(--text-main); border-color: var(--border-color);">
+            </div>
+
+            <button type="submit" class="btn btn-primary w-full py-4 text-lg font-bold">
+                Submit Payment Evidence
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function updatePaymentUI(method) {
+        document.getElementById('crypto-instructions').style.display = method === 'crypto' ? 'block' : 'none';
+        document.getElementById('wire-instructions').style.display = method === 'wire' ? 'block' : 'none';
+        document.getElementById('giftcard-instructions').style.display = method === 'giftcard' ? 'block' : 'none';
+    }
+
+    function updateCryptoAddress(network, address) {
+        document.getElementById('address-display-box').style.display = 'block';
+        document.getElementById('selected-network').textContent = network;
+        document.getElementById('wallet-address-text').textContent = address;
+    }
+</script>
+{% endblock %}

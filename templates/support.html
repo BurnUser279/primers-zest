@@ -1,0 +1,229 @@
+{% extends "layout.html" %}
+
+{% block title %}Concierge Support - Primer's Zest{% endblock %}
+
+{% block extra_head %}
+<style>
+
+    .support-card {
+        background: var(--bg-card);
+        border-radius: 24px;
+        padding: 50px;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-lg);
+        max-width: 700px;
+        margin: 0 auto;
+        position: relative;
+        overflow: hidden;
+    }
+
+    @media (max-width: 768px) {
+        .support-card {
+            padding: 30px 20px;
+        }
+    }
+
+    .support-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--primary-gradient);
+    }
+
+    .form-group {
+        margin-bottom: 30px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 12px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 15px 20px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        background: rgba(0,0,0,0.02);
+        color: var(--text-main);
+        font-family: inherit;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: #fff;
+        box-shadow: 0 8px 20px rgba(212, 175, 55, 0.1);
+    }
+
+    /* Custom File Upload */
+    .file-upload-wrapper {
+        position: relative;
+        width: 100%;
+    }
+
+    .file-upload-box {
+        border: 2px dashed var(--border-color);
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        background: rgba(0,0,0,0.01);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .file-upload-box:hover, .file-upload-box.dragover {
+        border-color: var(--primary);
+        background: rgba(212, 175, 55, 0.05);
+    }
+
+    .file-upload-box svg {
+        color: var(--primary);
+        opacity: 0.7;
+    }
+
+    .file-upload-box p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--text-main);
+        font-weight: 500;
+    }
+
+    .file-upload-box span {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .file-list {
+        margin-top: 15px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .file-badge {
+        background: var(--bg-body);
+        border: 1px solid var(--border-color);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        color: var(--text-main);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+</style>
+{% endblock %}
+
+{% block nav_links %}
+    {% include "member_nav_links.html" %}
+{% endblock %}
+
+{% block content %}
+<div>
+    <div style="text-align: center; margin-bottom: 50px;">
+        <h1 style="font-size: 2.5rem; font-weight: 900; margin-bottom: 15px; letter-spacing: -1px;">Concierge Dispatch</h1>
+        <p style="color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">Your request will be prioritized by our executive support team. Expect a response within 15 minutes.</p>
+    </div>
+
+    <div class="support-card">
+
+        <form action="/support" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>Category</label>
+                <select name="category" required class="form-control">
+                    <option value="Meeting Request">Meeting Request</option>
+                    <option value="Payment Issue">Payment Issue</option>
+                    <option value="Feature Suggestion">Feature Suggestion</option>
+                    <option value="Bug Report">Bug Report</option>
+                    <option value="General Inquiry">General Inquiry</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Message Details</label>
+                <textarea name="message" rows="1" required class="form-control" placeholder="Describe your request in detail..." style="overflow:hidden;"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Attachments (Optional)</label>
+                <div class="file-upload-wrapper">
+                    <input type="file" name="attachment" id="attachment" multiple style="display: none;">
+                    <label for="attachment" class="file-upload-box" id="dropZone">
+                        <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        <p>Click to upload or drag and drop</p>
+                        <span>Maximum 5 files. JPG, PNG, PDF supported.</span>
+                    </label>
+                    <div id="fileList" class="file-list"></div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 20px; margin-top: 15px; font-size: 1.1rem; letter-spacing: 0.5px;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="margin-right: 8px;"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                Secure Dispatch
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const attachment = document.getElementById('attachment');
+    const dropZone = document.getElementById('dropZone');
+    const fileList = document.getElementById('fileList');
+
+    attachment.addEventListener('change', handleFiles);
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+        });
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        attachment.files = dt.files;
+        handleFiles();
+    });
+
+    function handleFiles() {
+        const files = attachment.files;
+        fileList.innerHTML = '';
+        
+        if (files.length > 5) {
+            alert("Maximum 5 files allowed.");
+            attachment.value = '';
+            return;
+        }
+
+        Array.from(files).forEach(file => {
+            const badge = document.createElement('div');
+            badge.className = 'file-badge';
+            badge.innerHTML = `
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.414a4 4 0 00-5.656-5.656l-6.415 6.414a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                ${file.name}
+            `;
+            fileList.appendChild(badge);
+        });
+    }
+</script>
+{% endblock %}

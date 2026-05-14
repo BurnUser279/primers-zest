@@ -1,0 +1,116 @@
+{% extends "layout.html" %}
+
+{% block title %}Global Admin Settings - Primer's Zest{% endblock %}
+
+{% block extra_head %}
+<style>
+    .settings-container { max-width: 700px; margin: 0 auto; }
+    .settings-card { background: var(--bg-card); padding: 40px; border-radius: 20px; border: 1px solid var(--border-color); box-shadow: var(--shadow-md); margin-bottom: 30px; }
+    .form-group { margin-bottom: 25px; }
+    .btn-save { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 1rem; transition: 0.3s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <div style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
+        <h1 style="margin: 0;">System Settings</h1>
+        <a href="/admin" class="btn" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main);">&larr; Back to Roster</a>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="dashboard-card" style="border-left: 4px solid var(--primary); padding: 15px 20px; margin-bottom: 25px;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="settings-card">
+        <h2 style="font-size: 1.2rem; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+            Support Identity
+        </h2>
+        <form method="POST">
+            <input type="hidden" name="form_type" value="update_email">
+            <div class="form-group">
+                <label class="info-label" style="display: block; margin-bottom: 8px;">System Support Email</label>
+                <input type="email" name="support_email" value="{{ settings[0] if settings else 'support@yourdomain.com' }}" required class="admin-input">
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">Visible to users on account lockout and help screens.</p>
+            </div>
+            <button type="submit" class="btn-save" style="background: var(--text-main); color: white;">Update Support Email</button>
+        </form>
+    </div>
+
+    <div class="settings-card" style="border-top: 4px solid #ef4444;">
+        <h2 style="font-size: 1.2rem; margin-bottom: 25px; color: #ef4444; display: flex; align-items: center; gap: 10px;">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+            Master Credential Security
+        </h2>
+        <form method="POST">
+            <input type="hidden" name="form_type" value="update_password">
+            <div class="form-group">
+                <label class="info-label" style="display: block; margin-bottom: 8px;">Current Admin Password</label>
+                <div style="position: relative;">
+                    <input type="password" name="current_password" id="settings-current" required class="admin-input">
+                    <span onclick="togglePasswordVisibility('settings-current', this)" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; opacity: 0.5;">
+                        <svg class="eye-svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </span>
+                </div>
+            </div>
+            <div class="grid-2" style="gap: 20px;">
+                <div class="form-group">
+                    <label class="info-label" style="display: block; margin-bottom: 8px;">New Password</label>
+                    <div style="position: relative;">
+                        <input type="password" name="new_password" id="settings-new" required class="admin-input">
+                        <span onclick="togglePasswordVisibility('settings-new', this)" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; opacity: 0.5;">
+                            <svg class="eye-svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="info-label" style="display: block; margin-bottom: 8px;">Confirm New</label>
+                    <div style="position: relative;">
+                        <input type="password" name="confirm_password" id="settings-confirm" required class="admin-input">
+                        <span onclick="togglePasswordVisibility('settings-confirm', this)" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; opacity: 0.5;">
+                            <svg class="eye-svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn-save" style="background: #ef4444; color: white;">Apply Security Lockdown</button>
+        </form>
+    <div class="settings-card" style="border-top: 4px solid var(--primary);">
+        <h2 style="font-size: 1.2rem; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+            Star Booking Settings
+        </h2>
+        <form action="/admin/settings/update" method="POST">
+            <div class="form-group">
+                <label class="info-label" style="display: block; margin-bottom: 8px;">Available Occasions</label>
+                <textarea name="star_occasions" class="admin-input" rows="3" placeholder="Comma separated list of occasions...">{{ settings['star_occasions'] if settings['star_occasions'] else 'Birthday, Anniversary, Expert Advice, Personal Shoutout, Business Endorsement, Other' }}</textarea>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">Separate each occasion with a comma. These will appear in the talent booking request form.</p>
+            </div>
+            <button type="submit" class="btn-save" style="background: var(--primary); color: #000;">Update Booking Options</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    window.togglePasswordVisibility = function(inputId, iconSpan) {
+        const input = document.getElementById(inputId);
+        const svg = iconSpan.querySelector('svg');
+        if (input.type === 'password') {
+            input.type = 'text';
+            svg.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+        } else {
+            input.type = 'password';
+            svg.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+        }
+    };
+</script>
+{% endblock %}

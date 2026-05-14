@@ -1,0 +1,369 @@
+{% extends "layout.html" %}
+
+{% block title %}Admin - Member Profile: {{ member['fullname'] }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Reuse Admin Sidebar Styles */
+    .sidebar-nav {
+        width: var(--sidebar-width);
+        background: var(--bg-card);
+        border-right: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        height: 100vh;
+        z-index: 1000;
+        transition: transform 0.3s ease;
+    }
+    
+    .app-content {
+        margin-left: var(--sidebar-width);
+        padding: 40px;
+        max-width: 1400px;
+    }
+
+    .profile-card {
+        background: var(--bg-card);
+        border-radius: 20px;
+        padding: 40px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2), var(--shadow-md);
+        margin-bottom: 30px;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 25px;
+        margin-top: 30px;
+    }
+
+    .info-item {
+        background: var(--bg-body);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        min-width: 0; /* Enable flex/grid containment */
+    }
+
+    .info-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 5px;
+    }
+
+    .info-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-main);
+        word-break: break-all;
+        overflow-wrap: break-word;
+    }
+
+    .danger-zone {
+        background: #fef2f2;
+        border: 1px solid #fee2e2;
+        border-radius: 20px;
+        padding: 30px;
+        margin-top: 40px;
+    }
+
+    @media (max-width: 992px) {
+        .sidebar-nav { transform: translateX(-100%); }
+        .sidebar-nav.active { transform: translateX(0); }
+        .app-content { margin-left: 0; padding: 80px 20px 40px; }
+    }
+</style>
+{% endblock %}
+
+{% block sidebar %}
+<nav class="sidebar-nav" id="sidebarNav">
+    <div class="sidebar-header" style="padding: 30px; border-bottom: 1px solid var(--border-color);">
+        <a href="/" class="brand-logo" style="font-size: 1.2rem; font-weight: 800; color: var(--primary); text-decoration: none;">
+            ADMIN <span style="color: var(--text-main);">PORTAL</span>
+        </a>
+    </div>
+
+    <div class="nav-links" style="padding: 20px 15px; flex: 1; overflow-y: auto;">
+        <div class="nav-group-title" style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin: 15px 15px 10px;">Member Context</div>
+        <a href="/admin" class="nav-item">
+            &larr; Return to Roster
+        </a>
+        <a href="/admin/user/{{ member['id'] }}" class="nav-item active">
+            Member Overview
+        </a>
+        <a href="/admin/vault/{{ member['id'] }}" class="nav-item">
+            Verification Vault
+        </a>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="app-content">
+    <div class="section-header" style="margin-bottom: 35px; display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+            <h1 style="font-size: 2.2rem; margin-bottom: 10px;">{{ member['fullname'] }}</h1>
+            <p style="color: var(--text-muted);">Member ID: #{{ member['id'] }} | @{{ member['username'] }}</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <span class="status-badge {% if member['is_active']|int == 1 %}status-approved{% else %}status-pending{% endif %}">
+                {{ 'ACTIVE' if member['is_active']|int == 1 else 'DISABLED' }}
+            </span>
+            <form action="/admin/toggle_vip/{{ member['id'] }}" method="POST">
+                <button type="submit" class="btn {% if member['membership_tier'] == 'VIP' %}btn-secondary{% else %}btn-primary{% endif %} btn-sm">
+                    {% if member['membership_tier'] == 'VIP' %}Revoke VIP{% else %}Grant VIP{% endif %}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="profile-card">
+        <div class="info-grid">
+            <!-- Section: Contact -->
+            <div class="info-item" style="grid-column: 1 / -1; background: transparent; padding: 0; border: none;">
+                <div style="font-size: 0.7rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">Contact Information</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Email Address</div>
+                <div class="info-value" style="font-size: 0.95rem;">{{ member['email'] or 'N/A' }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Mobile Number</div>
+                <div class="info-value" style="font-size: 0.95rem;">{{ member['mobile'] or 'N/A' }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Username</div>
+                <div class="info-value" style="font-size: 0.95rem; color: var(--primary);">@{{ member['username'] }}</div>
+            </div>
+
+            <!-- Section: Demographics -->
+            <div class="info-item" style="grid-column: 1 / -1; background: transparent; padding: 0; border: none; margin-top: 10px;">
+                <div style="font-size: 0.7rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">Demographics & Background</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Age</div>
+                <div class="info-value">{{ member['age'] or 'N/A' }} years old</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Gender</div>
+                <div class="info-value">{{ member['gender'] or 'N/A' }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Country</div>
+                <div class="info-value">{{ member['country'] or 'N/A' }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">State / Region</div>
+                <div class="info-value">{{ member['state'] or 'N/A' }}</div>
+            </div>
+
+            <!-- Section: Financial & Lifestyle -->
+            <div class="info-item" style="grid-column: 1 / -1; background: transparent; padding: 0; border: none; margin-top: 10px;">
+                <div style="font-size: 0.7rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">Financial & Lifestyle</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Income Tier</div>
+                <div class="info-value">{{ member['income'] or 'N/A' }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Travel Profile</div>
+                <div class="info-value">{{ member['travel'] or 'N/A' }}</div>
+            </div>
+
+            <!-- Section: Status -->
+            <div class="info-item" style="grid-column: 1 / -1; background: transparent; padding: 0; border: none; margin-top: 10px;">
+                <div style="font-size: 0.7rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">Account Status</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Membership Tier</div>
+                <div class="info-value" style="color: var(--primary);">{{ member['membership_tier'] or 'Regular' }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label" style="display: flex; justify-content: space-between; align-items: center;">
+                    KYC Status
+                    <form action="/admin/user/{{ member['id'] }}/toggle_kyc" method="POST" style="margin: 0;">
+                        <button type="submit" style="background: none; border: none; color: var(--primary); text-decoration: underline; font-size: 0.7rem; cursor: pointer; padding: 0;">Toggle Status</button>
+                    </form>
+                </div>
+                <div class="info-value">
+                    {% if member['kyc_status'] == 'Verified' %}
+                    <span style="color: #166534; font-weight: 700;">&#10003; Verified</span>
+                    {% elif member['kyc_status'] == 'Pending' %}
+                    <span style="color: #f59e0b; font-weight: 700;">&#8987; Pending</span>
+                    {% else %}
+                    <span style="color: #991b1b; font-weight: 700;">&#10007; Unverified</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Account Active</div>
+                <div class="info-value">
+                    {% if member['is_active']|int == 1 %}
+                    <span style="color: #166534; font-weight: 700;">&#10003; Active</span>
+                    {% else %}
+                    <span style="color: #991b1b; font-weight: 700;">&#10007; Disabled</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Account Locked</div>
+                <div class="info-value">
+                    {% if member['is_locked'] %}
+                    <span style="color: #991b1b; font-weight: 700;">&#128274; Locked</span>
+                    {% else %}
+                    <span style="color: #166534; font-weight: 700;">&#128275; Unlocked</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% if member['vip_since'] %}
+            <div class="info-item">
+                <div class="info-label">VIP Since</div>
+                <div class="info-value">{{ member['vip_since']|datetimeformat }}</div>
+            </div>
+            {% endif %}
+            <div class="info-item">
+                <div class="info-label">Vault Link</div>
+                <div class="info-value"><a href="/admin/vault/{{ member['id'] }}" style="color: var(--primary); font-size: 0.85rem; text-decoration: none;">View Documents &rarr;</a></div>
+            </div>
+
+            <!-- Medical Section (always shown) -->
+            <div class="info-item" style="grid-column: 1 / -1; background: transparent; padding: 0; border: none; margin-top: 10px;">
+                <div style="font-size: 0.7rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">Confidential Health / Medical Details</div>
+            </div>
+            <div class="info-item" style="grid-column: 1 / -1; background: rgba(253, 224, 71, 0.15); border-color: #fde047; border-left: 4px solid #fde047;">
+                <div class="info-label" style="margin-bottom: 8px;">Medical Conditions / Health Notes</div>
+                <div style="font-size: 0.95rem; line-height: 1.7; color: var(--text-main);">
+                    {{ member['medical'] or 'None declared — member did not provide any medical or health information at registration.' }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section: Profile Audit History -->
+    <div class="profile-card">
+        <h3 style="font-size: 1.1rem; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Profile Update History
+        </h3>
+        
+        {% if audit_logs %}
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                <thead>
+                    <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                        <th style="padding: 12px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 0.7rem;">Date</th>
+                        <th style="padding: 12px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 0.7rem;">Field</th>
+                        <th style="padding: 12px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 0.7rem;">Previous Value</th>
+                        <th style="padding: 12px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 0.7rem;">Updated Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in audit_logs %}
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 12px; color: var(--text-muted);">{{ log['changed_at'] }}</td>
+                        <td style="padding: 12px; font-weight: 700; color: var(--primary);">{{ log['field_name']|capitalize }}</td>
+                        <td style="padding: 12px; color: #991b1b; background: #fff1f2;">{{ log['old_value'] or '(Empty)' }}</td>
+                        <td style="padding: 12px; color: #166534; background: #f0fdf4;">{{ log['new_value'] or '(Empty)' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color: var(--text-muted); font-style: italic;">No profile changes have been recorded for this member yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- Section: Manual Financial Contribution -->
+    <div class="profile-card">
+        <h3 style="font-size: 1.1rem; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Manual Financial Ledger Top-up
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">Inject a manual payment or external donation into this member's ledger. This immediately increments their "Total Contributions" visible on their dashboard.</p>
+        <form action="/admin/user/{{ member['id'] }}/add_donation" method="POST" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 150px;">
+                <input type="number" step="0.01" name="amount" placeholder="Amount ($)" required class="admin-input" style="width: 100%; padding: 12px; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px;">
+            </div>
+            <div style="flex: 2; min-width: 250px;">
+                <input type="text" name="note" placeholder="Description (e.g., Wire Transfer Top-up)" class="admin-input" style="width: 100%; padding: 12px; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px;">
+            </div>
+            <button type="submit" class="btn btn-primary" style="white-space: nowrap; padding: 12px 25px;">Inject Funds</button>
+        </form>
+    </div>
+
+
+    <div class="danger-zone">
+        <h3 style="color: #991b1b; margin-top: 0; font-size: 1.1rem; margin-bottom: 20px;">Administrative Sanctions</h3>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px;">
+            <div style="background: #fff; padding: 25px; border-radius: 15px; border: 1px solid #fee2e2;">
+                <h4 style="margin-top: 0; font-size: 0.9rem;">{{ 'Enable Account' if member['is_active']|int == 0 else 'Suspend Access' }}</h4>
+                <p style="font-size: 0.8rem; color: #7f1d1d; margin-bottom: 15px;">
+                    {{ 'Restore user access to their dashboard and private services.' if member['is_active']|int == 0 else 'Temporarily block the user from accessing their dashboard.' }}
+                </p>
+                <form action="/admin/user/{{ member['id'] }}/{{ 'enable' if member['is_active']|int == 0 else 'disable' }}" method="POST" onsubmit="confirmAction(event, '{{ 'enable' if member['is_active']|int == 0 else 'disable' }}')">
+                    <input type="password" name="admin_password" placeholder="Admin Password" required class="admin-input" style="margin-bottom: 10px;">
+                    <button type="submit" class="btn {% if member['is_active']|int == 0 %}btn-primary{% else %}btn-secondary{% endif %}" style="width: 100%; border: none; {% if member['is_active']|int == 1 %}background: #6b7280;{% endif %}">
+                        {{ 'Enable Account' if member['is_active']|int == 0 else 'Disable Account' }}
+                    </button>
+                </form>
+            </div>
+
+            <div style="background: #fff; padding: 25px; border-radius: 15px; border: 1px solid #fee2e2;">
+                <h4 style="margin-top: 0; font-size: 0.9rem; color: #dc2626;">Purge Account</h4>
+                <p style="font-size: 0.8rem; color: #7f1d1d; margin-bottom: 15px;">Permanently delete all member data. This cannot be undone.</p>
+                <form action="/admin/user/{{ member['id'] }}/delete" method="POST" onsubmit="confirmAction(event, 'delete')">
+                    <input type="password" name="admin_password" placeholder="Admin Password" required class="admin-input" style="margin-bottom: 10px;">
+                    <button type="submit" class="btn btn-primary" style="width: 100%; background: #dc2626; border: none;">Delete Permanently</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="confirmModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(4px);">
+    <div style="background: white; padding: 40px; border-radius: 20px; max-width: 500px; width: 90%; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3);">
+        <h2 id="modalTitle" style="color: #991b1b; margin-top: 0;">Confirm Action</h2>
+        <p id="modalMessage" style="color: #374151; line-height: 1.6; margin: 20px 0;"></p>
+        <div style="display: flex; gap: 15px; margin-top: 30px;">
+            <button id="modalConfirmBtn" class="btn btn-primary" style="flex: 1; background: #dc2626;">Execute</button>
+            <button onclick="closeModal()" class="btn btn-secondary" style="flex: 1;">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentForm = null;
+    function confirmAction(event, type) {
+        event.preventDefault();
+        currentForm = event.target;
+        let msg = '';
+        let title = '';
+        
+        if (type === 'delete') {
+            title = 'Danger: Permanent Deletion';
+            msg = 'CRITICAL: This will PERMANENTLY PURGE this member and all associated records. Are you absolutely certain?';
+        } else if (type === 'enable') {
+            title = 'Confirm Activation';
+            msg = 'Are you sure you want to reactivate this member account?';
+        } else {
+            title = 'Confirm Suspension';
+            msg = 'Are you sure you want to disable this member account?';
+        }
+        
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('modalMessage').innerText = msg;
+        document.getElementById('confirmModal').style.display = 'flex';
+        document.getElementById('modalConfirmBtn').onclick = () => currentForm.submit();
+    }
+    function closeModal() { document.getElementById('confirmModal').style.display = 'none'; }
+    function toggleSidebar() { document.getElementById('sidebarNav').classList.toggle('active'); }
+</script>
+{% endblock %}

@@ -1,0 +1,220 @@
+{% extends "layout.html" %}
+
+{% block title %}Notifications - Primer's Zest{% endblock %}
+
+{% block extra_head %}
+<style>
+    .notifications-container {
+        max-width: 900px;
+        margin: 40px auto;
+    }
+
+    .notification-card {
+        background: var(--bg-card);
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        padding: 24px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .notification-card.unread {
+        border-left: 4px solid var(--primary);
+        background: linear-gradient(to right, rgba(212, 175, 55, 0.05), transparent);
+    }
+
+    .notification-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .notification-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: var(--bg-body);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+        margin-right: 20px;
+    }
+
+    .notification-content {
+        flex: 1;
+    }
+
+    .notification-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 6px;
+    }
+
+    .notification-type {
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--primary);
+    }
+
+    .notification-time {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .notification-message {
+        font-size: 1.05rem;
+        color: var(--text-main);
+        font-weight: 500;
+        line-height: 1.4;
+    }
+
+    .action-link {
+        padding: 10px 20px;
+        background: var(--primary-gradient);
+        color: white !important;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: 0.2s;
+    }
+
+    .action-link:hover {
+        filter: brightness(1.1);
+        transform: scale(1.05);
+    }
+
+    .mark-read-form {
+        margin: 0;
+    }
+
+    .btn-icon {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 5px;
+        transition: 0.2s;
+    }
+
+    .btn-icon:hover {
+        color: var(--primary);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.2;
+    }
+
+    @media (max-width: 768px) {
+        .notifications-container {
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+        .notifications-container h1 {
+            font-size: 1.8rem !important;
+        }
+        .notification-card {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 16px;
+        }
+        .notification-icon {
+            width: 36px;
+            height: 36px;
+            margin-right: 12px;
+        }
+        .notification-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+        .notification-message {
+            font-size: 0.95rem;
+        }
+        .notification-card > div:last-child {
+            width: 100%;
+            justify-content: space-between;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+        }
+        .action-link {
+            flex: 1;
+            text-align: center;
+            padding: 8px 15px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block nav_links %}
+    {% include "member_nav_links.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="notifications-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+        <h1 style="font-size: 2.2rem; margin: 0;">Notifications</h1>
+        {% if notifications %}
+        <form action="/notifications/mark_all_read" method="POST">
+            <button type="submit" class="btn" style="background: none; border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.8rem;">Mark all as read</button>
+        </form>
+        {% endif %}
+    </div>
+
+    {% if notifications %}
+        {% for note in notifications %}
+        <div class="notification-card {% if not note.is_read %}unread{% endif %}">
+            <div style="display: flex; align-items: center; flex: 1;">
+                <div class="notification-icon">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-meta">
+                        <span class="notification-type">{{ note.action_type }}</span>
+                        <span class="notification-time">{{ note.created_at|datetimeformat }}</span>
+                    </div>
+                    <div class="notification-message">{{ note.message }}</div>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 20px;">
+                {% if note.target_url %}
+                <a href="/notifications/action/{{ note.id }}" class="action-link">View Details</a>
+                {% endif %}
+                
+                {% if not note.is_read %}
+                <form action="/notifications/read/{{ note.id }}" method="POST" class="mark-read-form">
+                    <button type="submit" class="btn-icon" title="Mark as read">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"></path></svg>
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <svg width="60" height="60" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            </div>
+            <h2 style="color: var(--text-main);">No notifications yet</h2>
+            <p style="color: var(--text-muted);">We'll notify you here when the executive team updates your status.</p>
+            <a href="/dashboard" class="btn btn-primary" style="margin-top: 20px;">Return to Dashboard</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

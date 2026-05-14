@@ -1,0 +1,188 @@
+{% extends "layout.html" %}
+
+{% block title %}Appeal Resolution: {{ member.fullname }} - Admin Portal{% endblock %}
+
+{% block extra_head %}
+<style>
+    .appeal-workspace {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    .member-context-card {
+        background: var(--bg-card);
+        border-radius: 20px;
+        padding: 30px;
+        border: 1px solid var(--border-color);
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .chat-interface {
+        background: var(--bg-card);
+        border-radius: 24px;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-lg);
+        height: 700px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .chat-history {
+        flex: 1;
+        padding: 40px;
+        overflow-y: auto;
+        background: #fafafa;
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+    }
+
+    .msg-bubble {
+        max-width: 75%;
+        padding: 18px 24px;
+        border-radius: 20px;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        position: relative;
+    }
+
+    .msg-user {
+        align-self: flex-start;
+        background: #fff;
+        border: 1px solid var(--border-color);
+        color: var(--text-main);
+        border-bottom-left-radius: 4px;
+    }
+
+    .msg-admin {
+        align-self: flex-end;
+        background: var(--primary);
+        color: #fff;
+        border-bottom-right-radius: 4px;
+    }
+
+    .msg-meta {
+        font-size: 0.65rem;
+        opacity: 0.7;
+        margin-top: 8px;
+        display: block;
+    }
+
+    .msg-admin .msg-meta { text-align: right; }
+
+    .reply-area {
+        padding: 30px;
+        background: #fff;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .reply-form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .reply-input {
+        width: 100%;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        background: #f8f9fa;
+        font-family: inherit;
+        font-size: 1rem;
+        resize: none;
+        outline: none;
+        transition: all 0.3s ease;
+    }
+
+    .reply-input:focus {
+        border-color: var(--primary);
+        background: #fff;
+        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.1);
+    }
+
+    .sidebar-nav { width: 280px; }
+    .main-wrapper { margin-left: 280px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="appeal-workspace">
+    <div style="margin-bottom: 25px;">
+        <a href="/admin" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 600;">&larr; Back to Resolution Center</a>
+    </div>
+
+    <div class="member-context-card">
+        <div>
+            <h1 style="margin: 0; font-size: 1.8rem;">Appeal Resolution</h1>
+            <p style="color: var(--text-muted); margin: 5px 0 0;">Member: <strong>{{ member.fullname }}</strong> (@{{ member.username }})</p>
+        </div>
+        <div style="text-align: right;">
+            <span class="status-badge {% if member.is_active|int == 1 %}status-approved{% else %}status-pending{% endif %}">
+                {{ 'ACCOUNT ACTIVE' if member.is_active|int == 1 else 'ACCOUNT DISABLED' }}
+            </span>
+            <div style="margin-top: 10px;">
+                <a href="/admin/user/{{ member.id }}" class="btn btn-sm" style="background: var(--bg-body); border: 1px solid var(--border-color);">Manage Profile &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-interface">
+        <div class="chat-history" id="appealChat">
+            {% if not chats %}
+                <div style="text-align: center; margin: auto; color: var(--text-muted);">
+                    <p>No messages in this appeal history.</p>
+                </div>
+            {% endif %}
+
+            {% for chat in chats %}
+                <div class="msg-bubble msg-user">
+                    <span style="font-weight: 800; font-size: 0.7rem; color: var(--primary); display: block; margin-bottom: 8px; text-transform: uppercase;">Member Dispatch</span>
+                    {% if chat['file_path'] and not chat['uploaded_by_admin'] %}
+                        <img src="{{ url_for('static', filename=chat['file_path'].replace('static/', '').replace('static\\', '').replace('\\', '/')) }}" style="max-width: 100%; border-radius: 12px; margin-bottom: 10px; cursor: pointer;" onclick="window.open(this.src)">
+                    {% endif %}
+                    {{ chat['message'] }}
+                    <span class="msg-meta">{{ chat['created_at']|datetimeformat }}</span>
+                </div>
+                
+                {% if chat['admin_reply'] or (chat['file_path'] and chat['uploaded_by_admin']) %}
+                <div class="msg-bubble msg-admin">
+                    <span style="font-weight: 800; font-size: 0.7rem; color: rgba(255,255,255,0.8); display: block; margin-bottom: 8px; text-transform: uppercase;">Admin Response</span>
+                    {% if chat['file_path'] and chat['uploaded_by_admin'] %}
+                        <img src="{{ url_for('static', filename=chat['file_path'].replace('static/', '').replace('static\\', '').replace('\\', '/')) }}" style="max-width: 100%; border-radius: 12px; margin-bottom: 10px; cursor: pointer; border: 2px solid rgba(255,255,255,0.3);" onclick="window.open(this.src)">
+                    {% endif %}
+                    {{ chat['admin_reply'] }}
+                    <span class="msg-meta">Delivered</span>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <div class="reply-area">
+            <form action="/admin/appeal/reply/{{ member.id }}" method="POST" class="reply-form" enctype="multipart/form-data">
+                <div style="display: flex; gap: 15px; align-items: flex-start;">
+                    <label style="cursor: pointer; padding: 15px; background: #f8f9fa; border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-muted); margin-top: 5px;">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <input type="file" name="attachment" accept="image/*" style="display: none;" onchange="this.parentElement.style.color='var(--primary)'">
+                    </label>
+                    <textarea name="admin_reply" rows="3" class="reply-input" placeholder="Type your official resolution or response here..."></textarea>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Images and text can be sent together or separately.</p>
+                    <button type="submit" class="btn btn-primary" style="padding: 12px 40px;">Send Resolution</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const chat = document.getElementById('appealChat');
+    chat.scrollTop = chat.scrollHeight;
+</script>
+{% endblock %}

@@ -1,0 +1,55 @@
+<div class="nav-group-title" style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin: 15px 15px 10px;">Management</div>
+<a href="/admin" class="nav-item {% if request.path == '/admin' %}active{% endif %}">
+    Overview
+</a>
+<a href="/admin/notifications" class="nav-item {% if '/admin/notifications' in request.path %}active{% endif %}" style="position: relative;">
+    Notifications Centre
+    {% if notifications %}
+    {% set unread_count = notifications|rejectattr('is_read')|list|length %}
+    {% if unread_count > 0 %}
+    <span style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: var(--primary); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; font-weight: 700;">{{ unread_count }}</span>
+    {% endif %}
+    {% endif %}
+</a>
+<a href="/admin#section-roster" class="nav-item">
+    Member Roster
+</a>
+<a href="/admin#section-star-bookings" class="nav-item" style="position: relative;">
+    Star Bookings
+    {% if star_bookings and star_bookings|length > 0 %}
+    <span style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: var(--primary); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; font-weight: 700;">{{ star_bookings|length }}</span>
+    {% endif %}
+</a>
+<a href="/admin#section-stars-roster" class="nav-item">
+    Talent Roster
+</a>
+<a href="/admin#section-plans" class="nav-item">
+    Subscription Plans
+</a>
+<a href="/admin/membership_cards" class="nav-item {% if '/admin/membership_cards' in request.path %}active{% endif %}">
+    Membership Cards
+</a>
+<a href="/admin#section-appeals" class="nav-item" style="position: relative;">
+    Resolution Center
+</a>
+<a href="/admin#section-invites" class="nav-item">
+    Invite Management
+</a>
+<a href="/admin#section-finance" class="nav-item" style="position: relative; border: 1px solid var(--border-color); margin-top: 10px;">
+    Financial Audit
+</a>
+<a href="/admin#section-payment-settings" class="nav-item">
+    Payment Config
+    {% if vip_submissions %}
+    {% set pending_vip = vip_submissions|selectattr('status', 'equalto', 'Pending')|list %}
+    {% if pending_vip|length > 0 %}
+    <span style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: var(--primary); color: #000; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; font-weight: 800;">{{ pending_vip|length }}</span>
+    {% endif %}
+    {% endif %}
+</a>
+<a href="/admin#section-settings" class="nav-item">
+    System Settings
+</a>
+<a href="/admin#section-audit" class="nav-item">
+    Audit Trail
+</a>

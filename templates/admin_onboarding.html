@@ -1,0 +1,237 @@
+{% extends "layout.html" %}
+
+{% block title %}Onboarding Management - Admin Console{% endblock %}
+
+{% block extra_head %}
+<style>
+    .admin-container {
+        padding: 40px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .config-card {
+        background: var(--bg-card);
+        border-radius: 20px;
+        padding: 30px;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-md);
+        margin-bottom: 30px;
+    }
+
+    .plan-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-bottom: 15px;
+        background: rgba(212, 175, 55, 0.1);
+        color: var(--primary);
+    }
+
+    .country-tag {
+        background: var(--bg-body);
+        border: 1px solid var(--border-color);
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--text-muted);
+    }
+
+    .form-section {
+        border-top: 1px solid var(--border-color);
+        padding-top: 25px;
+        margin-top: 25px;
+    }
+
+    .field-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 10px;
+        align-items: center;
+    }
+
+    .field-input {
+        flex: 1;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-body);
+        color: var(--text-main);
+        font-size: 0.85rem;
+    }
+
+    .btn-remove {
+        color: #ef4444;
+        cursor: pointer;
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+    }
+
+    .btn-add {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--primary);
+        cursor: pointer;
+        background: none;
+        border: none;
+        padding: 10px 0;
+    }
+
+    .table-container {
+        margin-top: 40px;
+    }
+
+    .config-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .config-table th {
+        text-align: left;
+        padding: 15px;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .config-table td {
+        padding: 15px;
+        border-bottom: 1px solid var(--border-color);
+        vertical-align: top;
+    }
+
+    .welcome-text-preview {
+        max-width: 300px;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+        <div>
+            <h1 style="font-size: 2rem; font-weight: 800; margin: 0;">Onboarding Architect</h1>
+            <p style="color: var(--text-muted); margin-top: 5px;">Customize the VIP entry experience per country and tier.</p>
+        </div>
+        <a href="/admin" class="btn" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main);">Back to Dashboard</a>
+    </div>
+
+    <!-- New Config Form -->
+    <div class="config-card">
+        <h2 style="font-size: 1.1rem; margin-top: 0; margin-bottom: 20px;">Add or Update Configuration</h2>
+        <form action="/admin/onboarding/save" method="POST">
+            <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Subscription Plan</label>
+                    <select name="plan_id" class="field-input" style="width: 100%;" required>
+                        {% for plan in plans %}
+                        <option value="{{ plan[0] }}">{{ plan[1] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Country ISO (e.g. US, AE, UK)</label>
+                    <input type="text" name="country" class="field-input" style="width: 100%;" placeholder="DEFAULT" maxlength="10">
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Tailored Welcome Message</label>
+                <textarea name="welcome_message" class="field-input" style="width: 100%; height: 100px; resize: none;" required placeholder="Hello! I'm your dedicated concierge..."></textarea>
+            </div>
+
+            <div class="form-section">
+                <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px;">Required Verification Documents</label>
+                <div id="fieldsContainer">
+                    <div class="field-row">
+                        <input type="text" name="field_name[]" class="field-input" placeholder="Field Label (e.g. Proof of Identity)" required>
+                        <select name="field_type[]" class="field-input" style="max-width: 120px;">
+                            <option value="file">File Upload</option>
+                            <option value="text">Text Response</option>
+                        </select>
+                        <button type="button" class="btn-remove" onclick="this.parentElement.remove()">&times;</button>
+                    </div>
+                </div>
+                <button type="button" class="btn-add" onclick="addField()">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"></path></svg>
+                    Add Requirement
+                </button>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <button type="submit" class="btn btn-primary" style="padding: 12px 30px;">Deploy Configuration</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Existing Configs Table -->
+    <div class="config-card table-container">
+        <h2 style="font-size: 1.1rem; margin-top: 0; margin-bottom: 20px;">Active Onboarding Rules</h2>
+        <table class="config-table">
+            <thead>
+                <tr>
+                    <th>Plan</th>
+                    <th>Country</th>
+                    <th>Welcome Message</th>
+                    <th>Fields</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for config in configs %}
+                <tr>
+                    <td><span class="plan-badge">{{ config.plan_name }}</span></td>
+                    <td><span class="country-tag">{{ config.country }}</span></td>
+                    <td><div class="welcome-text-preview">{{ config.welcome_message }}</div></td>
+                    <td>
+                        <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                            {% for field in config.fields %}
+                            <span style="font-size: 0.7rem; background: rgba(0,0,0,0.03); padding: 2px 6px; border-radius: 4px;">{{ field[0] }}</span>
+                            {% endfor %}
+                        </div>
+                    </td>
+                    <td>
+                        <form action="/admin/onboarding/delete/{{ config.id }}" method="POST" onsubmit="return confirm('Delete this configuration?')">
+                            <button type="submit" style="background: none; border: none; color: #ef4444; font-size: 0.75rem; font-weight: 700; cursor: pointer;">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function addField() {
+        const container = document.getElementById('fieldsContainer');
+        const row = document.createElement('div');
+        row.className = 'field-row';
+        row.innerHTML = `
+            <input type="text" name="field_name[]" class="field-input" placeholder="Field Label" required>
+            <select name="field_type[]" class="field-input" style="max-width: 120px;">
+                <option value="file">File Upload</option>
+                <option value="text">Text Response</option>
+            </select>
+            <button type="button" class="btn-remove" onclick="this.parentElement.remove()">&times;</button>
+        `;
+        container.appendChild(row);
+    }
+</script>
+{% endblock %}

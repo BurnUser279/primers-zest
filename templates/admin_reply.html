@@ -1,0 +1,164 @@
+{% extends "layout.html" %}
+
+{% block title %}Reply to Member - Primer's Zest Admin{% endblock %}
+
+{% block extra_head %}
+<style>
+    .reply-container {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+    .reply-card {
+        background: var(--bg-card);
+        border-radius: 24px;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        box-shadow: var(--shadow-lg);
+    }
+    .reply-header {
+        padding: 30px 40px;
+        background: rgba(212, 175, 55, 0.03);
+        border-bottom: 1px solid var(--border-color);
+    }
+    .reply-body {
+        padding: 40px;
+    }
+    .original-message {
+        background: var(--bg-body);
+        border: 1px solid var(--border-color);
+        border-left: 4px solid var(--primary);
+        padding: 25px;
+        border-radius: 16px;
+        margin-bottom: 40px;
+        position: relative;
+    }
+    .original-message::before {
+        content: "Original Message";
+        position: absolute;
+        top: -10px;
+        left: 20px;
+        background: var(--primary);
+        color: white;
+        font-size: 0.65rem;
+        font-weight: 800;
+        padding: 2px 10px;
+        border-radius: 10px;
+        text-transform: uppercase;
+    }
+    .reply-form textarea {
+        width: 100%;
+        background: var(--bg-body);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 20px;
+        color: var(--text-main);
+        font-family: inherit;
+        font-size: 1rem;
+        margin-bottom: 25px;
+        transition: border-color 0.3s;
+    }
+    .reply-form textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+    .attachment-zone {
+        background: rgba(0,0,0,0.02);
+        border: 2px dashed var(--border-color);
+        padding: 30px;
+        border-radius: 16px;
+        text-align: center;
+        margin-bottom: 30px;
+        transition: 0.3s;
+    }
+    .attachment-zone:hover { border-color: var(--primary); }
+    
+    .media-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+    .media-item {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+    }
+    .media-item img, .media-item video {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reply-container">
+    <div class="reply-card">
+        <div class="reply-header">
+            <h1 class="brand-font" style="font-size: 1.8rem; margin: 0;">Support Console</h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 5px;">Responding to Member ID: #{{ member_id }}</p>
+        </div>
+        
+        <div class="reply-body">
+            <div class="original-message">
+                <p style="font-size: 1rem; line-height: 1.6; margin: 0;">{{ ticket_text }}</p>
+                
+                {% if attachments %}
+                <div class="media-grid">
+                    {% for file in attachments %}
+                    <div class="media-item">
+                        {% set file_lower = file.lower() %}
+                        {% if file_lower.endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) %}
+                            <a href="{{ file }}" target="_blank"><img src="{{ file }}"></a>
+                        {% elif file_lower.endswith(('.mp4', '.webm')) %}
+                            <video src="{{ file }}" controls></video>
+                        {% else %}
+                            <div style="height: 150px; display: flex; align-items: center; justify-content: center; background: #eee;">
+                                <a href="{{ file }}" target="_blank" class="btn btn-sm">Download File</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <form class="reply-form" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label style="font-weight: 800; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: block;">Your Response</label>
+                    <textarea name="admin_reply_text" rows="1" placeholder="Type your professional response here..." required style="overflow:hidden;"></textarea>
+                </div>
+                
+                <div class="attachment-zone">
+                    <label for="admin_media" style="cursor: pointer;">
+                        <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color: var(--primary); margin-bottom: 15px;"><path d="M12 4v16m8-8H4"></path></svg>
+                        <p style="font-weight: 700; margin-bottom: 5px;">Attach Media Assets</p>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">Max 5 files (Images, PDF, Documents)</p>
+                    </label>
+                    <input type="file" name="admin_media" id="admin_media" multiple accept="image/*, .doc, .docx, .pdf" style="display: none;">
+                    <div id="fileList" style="margin-top: 15px; font-size: 0.85rem; color: var(--primary); font-weight: 600;"></div>
+                </div>
+
+                <div style="display: flex; gap: 15px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 2; padding: 18px; font-weight: 800;">Dispatch Response</button>
+                    <a href="/admin" class="btn" style="flex: 1; padding: 18px; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); text-align: center; text-decoration: none; font-weight: 700;">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('admin_media').addEventListener('change', function() {
+        const fileList = document.getElementById('fileList');
+        if (this.files.length > 5) {
+            alert("Maximum 5 files allowed.");
+            this.value = "";
+            fileList.innerHTML = "";
+            return;
+        }
+        fileList.innerHTML = this.files.length + " file(s) selected";
+    });
+</script>
+{% endblock %}

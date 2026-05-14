@@ -1,0 +1,232 @@
+{% extends "layout.html" %}
+
+{% block title %}Admin Notifications - Primer's Zest{% endblock %}
+
+{% block extra_head %}
+<style>
+    .notifications-container {
+        max-width: 1000px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .notification-card {
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        padding: 20px;
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .notification-card.unread {
+        border-left: 4px solid var(--primary);
+        background: rgba(var(--primary-rgb), 0.02);
+    }
+
+    .notification-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .notification-info {
+        flex: 1;
+    }
+
+    .notification-meta {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 8px;
+    }
+
+    .notification-type {
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        padding: 4px 8px;
+        border-radius: 4px;
+        background: var(--bg-body);
+        color: var(--text-muted);
+    }
+
+    .type-vip { background: #fef3c7; color: #92400e; }
+    .type-message { background: #dcfce7; color: #166534; }
+    .type-appeal { background: #fee2e2; color: #991b1b; }
+    .type-payment { background: #e0e7ff; color: #3730a3; }
+
+    .notification-time {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .notification-message {
+        font-size: 1rem;
+        color: var(--text-main);
+        margin-bottom: 5px;
+    }
+
+    .notification-user {
+        font-size: 0.85rem;
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    .notification-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .mark-read-btn {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 0.8rem;
+        padding: 5px;
+        transition: 0.2s;
+    }
+
+    .mark-read-btn:hover {
+        color: var(--primary);
+    }
+
+    .action-button {
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        background: var(--primary);
+        color: white;
+        transition: 0.2s;
+    }
+
+    .action-button:hover {
+        opacity: 0.9;
+        transform: scale(1.05);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 100px 20px;
+        color: var(--text-muted);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        .page-header div {
+            width: 100%;
+            display: flex;
+            gap: 10px;
+        }
+        .page-header div > * {
+            flex: 1;
+        }
+        .page-header .btn {
+            width: 100%;
+            text-align: center;
+            justify-content: center;
+        }
+        .notification-card {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        .notification-actions {
+            width: 100%;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+            justify-content: space-between;
+        }
+        .notification-actions .action-button {
+            flex: 1;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="notifications-container">
+    <div class="page-header">
+        <h1>Notifications Centre</h1>
+        <div style="display: flex; gap: 10px;">
+            <a href="/admin" class="btn" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main);">Back to Dashboard</a>
+            <form action="/admin/notifications/mark_all_read" method="POST">
+                <button type="submit" class="btn btn-secondary">Mark All as Read</button>
+            </form>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-success" style="margin-bottom: 20px;">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if notifications %}
+        {% for note in notifications %}
+            <div class="notification-card {% if not note.is_read %}unread{% endif %}">
+                <div class="notification-info">
+                    <div class="notification-meta">
+                        <span class="notification-type type-{{ note.action_type.lower().split()[0] }}">
+                            {{ note.action_type }}
+                        </span>
+                        <span class="notification-time">{{ note.created_at|datetimeformat }}</span>
+                    </div>
+                    <div class="notification-message">{{ note.message }}</div>
+                    <div class="notification-user">Member: {{ note.username }}</div>
+                </div>
+                
+                <div class="notification-actions">
+                    {% if not note.is_read %}
+                    <form action="/admin/notifications/mark_read/{{ note.id }}" method="POST" style="margin: 0;">
+                        <button type="submit" class="mark-read-btn" style="font-weight: 600; text-decoration: underline;">
+                            Mark as read
+                        </button>
+                    </form>
+                    {% endif %}
+                    
+                    {% if note.target_url %}
+                    <a href="/admin/notifications/action/{{ note.id }}" class="action-button">Take Action</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <svg width="60" height="60" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            </div>
+            <h3>All clear!</h3>
+            <p>You have no new notifications at the moment.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends "layout.html" %}
+
+{% block title %}Request {{ star['name'] }} - Primer's Zest{% endblock %}
+
+{% block extra_head %}
+<style>
+    .booking-form-card {
+        background: var(--bg-card);
+        border-radius: 24px;
+        border: 1px solid var(--border-color);
+        max-width: 800px;
+        margin: 0 auto;
+        overflow: hidden;
+        display: flex;
+    }
+    .form-sidebar {
+        width: 300px;
+        background: rgba(212, 175, 55, 0.03);
+        border-right: 1px solid var(--border-color);
+        padding: 40px 30px;
+        text-align: center;
+    }
+    .form-main {
+        flex: 1;
+        padding: 40px;
+    }
+    .star-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--primary);
+        margin-bottom: 20px;
+    }
+    .form-group { margin-bottom: 25px; }
+    .form-group label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+        width: 100%;
+        background: rgba(0,0,0,0.02);
+        border: 1px solid var(--border-color);
+        padding: 15px;
+        border-radius: 12px;
+        color: var(--text-main);
+        font-family: inherit;
+    }
+    
+    @media (max-width: 768px) {
+        .booking-form-card { flex-direction: column; }
+        .form-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border-color); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="booking-form-card">
+        <div class="form-sidebar">
+            <img src="/{{ star['image_path'] if star['image_path'] else 'static/img/default_star.jpg' }}" class="star-avatar">
+            <h2 style="font-size: 1.5rem; margin-bottom: 5px;">{{ star['name'] }}</h2>
+            <p style="color: var(--primary); font-weight: 700; font-size: 0.8rem; text-transform: uppercase;">{{ star['category'] }}</p>
+            <div style="margin-top: 30px; padding: 20px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color);">
+                <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 5px;">Starting from</div>
+                <div style="font-size: 2rem; font-weight: 800; color: var(--text-main);">${{ star['price'] }}</div>
+            </div>
+        </div>
+        
+        <div class="form-main">
+            <h3 style="margin-bottom: 30px;">Request Details</h3>
+            <form action="/book_a_star/request/{{ star['id'] }}" method="POST">
+                <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label>Occasion</label>
+                        <select name="occasion" required>
+                            {% for occ in occasions %}
+                            <option value="{{ occ }}">{{ occ }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>For Whom? (Optional)</label>
+                        <input type="text" name="recipient" placeholder="Recipient Name">
+                    </div>
+                </div>
+
+                <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label>Booking Timeframe (Duration)</label>
+                        <select name="timeframe" required>
+                            <option value="24 hours">24 hours</option>
+                            <option value="48 hours">48 hours</option>
+                            <option value="72 hours">72 hours</option>
+                            <option value="1 week">1 week</option>
+                            <option value="1 month">1 month</option>
+                            <option value="3 months">3 months</option>
+                            <option value="6 months">6 months</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Desired Start Time</label>
+                        <select name="start_time" required>
+                            <option value="Immediately">Immediately</option>
+                            <option value="Tomorrow">Tomorrow</option>
+                            <option value="In a week">In a week</option>
+                            <option value="In a month">In a month</option>
+                            <option value="Specific Date">Specific Date (Specify in chat)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Event Address / Location</label>
+                    <input type="text" name="address" placeholder="Where is the talent needed?" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Instructions & Details (Optional)</label>
+                    <textarea name="instructions" rows="4" placeholder="Tell the star what you'd like them to say or do..."></textarea>
+                </div>
+                
+                <div style="background: rgba(212, 175, 55, 0.05); padding: 20px; border-radius: 12px; margin-bottom: 30px; font-size: 0.85rem; color: var(--text-muted); border: 1px dashed var(--primary);">
+                    <p><strong>Note:</strong> Submitting this request initiates a private concierge chat. Payment instructions and final delivery timeline will be provided there.</p>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 18px; font-size: 1rem; font-weight: 800;">Submit Booking Request</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

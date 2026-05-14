@@ -1,0 +1,730 @@
+{% extends "layout.html" %}
+
+{% block title %}Membership Application - Primer's Zest{% endblock %}
+
+{% block extra_head %}
+<style>
+    .auth-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: calc(100vh - 80px);
+        padding: 40px 20px;
+        background: radial-gradient(circle at center, #111 0%, #050505 100%);
+    }
+    .register-card {
+        background: var(--bg-card);
+        padding: 0;
+        border-radius: 24px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        width: 100%;
+        max-width: 700px;
+        border: 1px solid var(--border-color);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* Progress Bar */
+    .onboarding-progress {
+        height: 6px;
+        background: rgba(255,255,255,0.05);
+        width: 100%;
+        display: flex;
+    }
+    .progress-fill {
+        height: 100%;
+        background: var(--primary-gradient);
+        width: 25%;
+        transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 0 15px var(--primary);
+    }
+
+    .form-content {
+        padding: 50px;
+    }
+
+    .step-header {
+        margin-bottom: 35px;
+    }
+    .step-badge {
+        font-size: 0.65rem;
+        font-weight: 800;
+        color: var(--primary);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 10px;
+        display: block;
+    }
+    .step-title {
+        font-size: 1.8rem;
+        margin: 0;
+        color: var(--text-main);
+    }
+    .step-subtitle {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        margin-top: 8px;
+    }
+
+    .form-step {
+        display: none;
+        animation: fadeIn 0.4s ease-out;
+    }
+    .form-step.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+    .form-group.full-width {
+        grid-column: span 2;
+    }
+    label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    input, select, textarea {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--border-color);
+        padding: 14px 18px;
+        border-radius: 12px;
+        color: var(--text-main);
+        font-family: inherit;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: rgba(255,255,255,0.06);
+        box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
+    }
+
+    /* Password Strength */
+    .strength-meter {
+        height: 4px;
+        background: rgba(255,255,255,0.1);
+        margin-top: 10px;
+        border-radius: 2px;
+        overflow: hidden;
+        display: flex;
+    }
+    .strength-bar {
+        height: 100%;
+        width: 0;
+        transition: all 0.3s ease;
+    }
+    .strength-text {
+        font-size: 0.7rem;
+        margin-top: 5px;
+        font-weight: 600;
+    }
+
+    .nav-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 40px;
+        padding-top: 30px;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .btn-nav {
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.3s;
+        font-size: 0.9rem;
+    }
+    .btn-prev {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-muted);
+    }
+    .btn-prev:hover {
+        border-color: var(--text-main);
+        color: var(--text-main);
+    }
+    .btn-next {
+        background: var(--primary-gradient);
+        border: none;
+        color: #000;
+        box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+    }
+    .btn-next:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(212, 175, 55, 0.3);
+    }
+
+    .pass-container { position: relative; }
+    .pass-toggle {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        opacity: 0.5;
+    }
+
+    .consent-box {
+        background: rgba(212, 175, 55, 0.05);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px dashed var(--border-color);
+        display: flex;
+        gap: 15px;
+        align-items: flex-start;
+        cursor: pointer;
+    }
+    .consent-box input { width: 20px; height: 20px; margin-top: 2px; }
+
+    @media (max-width: 600px) {
+        .auth-container { padding: 20px 10px; }
+        .form-grid { grid-template-columns: 1fr; gap: 15px; }
+        .form-group.full-width { grid-column: span 1; }
+        .form-content { padding: 30px 15px; }
+        .register-card { border-radius: 16px; }
+        .step-title { font-size: 1.5rem; }
+        .btn-nav { padding: 12px 20px; font-size: 0.85rem; }
+    }
+</style>
+{% endblock %}
+
+{% block sidebar %}{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="register-card">
+        <div class="onboarding-progress">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <form method="POST" id="onboardingForm">
+            <input type="hidden" name="invite_token" value="{{ invite_token }}">
+            
+            <div class="form-content">
+                
+                <!-- STEP 1: Account Essentials -->
+                <div class="form-step active" id="step1">
+                    <div class="step-header">
+                        <span class="step-badge">Step 01 / 04</span>
+                        <h2 class="step-title">Security Credentials</h2>
+                        <p class="step-subtitle">Define your unique identity and secure access point.</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Private Username</label>
+                        <input type="text" name="username" required placeholder="Select a handle" id="username">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Secure Email</label>
+                        <input type="email" name="email" required placeholder="name@luxury.com" id="email">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Access Password</label>
+                        <div class="pass-container">
+                            <input type="password" name="password" id="password" required placeholder="••••••••" style="width: 100%;">
+                            <span class="pass-toggle" onclick="togglePass('password')">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </span>
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 5px;" id="password-hint">Password must be at least 10 characters and contain a letter and either a number or a symbol.</div>
+                        <div class="strength-meter">
+                            <div class="strength-bar" id="strengthBar"></div>
+                        </div>
+                        <div class="strength-text" id="strengthText">Strength: Weak</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Confirm Password</label>
+                        <div class="pass-container">
+                            <input type="password" name="confirm_password" id="confirm_password" required placeholder="••••••••" style="width: 100%;">
+                            <span class="pass-toggle" onclick="togglePass('confirm_password')">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </span>
+                        </div>
+                        <small id="password-match-msg" style="font-size: 0.65rem; font-weight: 700; display: block; margin-top: 5px;"></small>
+                    </div>
+                </div>
+
+                <!-- STEP 2: Personal Profile -->
+                <div class="form-step" id="step2">
+                    <div class="step-header">
+                        <span class="step-badge">Step 02 / 04</span>
+                        <h2 class="step-title">Member Profile</h2>
+                        <p class="step-subtitle">How should we address you within the elite circle?</p>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label>Legal Full Name</label>
+                            <input type="text" name="fullname" required placeholder="Enter your full name">
+                        </div>
+                        <div class="form-group">
+                            <label>Age</label>
+                            <input type="number" name="age" required min="18" placeholder="21+ required">
+                        </div>
+                        <div class="form-group">
+                            <label>Gender Identity</label>
+                            <select name="gender" required id="genderSelect" onchange="checkGenderOther(this)">
+                                <option value="" disabled selected>Select Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Non-Binary">Non-Binary</option>
+                                <option value="Other">Other / Prefer not to say</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width" id="genderOtherGroup" style="display: none;">
+                            <label>Please Specify</label>
+                            <input type="text" name="gender_other" placeholder="How do you identify?">
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Direct Mobile Line</label>
+                            <input type="tel" name="mobile" required placeholder="+1 (000) 000-0000" pattern="[+0-9 ]+">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Lifestyle & Finance -->
+                <div class="form-step" id="step3">
+                    <div class="step-header">
+                        <span class="step-badge">Step 03 / 04</span>
+                        <h2 class="step-title">Executive Standing</h2>
+                        <p class="step-subtitle">Membership is curated based on professional and lifestyle benchmarks.</p>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Primary Country</label>
+                            <select name="country" required id="countrySelect" onchange="handleCountryChange(this)">
+                                <option value="" disabled selected>Select Country</option>
+                                <option value="Australia">Australia</option>
+                                <option value="Brazil">Brazil</option>
+                                <option value="Canada">Canada</option>
+                                <option value="China">China</option>
+                                <option value="France">France</option>
+                                <option value="Germany">Germany</option>
+                                <option value="India">India</option>
+                                <option value="Japan">Japan</option>
+                                <option value="Mexico">Mexico</option>
+                                <option value="Monaco">Monaco</option>
+                                <option value="Singapore">Singapore</option>
+                                <option value="South Africa">South Africa</option>
+                                <option value="Switzerland">Switzerland</option>
+                                <option value="United Arab Emirates">United Arab Emirates</option>
+                                <option value="United Kingdom">United Kingdom</option>
+                                <option value="United States">United States</option>
+                                <option value="Other">Other (Please Specify)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="customCountryGroup" style="display: none;">
+                            <label>Specify Country</label>
+                            <input type="text" name="country_custom" id="country_custom" placeholder="Enter Country Name">
+                        </div>
+                        <div class="form-group">
+                            <label>City / State</label>
+                            <select name="state" required id="stateSelect">
+                                <option value="" disabled selected>Select State/Region</option>
+                                <!-- Populated via JS -->
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Professional Industry</label>
+                            <select name="industry" required>
+                                <option value="" disabled selected>Select Industry</option>
+                                <option value="Finance">Finance & Investment</option>
+                                <option value="Technology">Technology & AI</option>
+                                <option value="Real Estate">Real Estate Development</option>
+                                <option value="Entertainment">Media & Entertainment</option>
+                                <option value="Healthcare">Healthcare & Biotech</option>
+                                <option value="Luxury Goods">Luxury Goods & Fashion</option>
+                                <option value="Public Service">Public Service & Law</option>
+                                <option value="Art & Design">Art & Design</option>
+                                <option value="Other">Other Private Sector</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Financial Profile (Net Worth Estimation)</label>
+                            <select name="net_worth" required>
+                                <option value="" disabled selected>Select Bracket</option>
+                                <option value="Emerging (Below $50k)">Emerging (Below $50k)</option>
+                                <option value="Developing ($50k - $250k)">Developing ($50k - $250k)</option>
+                                <option value="Affluent ($250k - $1M)">Affluent ($250k - $1M)</option>
+                                <option value="High Net Worth ($1M - $5M)">High Net Worth ($1M - $5M)</option>
+                                <option value="VHNWI ($5M - $30M)">Very High Net Worth ($5M - $30M)</option>
+                                <option value="UHNWI ($30M+)">Ultra High Net Worth ($30M+)</option>
+                                <option value="Elite ($100M+)">Elite Global ($100M+)</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Travel Frequency</label>
+                            <select name="travel" required>
+                                <option value="" disabled selected>Select Frequency</option>
+                                <option value="Occasional">Occasional (Vacations & Leisure)</option>
+                                <option value="Seasonal">Seasonal (Quarterly Getaways)</option>
+                                <option value="Regular">Regular (Monthly Travel)</option>
+                                <option value="Global Nomad">Global Nomad (Frequent / Lifestyle)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 4: Finalize -->
+                <div class="form-step" id="step4">
+                    <div class="step-header">
+                        <span class="step-badge">Final Step</span>
+                        <h2 class="step-title">Terms of Entry</h2>
+                        <p class="step-subtitle">Your application will be reviewed for authenticity.</p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label class="consent-box" for="consentTos">
+                            <input type="checkbox" id="consentTos" name="consent_tos" required>
+                            <span style="font-size: 0.85rem; line-height: 1.5; color: var(--text-main); text-transform: none; font-weight: 500;">
+                                I have read and agree to the 
+                                <a href="javascript:void(0)" onclick="openLegalModal('terms')" style="color: var(--primary); font-weight: 700; text-decoration: none; border-bottom: 1px dashed var(--primary);">Terms of Service</a>, 
+                                including the mandatory verification of Government-issued IDs and Financial Documentation.
+                            </span>
+                        </label>
+                    </div>
+
+                    <div style="margin-bottom: 30px;">
+                        <label class="consent-box" for="consentPrivacy">
+                            <input type="checkbox" id="consentPrivacy" name="consent_privacy" required>
+                            <span style="font-size: 0.85rem; line-height: 1.5; color: var(--text-main); text-transform: none; font-weight: 500;">
+                                I acknowledge and agree to the 
+                                <a href="javascript:void(0)" onclick="openLegalModal('privacy')" style="color: var(--primary); font-weight: 700; text-decoration: none; border-bottom: 1px dashed var(--primary);">Privacy Policy</a>, 
+                                and consent to the secure processing of my sensitive data.
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="info-alert" style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0; line-height: 1.6;">
+                            <strong>Note:</strong> Sensitive health and medical preferences for your concierge experience will be collected <strong>after</strong> successful verification via your secure private vault.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="nav-buttons">
+                    <button type="button" class="btn-nav btn-prev" id="prevBtn" onclick="changeStep(-1)" style="visibility: hidden;">Previous</button>
+                    <button type="button" class="btn-nav btn-next" id="nextBtn" onclick="changeStep(1)">Continue</button>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let currentStep = 1;
+    const totalSteps = 4;
+
+    function changeStep(n) {
+        if (n === 1 && !validateCurrentStep()) return;
+
+        const steps = document.querySelectorAll('.form-step');
+        steps[currentStep - 1].classList.remove('active');
+        
+        currentStep += n;
+
+        if (currentStep > totalSteps) {
+            document.getElementById('onboardingForm').submit();
+            return;
+        }
+
+        steps[currentStep - 1].classList.add('active');
+        updateUI();
+    }
+
+    function updateUI() {
+        // Progress Bar
+        const progress = (currentStep / totalSteps) * 100;
+        document.getElementById('progressFill').style.width = progress + '%';
+
+        // Buttons
+        document.getElementById('prevBtn').style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+        document.getElementById('nextBtn').textContent = currentStep === totalSteps ? 'Complete Application' : 'Continue';
+    }
+
+    function validateCurrentStep() {
+        const stepDiv = document.getElementById('step' + currentStep);
+        const inputs = stepDiv.querySelectorAll('input[required], select[required]');
+        let valid = true;
+
+        inputs.forEach(input => {
+            if (!input.value && input.type !== 'checkbox') {
+                input.style.borderColor = '#ef4444';
+                valid = false;
+            } else if (input.type === 'checkbox' && !input.checked) {
+                valid = false;
+            } else {
+                input.style.borderColor = 'var(--border-color)';
+            }
+        });
+
+        if (currentStep === 1) {
+            const p1 = document.getElementById('password').value;
+            const p2 = document.getElementById('confirm_password').value;
+            const passRegex = /^(?=.*[a-zA-Z])(?=.*[0-9!@#$%^&*(),.?":{}|<>]).{10,}$/;
+            
+            if (!passRegex.test(p1)) {
+                showToast("Password must be at least 10 characters and contain a letter and either a number or a symbol.", "error");
+                valid = false;
+            } else if (p1 !== p2) {
+                showToast("Passwords do not match.", "error");
+                valid = false;
+            }
+        }
+
+        return valid;
+    }
+
+    function checkGenderOther(select) {
+        document.getElementById('genderOtherGroup').style.display = select.value === 'Other' ? 'block' : 'none';
+    }
+
+    function togglePass(id) {
+        const input = document.getElementById(id);
+        input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    // Password Validation & Strength
+    function validatePasswords() {
+        const p1 = document.getElementById('password').value;
+        const p2 = document.getElementById('confirm_password').value;
+        const hint = document.getElementById('password-hint');
+        const matchMsg = document.getElementById('password-match-msg');
+        const passRegex = /^(?=.*[a-zA-Z])(?=.*[0-9!@#$%^&*(),.?":{}|<>]).{10,}$/;
+
+        // Rule Hint
+        if (passRegex.test(p1)) {
+            hint.style.color = '#10b981';
+        } else {
+            hint.style.color = p1.length > 0 ? '#ef4444' : 'var(--text-muted)';
+        }
+
+        // Match Message
+        if (p2.length > 0) {
+            if (p1 === p2) {
+                matchMsg.textContent = 'Passwords match';
+                matchMsg.style.color = '#10b981';
+            } else {
+                matchMsg.textContent = 'Passwords do not match';
+                matchMsg.style.color = '#ef4444';
+            }
+        } else {
+            matchMsg.textContent = '';
+        }
+    }
+
+    document.getElementById('password').addEventListener('input', function(e) {
+        validatePasswords();
+        const val = e.target.value;
+        const bar = document.getElementById('strengthBar');
+        const text = document.getElementById('strengthText');
+        let strength = 0;
+
+        if (val.length >= 10) strength++;
+        if (/[A-Z]/.test(val)) strength++;
+        if (/[0-9]/.test(val)) strength++;
+        if (/[!@#$%^&*]/.test(val)) strength++;
+
+        const colors = ['#ef4444', '#f59e0b', '#10b981', '#059669'];
+        const labels = ['Weak', 'Fair', 'Strong', 'Executive Grade'];
+
+        if (val.length === 0) {
+            bar.style.width = '0';
+            text.textContent = 'Strength: Empty';
+        } else {
+            bar.style.width = (strength + 1) * 20 + '%';
+            bar.style.backgroundColor = colors[strength];
+            text.textContent = 'Strength: ' + labels[strength];
+            text.style.color = colors[strength];
+        }
+    });
+
+    document.getElementById('confirm_password').addEventListener('input', validatePasswords);
+
+    function handleCountryChange(select) {
+        const customGroup = document.getElementById('customCountryGroup');
+        const customInput = document.getElementById('country_custom');
+        const stateSelect = document.getElementById('stateSelect');
+
+        const states = {
+            'United States': [
+                'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 
+                'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 
+                'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 
+                'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'OHio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 
+                'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'
+            ],
+            'United Kingdom': ['London', 'Birmingham', 'Manchester', 'Glasgow', 'Leeds', 'Liverpool', 'Newcastle', 'Sheffield', 'Belfast', 'Bristol', 'Cardiff', 'Edinburgh', 'Leicester', 'Nottingham'],
+            'Canada': ['Alberta', 'British Columbia', 'Manitoba', 'New Brunswick', 'Newfoundland and Labrador', 'Nova Scotia', 'Ontario', 'Prince Edward Island', 'Quebec', 'Saskatchewan'],
+            'Australia': ['New South Wales', 'Queensland', 'South Australia', 'Tasmania', 'Victoria', 'Western Australia', 'Australian Capital Territory', 'Northern Territory'],
+            'United Arab Emirates': ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Umm Al Quwain', 'Ras Al Khaimah', 'Fujairah'],
+            'France': ['Paris', 'Lyon', 'Marseille', 'Nice', 'Bordeaux', 'Lille', 'Strasbourg', 'Nantes'],
+            'Germany': ['Berlin', 'Munich', 'Hamburg', 'Frankfurt', 'Cologne', 'Stuttgart', 'Dusseldorf', 'Dortmund'],
+            'Switzerland': ['Zurich', 'Geneva', 'Basel', 'Lausanne', 'Bern', 'Lucerne'],
+            'South Africa': ['Johannesburg', 'Cape Town', 'Durban', 'Pretoria', 'Port Elizabeth', 'Bloemfontein'],
+            'Monaco': ['Monte Carlo', 'La Condamine', 'Fontvieille', 'Moneghetti'],
+            'Singapore': ['Central Business District', 'East Region', 'West Region', 'North Region', 'North-East Region'],
+            'India': ['Maharashtra', 'Delhi', 'Karnataka', 'Tamil Nadu', 'Gujarat', 'Uttar Pradesh', 'West Bengal', 'Rajasthan'],
+            'Brazil': ['Sao Paulo', 'Rio de Janeiro', 'Brasilia', 'Salvador', 'Fortaleza', 'Belo Horizonte'],
+            'China': ['Beijing', 'Shanghai', 'Guangdong', 'Zhejiang', 'Jiangsu', 'Sichuan', 'Fujian'],
+            'Japan': ['Tokyo', 'Osaka', 'Kyoto', 'Hokkaido', 'Fukuoka', 'Aichi'],
+            'China': ['Beijing', 'Shanghai', 'Guangdong', 'Zhejiang', 'Jiangsu', 'Sichuan', 'Fujian'],
+            'Mexico': ['Mexico City', 'Jalisco', 'Nuevo Leon', 'Puebla', 'Quintana Roo', 'Baja California']
+        };
+
+        // Clear existing options except the first placeholder
+        stateSelect.innerHTML = '<option value="" disabled selected>Select State/Region</option>';
+
+        if (select.value === 'Other') {
+            customGroup.style.display = 'block';
+            customInput.required = true;
+            
+            // For "Other", we might want to just allow typing or have a generic option
+            const opt = document.createElement('option');
+            opt.value = 'Other';
+            opt.textContent = 'Other / International';
+            stateSelect.appendChild(opt);
+        } else {
+            customGroup.style.display = 'none';
+            customInput.required = false;
+            
+            // Populate states if available
+            if (states[select.value]) {
+                states[select.value].forEach(s => {
+                    const option = document.createElement('option');
+                    option.value = s;
+                    option.textContent = s;
+                    stateSelect.appendChild(option);
+                });
+            } else {
+                // Default fallback if no states defined for the country
+                const option = document.createElement('option');
+                option.value = 'General';
+                option.textContent = 'General / All Regions';
+                stateSelect.appendChild(option);
+            }
+        }
+    }
+
+    // Initialize UI
+    updateUI();
+</script>
+    <div id="legalModal" class="legal-modal-overlay">
+        <div class="legal-modal-content">
+            <button class="close-legal-modal" onclick="closeLegalModal()">×</button>
+            <div id="legalModalBody" style="width: 100%; height: 100%;">
+                <iframe id="legalIframe" src="" style="width:100%; height:100%; border:none; border-radius: 8px; background: var(--bg-body);"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    .legal-modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .legal-modal-overlay.active {
+        opacity: 1;
+    }
+    .legal-modal-content {
+        background: var(--bg-card);
+        width: 90%;
+        max-width: 800px;
+        height: 80vh;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        position: relative;
+        padding: 20px;
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+    }
+    .legal-modal-overlay.active .legal-modal-content {
+        transform: translateY(0);
+    }
+    .close-legal-modal {
+        position: absolute;
+        top: -15px;
+        right: -15px;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: var(--primary-gradient);
+        color: #000;
+        border: none;
+        font-size: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        z-index: 10;
+        transition: transform 0.2s ease;
+    }
+    .close-legal-modal:hover {
+        transform: scale(1.1);
+    }
+    </style>
+
+    <script>
+    function openLegalModal(type) {
+        const modal = document.getElementById('legalModal');
+        const iframe = document.getElementById('legalIframe');
+        iframe.src = type === 'terms' ? '/terms' : '/privacy';
+        modal.style.display = 'flex';
+        // Trigger reflow
+        void modal.offsetWidth;
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeLegalModal() {
+        const modal = document.getElementById('legalModal');
+        const iframe = document.getElementById('legalIframe');
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.style.display = 'none';
+            iframe.src = '';
+        }, 300);
+        document.body.style.overflow = 'auto';
+    }
+    </script>
+
+{% endblock %}

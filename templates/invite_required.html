@@ -1,0 +1,123 @@
+{% extends "layout.html" %}
+{% block title %}Membership Invitation Required — Primer's Zest{% endblock %}
+{% block sidebar %}{% endblock %}
+{% block extra_head %}
+<meta name="robots" content="noindex, nofollow">
+<style>
+    .invite-gate {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        text-align: center;
+    }
+    .gate-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        max-width: 500px;
+        width: 100%;
+        padding: 60px 40px;
+        border-radius: 24px;
+        box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+        position: relative;
+        overflow: hidden;
+    }
+    .gate-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 4px;
+        background: linear-gradient(to right, #d4af37, #aa8a2e);
+    }
+    .gate-icon {
+        font-size: 3.5rem;
+        margin-bottom: 24px;
+        display: inline-block;
+    }
+    .gate-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--text-main);
+        margin-bottom: 16px;
+    }
+    .gate-text {
+        font-size: 1rem;
+        color: var(--text-muted);
+        line-height: 1.6;
+        margin-bottom: 32px;
+    }
+    .invite-form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    .token-input {
+        background: var(--bg-main);
+        border: 1px solid var(--border-color);
+        padding: 14px 20px;
+        border-radius: 12px;
+        color: var(--text-main);
+        font-family: monospace;
+        text-align: center;
+        font-size: 1.1rem;
+        letter-spacing: 2px;
+    }
+    .token-input:focus {
+        border-color: #d4af37;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(212,175,55,0.15);
+    }
+    .btn-submit-token {
+        background: linear-gradient(135deg, #d4af37, #aa8a2e);
+        color: white;
+        border: none;
+        padding: 14px;
+        border-radius: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .btn-submit-token:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(212,175,55,0.3);
+        filter: brightness(1.1);
+    }
+    .gate-footer {
+        margin-top: 40px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border-color);
+    }
+    .gate-link {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .gate-link:hover { color: #d4af37; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="invite-gate">
+    <div class="gate-card">
+        <div class="gate-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #d4af37;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        </div>
+        <h1 class="gate-title">Private Access Only</h1>
+        <p class="gate-text">Primer's Zest is an exclusive circle. Registration is restricted to individuals with a valid invitation token.</p>
+        
+        <form action="/register" method="GET" class="invite-form">
+            <input type="text" name="invite" placeholder="ENTER INVITE TOKEN" class="token-input" required autofocus>
+            <button type="submit" class="btn-submit-token">Verify Invitation</button>
+        </form>
+
+        <div class="gate-footer">
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Don't have a token?</p>
+            <a href="/" class="gate-link">Return to Public Homepage</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

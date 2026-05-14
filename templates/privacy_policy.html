@@ -1,0 +1,185 @@
+{% extends "layout.html" %}
+{% block title %}Privacy Policy — Primer's Zest{% endblock %}
+{% block sidebar %}{% endblock %}
+{% block extra_head %}
+<meta name="robots" content="noindex, nofollow">
+<style>
+    .legal-wrap {
+        max-width: 860px;
+        margin: 60px auto;
+        padding: 0 30px 80px;
+    }
+    .legal-header {
+        text-align: center;
+        padding: 60px 0 50px;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 50px;
+    }
+    .legal-badge {
+        display: inline-block;
+        background: rgba(212,175,55,0.1);
+        border: 1px solid rgba(212,175,55,0.3);
+        color: #d4af37;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 6px 18px;
+        border-radius: 50px;
+        margin-bottom: 20px;
+    }
+    .legal-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--text-main);
+        margin: 0 0 12px;
+    }
+    .legal-date {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+    .legal-section { margin-bottom: 44px; }
+    .legal-section h2 {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 14px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .legal-section p, .legal-section li {
+        font-size: 0.95rem;
+        color: var(--text-muted);
+        line-height: 1.8;
+        margin-bottom: 12px;
+    }
+    .legal-section ul { padding-left: 20px; }
+    .legal-section li { margin-bottom: 6px; }
+    .legal-highlight {
+        background: rgba(212,175,55,0.08);
+        border-left: 4px solid #d4af37;
+        padding: 18px 22px;
+        border-radius: 0 12px 12px 0;
+        margin: 20px 0;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        line-height: 1.7;
+    }
+    .legal-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 30px;
+    }
+    .legal-back:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="legal-wrap">
+    <a href="/" class="legal-back">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Back to Home
+    </a>
+
+    <div class="legal-header">
+        <div class="legal-badge">Legal</div>
+        <h1 class="legal-title">Privacy Policy</h1>
+        <p class="legal-date">Last updated: 1st May 2025</p>
+    </div>
+
+    <div class="legal-highlight">
+        This Privacy Policy describes how Primer's Zest ("we", "us", or "our") collects, uses, and safeguards the personal information of members and visitors to our private platform. By accessing or using this platform, you agree to the terms described herein.
+    </div>
+
+    <div class="legal-section">
+        <h2>1. Who We Are</h2>
+        <p>Primer's Zest is a private, invitation-only executive concierge and membership platform. Access to this platform is restricted and granted only to individuals who have received an explicit invitation from our administrative team.</p>
+        <p>This platform is not public-facing and is not intended for general consumer use. All members have accepted this policy as a condition of their invitation and registration.</p>
+    </div>
+
+    <div class="legal-section">
+        <h2>2. Information We Collect</h2>
+        <p>When you register, we collect the following categories of personal data:</p>
+        <ul>
+            <li><strong>Identity Data:</strong> Full legal name, username, age, and gender.</li>
+            <li><strong>Contact Data:</strong> Email address and mobile phone number.</li>
+            <li><strong>Location Data:</strong> Country and state/region of residence.</li>
+            <li><strong>Financial Context Data:</strong> Self-declared income bracket and travel preferences (used solely for membership tier qualification).</li>
+            <li><strong>Health & Medical Data (Optional):</strong> Any medical or health conditions voluntarily disclosed by the member. This data is classified as <strong>Special Category Data</strong> under data protection laws and is treated with the highest level of confidentiality.</li>
+            <li><strong>Verification Documents:</strong> Government-issued identity documents and proof of funds submitted during KYC verification. These are encrypted and stored securely.</li>
+            <li><strong>Communications Data:</strong> Messages exchanged through our support system, VIP Lounge, and Star Booking chat.</li>
+        </ul>
+    </div>
+
+    <div class="legal-section">
+        <h2>3. How We Use Your Information</h2>
+        <p>We use your personal data solely for the following purposes:</p>
+        <ul>
+            <li>To verify your identity and eligibility for membership.</li>
+            <li>To manage your account, membership tier, and access privileges.</li>
+            <li>To communicate with you regarding your membership, support requests, and bookings.</li>
+            <li>To deliver personalised concierge and executive support services.</li>
+            <li>To comply with applicable legal obligations.</li>
+        </ul>
+        <p>We do <strong>not</strong> use your data for advertising, sell it to third parties, or share it with any external organisation without your explicit written consent, except where required by law.</p>
+    </div>
+
+    <div class="legal-section">
+        <h2>4. Special Category Data (Health Information)</h2>
+        <div class="legal-highlight">
+            Any health or medical information you voluntarily disclose is processed under your explicit consent, given at the time of registration. This information is used only to ensure appropriate care and consideration in service delivery. You may withdraw this consent at any time by contacting our team.
+        </div>
+        <p>Health data is never shared with any third party. Access is restricted exclusively to authorised platform administrators.</p>
+    </div>
+
+    <div class="legal-section">
+        <h2>5. Data Retention</h2>
+        <p>We retain your personal data for as long as your membership account remains active. If your account is permanently closed or deleted, your personal data will be securely purged within 90 days, except where retention is required by law (e.g., for financial records).</p>
+    </div>
+
+    <div class="legal-section">
+        <h2>6. Data Security</h2>
+        <p>We implement appropriate technical and organisational measures to protect your data, including:</p>
+        <ul>
+            <li>Encrypted password storage using industry-standard hashing algorithms.</li>
+            <li>Restricted administrative access to member records.</li>
+            <li>Secure HTTPS transmission of all data.</li>
+        </ul>
+        <p>While we take reasonable steps to protect your information, no digital platform can guarantee absolute security. We encourage all members to use strong, unique passwords.</p>
+    </div>
+
+    <div class="legal-section">
+        <h2>7. Your Rights</h2>
+        <p>Depending on your jurisdiction, you may have the following rights regarding your personal data:</p>
+        <ul>
+            <li><strong>Right of Access:</strong> Request a copy of the personal data we hold about you.</li>
+            <li><strong>Right to Rectification:</strong> Request correction of inaccurate information.</li>
+            <li><strong>Right to Erasure:</strong> Request deletion of your personal data ("right to be forgotten").</li>
+            <li><strong>Right to Withdraw Consent:</strong> For special category data (including health information), you may withdraw consent at any time.</li>
+            <li><strong>Right to Object:</strong> Object to processing of your data for any purpose.</li>
+        </ul>
+        <p>To exercise any of these rights, please contact us through the Support Center within your member portal.</p>
+    </div>
+
+    <div class="legal-section">
+        <h2>8. Cookies</h2>
+        <p>This platform uses only functional session cookies — strictly necessary for maintaining your logged-in state. We do not use tracking cookies, advertising cookies, or analytics services that collect personally identifiable information.</p>
+    </div>
+
+    <div class="legal-section">
+        <h2>9. Changes to This Policy</h2>
+        <p>We may update this Privacy Policy from time to time. Material changes will be communicated to all active members via the platform's notification system. Continued use of the platform after notification constitutes acceptance of the updated policy.</p>
+    </div>
+
+    <div class="legal-section">
+        <h2>10. Contact</h2>
+        <p>For any privacy-related questions, requests, or concerns, please use the Support Center within your member dashboard, or contact the administrative team directly through your portal.</p>
+    </div>
+</div>
+{% endblock %}

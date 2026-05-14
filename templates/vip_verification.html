@@ -1,0 +1,422 @@
+{% extends "layout.html" %}
+
+{% block title %}VIP Verification - Primer's Zest{% endblock %}
+
+{% block extra_head %}
+<style>
+
+    .verification-card {
+        background: var(--bg-card);
+        border-radius: 20px;
+        padding: 40px;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-md);
+        margin-bottom: 40px;
+    }
+
+    @media (max-width: 768px) {
+        .verification-card {
+            padding: 25px 20px;
+        }
+    }
+
+    .rule-item {
+        background: var(--bg-body);
+        padding: 25px;
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        margin-bottom: 25px;
+    }
+
+    .rule-label {
+        display: block;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 15px;
+    }
+
+    .chat-window {
+        height: 400px;
+        overflow-y: auto;
+        background: var(--bg-body);
+        border-radius: 16px;
+        padding: 25px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        border: 1px solid var(--border-color);
+    }
+
+    .chat-bubble {
+        max-width: 80%;
+        padding: 12px 18px;
+        border-radius: 15px;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        position: relative;
+    }
+
+    .chat-bubble-admin {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        align-self: flex-start;
+    }
+
+    .chat-bubble-user {
+        background: var(--primary-gradient);
+        color: white;
+        align-self: flex-end;
+    }
+
+    .chat-timestamp {
+        font-size: 0.7rem;
+        opacity: 0.6;
+        margin-top: 5px;
+        text-align: right;
+    }
+
+    /* Custom File Upload */
+    .file-upload-box {
+        border: 2px dashed var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        background: rgba(0,0,0,0.01);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .file-upload-box:hover {
+        border-color: var(--primary);
+        background: rgba(212, 175, 55, 0.05);
+    }
+
+    .file-upload-box svg { color: var(--primary); opacity: 0.7; }
+    .file-upload-box p { margin: 0; font-size: 0.85rem; color: var(--text-main); font-weight: 600; }
+    .file-upload-box span { font-size: 0.7rem; color: var(--text-muted); }
+
+    .file-list { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .file-badge {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* Payment Method UI */
+    .payment-method-opt {
+        cursor: pointer;
+    }
+    .method-card {
+        padding: 20px 10px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        text-align: center;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        background: var(--bg-body);
+    }
+    .payment-method-opt input:checked + .method-card {
+        border-color: var(--primary);
+        background: rgba(255, 215, 0, 0.1);
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.15);
+    }
+    .method-card svg { color: var(--text-muted); transition: color 0.3s; }
+    .payment-method-opt input:checked + .method-card svg { color: var(--primary); }
+    .method-card span { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .payment-instruction-box {
+        background: var(--bg-body);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        animation: fadeIn 0.3s ease;
+    }
+    .instruction-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .instruction-row .label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block nav_links %}
+    {% include "member_nav_links.html" %}
+{% endblock %}
+
+{% block content %}
+<div>
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h1 style="font-size: 2.2rem; margin-bottom: 10px;">VIP Authentication</h1>
+        <p style="color: var(--text-muted);">Confirm your elite status to unlock full portal access.</p>
+    </div>
+
+    <div class="verification-card">
+        <div style="background: rgba(255, 215, 0, 0.05); border-left: 4px solid var(--primary); padding: 20px; border-radius: 0 12px 12px 0; margin-bottom: 35px;">
+            <p style="margin: 0; color: var(--text-main); font-weight: 700; font-size: 1.1rem;">Secure Payment Concierge</p>
+            <p style="margin: 5px 0 0; color: var(--text-muted); font-size: 0.9rem;">Select your preferred anonymous payment route for <strong>{{ plan_name }}</strong>.</p>
+        </div>
+        
+        <form action="/submit_vip_verification" method="POST" enctype="multipart/form-data" id="paymentForm">
+            <input type="hidden" name="plan_id" value="{{ plan_id }}">
+            
+            <!-- Payment Method Selection -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 30px;">
+                        <label class="payment-method-opt">
+                            <input type="radio" name="payment_method" value="crypto" style="display: none;" onchange="updatePaymentUI(this.value)">
+                            <div class="method-card">
+                                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.407 2.67 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.407-2.67-1M12 16a3 3 0 100-6 3 3 0 000 6z"></path></svg>
+                                <span>Crypto</span>
+                            </div>
+                        </label>
+                        <label class="payment-method-opt">
+                            <input type="radio" name="payment_method" value="wire" style="display: none;" onchange="updatePaymentUI(this.value)">
+                            <div class="method-card">
+                                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                                <span>Bank Transfer</span>
+                            </div>
+                        </label>
+                        <label class="payment-method-opt">
+                            <input type="radio" name="payment_method" value="giftcard" style="display: none;" onchange="updatePaymentUI(this.value)">
+                            <div class="method-card">
+                                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                                <span>Giftcards</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Dynamic Instructions -->
+                    <div id="crypto-instructions" class="payment-instruction-box" style="display: none;">
+                        <h4 style="margin-bottom: 20px; font-size: 0.9rem; color: var(--primary);">EXECUTIVE CRYPTO WALLET</h4>
+                        <div class="admin-form-group">
+                            <label style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 10px; display: block; letter-spacing: 1px;">Select Target Currency</label>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px;">
+                                {% for wallet in crypto_wallets %}
+                                <label class="payment-method-opt">
+                                    <input type="radio" name="crypto_currency" value="{{ wallet[1] }}" style="display: none;" onchange="updateCryptoAddress('{{ wallet[2] }}', '{{ wallet[3] }}')">
+                                    <div class="method-card" style="padding: 15px; min-height: 80px;">
+                                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.97-1.31-2.73-2.61-3.03V5h-1.9v1.65c-1.31.27-2.71 1.07-2.71 2.83 0 1.96 1.71 2.68 3.52 3.14 1.93.49 2.41 1.14 2.41 1.9 0 .84-.71 1.54-2.18 1.54-1.71 0-2.37-.82-2.43-1.84h-1.73c.08 2.01 1.48 2.82 2.91 3.12V19h1.9v-1.64c1.4-.25 2.88-1.03 2.88-2.91 0-2.09-1.68-2.79-3.47-3.31z"></path></svg>
+                                        <span style="font-weight: 700; font-size: 0.9rem;">{{ wallet[1] }}</span>
+                                    </div>
+                                </label>
+                                {% else %}
+                                <div style="color: var(--text-muted); font-size: 0.85rem; font-style: italic; padding: 15px; border: 1px dashed var(--border-color); border-radius: 8px; text-align: center; width: 100%; grid-column: 1 / -1;">
+                                    No crypto wallets have been configured by the executive team yet.
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div id="address-display-box" style="display: none; margin-top: 20px;">
+                            <div class="instruction-row" style="margin-bottom: 15px;">
+                                <div class="label">Network</div>
+                                <div id="selected-network" style="font-weight: 700; color: var(--primary);">--</div>
+                            </div>
+                            <div class="instruction-row">
+                                <div class="label">Wallet Address</div>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; font-family: monospace; font-size: 0.85rem; word-break: break-all; margin-top: 5px; border: 1px solid var(--border-color); position: relative;">
+                                <span id="wallet-address-text">--</span>
+                            </div>
+                            
+                            <div style="margin-top: 25px; padding: 15px; background: rgba(var(--primary-rgb), 0.05); border: 1px solid var(--border-color); border-radius: 8px;">
+                                <p style="margin: 0; font-size: 0.85rem; color: var(--text-main); font-weight: 600; text-align: center;">Please complete your transfer to the address above, then upload a snapshot/proof of your transaction below.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="wire-instructions" class="payment-instruction-box" style="display: none;">
+                        <h4 style="margin-bottom: 20px; font-size: 0.9rem; color: var(--primary);">BANK TRANSFER DETAILS</h4>
+                        <div style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap;">{{ settings.get('bank_instructions', 'Contact concierge for bank details.') }}</div>
+                        <div class="admin-form-group" style="margin-top: 25px;">
+                            <label>Reference Number / Name</label>
+                            <input type="text" name="wire_reference" placeholder="Enter your transfer reference..." class="admin-input">
+                        </div>
+                    </div>
+
+                    <div id="giftcard-instructions" class="payment-instruction-box" style="display: none;">
+                        <h4 style="margin-bottom: 20px; font-size: 0.9rem; color: var(--primary);">GIFTCARD SUBMISSION</h4>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Please provide the high-quality scans of the front and back of the giftcard in the attachment box below.</p>
+                        <div class="admin-form-group">
+                            <label>Card Code / PIN</label>
+                            <input type="text" name="giftcard_code" placeholder="Enter the claim code..." class="admin-input">
+                        </div>
+                    </div>
+
+            <div class="rule-item" style="margin-top: 25px;">
+                <label class="rule-label" style="margin-bottom: 8px; display: block;">Payment Evidence / High-Quality Scans</label>
+                <div class="custom-file-wrapper">
+                    <label class="file-cta">
+                        <input type="file" name="payment_evidence" id="payment_evidence" multiple class="file-input-hidden" onchange="updateFileList(this, 'general_list')">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg> Choose Files
+                    </label>
+                    <span class="file-name-text" style="font-size: 0.8rem; margin-left: 10px;">JPG, PNG, PDF supported</span>
+                </div>
+                <div id="general_list" class="file-list" style="margin-top: 15px;"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 20px; margin-top: 20px; font-size: 1.1rem; letter-spacing: 0.5px;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="margin-right: 8px;"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                Submit for Executive Verification
+            </button>
+        </form>
+    </div>
+
+    <div class="verification-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <h2 style="font-size: 1.25rem; margin: 0;">Onboarding Concierge</h2>
+            {% if submission_id %}
+            <span style="font-size: 0.75rem; color: #166534; font-weight: 700; text-transform: uppercase; background: #dcfce7; padding: 4px 10px; border-radius: 50px;">Live Chat Active</span>
+            {% else %}
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; background: var(--bg-body); padding: 4px 10px; border-radius: 50px;">Awaiting Submission</span>
+            {% endif %}
+        </div>
+
+        <div class="chat-window" id="chatWindow">
+            <div class="chat-bubble chat-bubble-admin">
+                Hello! I'm your dedicated VIP onboarding assistant. Please submit your verification details to begin our private consultation.
+            </div>
+            {% for chat in chats %}
+            <div class="chat-bubble {% if chat['sender_id']|string != session['member_id']|string %}chat-bubble-admin{% else %}chat-bubble-user{% endif %}">
+                {{ chat['message'] }}
+                {% if chat['media_path'] %}
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <a href="{{ chat['media_path'] }}" target="_blank" style="color: inherit; text-decoration: underline; font-size: 0.8rem; font-weight: 700;">View Attachment</a>
+                </div>
+                {% endif %}
+                <div class="chat-timestamp">{{ chat['timestamp']|datetimeformat('%H:%M') }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if submission_id %}
+        <form id="ajaxChatForm" style="display: flex; gap: 15px; margin-top: 20px;">
+            <div style="flex: 1; display: flex; align-items: center; background: var(--bg-body); border-radius: 12px; border: 1px solid var(--border-color); padding: 5px 15px;">
+                <input type="text" name="message" id="chatInput" placeholder="Send a message to concierge..." style="flex: 1; background: transparent; border: none; padding: 12px 0; color: var(--text-main); font-family: inherit; outline: none;">
+                <label for="chat_media" style="cursor: pointer; opacity: 0.6; hover: opacity: 1;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                </label>
+                <input type="file" name="chat_media" id="chat_media" style="display: none;">
+            </div>
+            <button type="submit" class="btn btn-primary" id="sendBtn">Send</button>
+        </form>
+        {% else %}
+        <div style="margin-top: 20px; display: flex; gap: 15px; opacity: 0.5; pointer-events: none;">
+            <input type="text" class="form-control" placeholder="Unlock chat after submission..." disabled style="background: var(--bg-body);">
+            <button class="btn btn-primary" disabled>Send</button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function togglePaymentDetails(method) {
+        const boxes = ['crypto_details', 'wire_details', 'giftcard_details'];
+        boxes.forEach(id => {
+            document.getElementById(id).style.display = (id === method + '_details') ? 'block' : 'none';
+        });
+    }
+
+    function copyWallet() {
+        const addr = document.getElementById('walletAddress').innerText;
+        navigator.clipboard.writeText(addr).then(() => {
+            alert('Wallet address copied to clipboard.');
+        });
+    }
+
+    function updateFileList(input, listId) {
+        const list = document.getElementById(listId);
+        list.innerHTML = '';
+        Array.from(input.files).forEach(file => {
+            const badge = document.createElement('div');
+            badge.className = 'file-badge';
+            badge.innerHTML = `
+                <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.414a4 4 0 00-5.656-5.656l-6.415 6.414a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                ${file.name}
+            `;
+            list.appendChild(badge);
+        });
+    }
+
+    const win = document.getElementById('chatWindow');
+    if (win) win.scrollTop = win.scrollHeight;
+
+    const chatForm = document.getElementById('ajaxChatForm');
+    if (chatForm) {
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            let formData = new FormData(this);
+            const btn = document.getElementById('sendBtn');
+            btn.disabled = true;
+            
+            fetch('/vip_chat/send/{{ session.member_id }}', {
+                method: 'POST',
+                body: formData
+            }).then(() => {
+                chatForm.reset();
+                btn.disabled = false;
+                pollChats();
+            }).catch(() => { btn.disabled = false; });
+        });
+    }
+
+    function pollChats() {
+        fetch(window.location.href)
+            .then(r => r.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newWin = doc.getElementById('chatWindow');
+                if (newWin && win) {
+                    const isBottom = win.scrollHeight - win.clientHeight <= win.scrollTop + 50;
+                    win.innerHTML = newWin.innerHTML;
+                    if (isBottom) win.scrollTop = win.scrollHeight;
+                }
+            });
+    }
+    setInterval(pollChats, 5000);
+
+    if (window.innerWidth < 992) {
+        document.querySelector('.mobile-nav-toggle').style.display = 'block';
+    }
+    function updatePaymentUI(method) {
+        document.getElementById('crypto-instructions').style.display = method === 'crypto' ? 'block' : 'none';
+        document.getElementById('wire-instructions').style.display = method === 'wire' ? 'block' : 'none';
+        document.getElementById('giftcard-instructions').style.display = method === 'giftcard' ? 'block' : 'none';
+    }
+
+    function updateCryptoAddress(network, address) {
+        const displayBox = document.getElementById('address-display-box');
+        
+        if (network && address) {
+            displayBox.style.display = 'block';
+            document.getElementById('selected-network').textContent = network;
+            document.getElementById('wallet-address-text').textContent = address;
+        } else {
+            displayBox.style.display = 'none';
+        }
+    }
+</script>
+{% endblock %}
