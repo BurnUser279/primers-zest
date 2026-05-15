@@ -377,7 +377,7 @@
     /* Mobile Specific Overrides */
     @media (max-width: 768px) {
         .chat-container {
-            height: calc(100vh - 120px); /* Account for mobile navigation */
+            height: calc(100vh - 70px); /* Fill space better */
             margin: -20px -15px;
             width: calc(100% + 30px) !important;
             max-width: calc(100% + 30px) !important;
@@ -387,90 +387,94 @@
         
         .chat-box {
             padding: 15px 12px;
-            gap: 15px;
+            gap: 12px;
             width: 100%;
             overflow-x: hidden;
         }
 
         .message-bubble {
-            max-width: 92%;
-            padding: 12px;
-            font-size: 0.85rem;
+            max-width: 90%;
+            padding: 10px 14px;
+            font-size: 0.9rem;
         }
 
         .chat-header {
-            padding: 10px 15px;
-            flex-direction: row; 
-            justify-content: space-between;
-            gap: 10px;
-            width: 100%;
+            padding: 8px 15px;
+            flex-wrap: nowrap;
+            gap: 8px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
         }
 
         .chat-header h2 { 
-            font-size: 0.9rem; 
-            max-width: 140px;
+            font-size: 0.95rem; 
+            white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            white-space: nowrap;
+            max-width: 120px;
+        }
+
+        .mobile-channel-nav {
+            padding: 8px 12px !important;
+            gap: 6px !important;
+            background: var(--bg-card) !important;
+        }
+
+        .mobile-channel-nav .btn {
+            font-size: 0.75rem !important;
+            padding: 5px 12px !important;
+            border-radius: 20px !important;
         }
         
         .poll-form-container {
-            padding: 12px !important;
-            width: 100%;
-            box-sizing: border-box;
+            padding: 10px 15px !important;
         }
 
         .poll-form-container form {
             flex-direction: column !important;
-            gap: 10px !important;
-            align-items: stretch !important;
+            gap: 8px !important;
+            width: 100%;
         }
         
         .poll-form-container input {
             width: 100% !important;
-            flex: none !important;
-            font-size: 0.9rem !important;
-            padding: 12px !important;
-            box-sizing: border-box;
+            font-size: 0.85rem !important;
+            padding: 10px !important;
+            margin: 0 !important;
         }
 
-        .poll-container {
-            padding: 15px !important;
-            margin: 15px 0 !important;
+        .poll-form-container button {
             width: 100% !important;
-            box-sizing: border-box;
+            padding: 10px !important;
+            margin-top: 4px;
         }
 
         .chat-footer {
-            padding: 10px;
-            width: 100%;
-            box-sizing: border-box;
+            padding: 8px;
+            background: var(--bg-body);
         }
 
         .input-area {
-            width: 100%;
-            padding: 4px !important;
-            box-sizing: border-box;
+            gap: 4px !important;
+            padding: 4px 8px !important;
         }
 
         .chat-input {
-            font-size: 0.9rem;
-            min-width: 0;
+            font-size: 0.95rem;
+            padding: 8px 4px !important;
         }
 
-        .mobile-channel-nav {
-            width: 100%;
-            padding: 10px 15px !important;
-            box-sizing: border-box;
+        #sendBtn span { display: none; }
+        #sendBtn::after {
+            content: "\27A4"; /* Arrow icon */
+            font-size: 1.2rem;
         }
-
-        .btn-sm {
-            padding: 8px 14px;
-            font-size: 0.75rem;
+        #sendBtn {
+            padding: 6px 12px !important;
+            min-width: 44px;
         }
 
         .hide-mobile { display: none !important; }
-        .only-mobile { display: flex !important; }
     }
 </style>
 {% endblock %}
@@ -592,21 +596,26 @@
             </div>
             <!-- Search Wrapper Removed as requested -->
 
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <a href="/dashboard" class="btn btn-secondary btn-sm hide-mobile" style="text-decoration: none;">Main Dashboard</a>
-                <button onclick="location.reload()" class="btn btn-secondary btn-sm">Refresh</button>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <button onclick="location.reload()" class="btn btn-secondary btn-sm" title="Refresh Feed">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" class="only-mobile"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    <span class="hide-mobile">Refresh</span>
+                </button>
                 <div style="position: relative; display: inline-block;">
-                    <button onclick="toggleQuickActions(event)" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #d4af37, #8B6914); white-space: nowrap;">Quick Actions</button>
+                    <button onclick="toggleQuickActions(event)" class="btn btn-primary btn-sm" style="background: var(--primary-gradient); white-space: nowrap;">
+                        <span class="hide-mobile">Quick Actions</span>
+                        <span class="only-mobile">Actions</span>
+                    </button>
                     <div id="quickActionsDropdown" style="display: none; position: absolute; top: 100%; right: 0; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; margin-top: 10px; width: 180px; z-index: 2000; box-shadow: var(--shadow-md); padding: 10px;">
                         {% if not is_admin %}
                         <button onclick="summonAdmin()" style="width: 100%; text-align: left; background: none; border: none; padding: 10px; color: var(--text-main); cursor: pointer; font-size: 0.85rem; font-weight: 600;">Summon Admin</button>
                         {% endif %}
+                        <div class="only-mobile" style="border-top: 1px solid var(--border-color); margin: 5px 0;"></div>
+                        <a href="/dashboard" class="only-mobile" style="display: block; text-align: left; text-decoration: none; padding: 10px; color: var(--text-main); font-size: 0.85rem; font-weight: 600;">Main Dashboard</a>
                         {% if is_admin == True %}
                         <div style="border-top: 1px solid var(--border-color); margin: 5px 0;"></div>
                         <button onclick="window.location.href='/admin'" style="width: 100%; text-align: left; background: none; border: none; padding: 10px; color: var(--primary); cursor: pointer; font-size: 0.85rem; font-weight: 600;">Admin Dashboard</button>
                         {% endif %}
-                        <div style="border-top: 1px solid var(--border-color); margin: 5px 0;"></div>
-                        <a href="/dashboard" style="display: block; text-align: left; text-decoration: none; padding: 10px; color: var(--text-main); font-size: 0.85rem; font-weight: 600;">Main Dashboard</a>
                     </div>
                 </div>
             </div>
@@ -749,7 +758,9 @@
                             <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
                         </label>
                         <input type="file" name="attachments" id="attachments" multiple accept="image/*,video/*,.pdf" style="display: none;" onchange="updateAttachmentCount(this)">
-                        <button type="submit" class="btn btn-primary" id="sendBtn">Send</button>
+                        <button type="submit" class="btn btn-primary" id="sendBtn" style="flex-shrink: 0; font-weight: 800;">
+                            <span>Send</span>
+                        </button>
                     </div>
                 </div>
             </form>
