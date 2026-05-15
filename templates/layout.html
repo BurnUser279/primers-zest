@@ -888,8 +888,8 @@
                 {% block content %}{% endblock %}
             </main>
 
+            {% if request.endpoint not in ['vip_lounge', 'star_booking_chat'] %}
             <footer class="main-footer" style="position: relative; overflow: hidden; padding: 60px 40px; border-top: 1px solid var(--border-color); background: var(--bg-card);">
-
                 <div class="footer-trust-grid">
                     <div class="trust-item">
                         <div class="trust-icon">GDPR</div>
@@ -973,6 +973,7 @@
                     </div>
                 </div>
             </footer>
+            {% endif %}
         </div>
     </div>
 
