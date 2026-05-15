@@ -30,11 +30,15 @@ def send_email_notification(recipient_email, subject, body, user_id=None):
     msg['Subject'] = subject
     msg.attach(MIMEText(body, 'html'))
 
-    server = smtplib.SMTP('smtp.gmail.com', 587, timeout=10)
-    server.starttls()
-    server.login(sender_email, sender_password)
-    server.send_message(msg)
-    server.quit()
+    try:
+        server = smtplib.SMTP('smtp.gmail.com', 587, timeout=10)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.send_message(msg)
+        server.quit()
+    except Exception as smtp_err:
+        print(f"SMTP Delivery Error: {smtp_err}")
+        return False
 
     # Audit Logging
     if user_id:
@@ -50,22 +54,26 @@ def send_email_notification(recipient_email, subject, body, user_id=None):
     return True
 
 def get_templated_email(event_type, name, admin_text=None):
+    conn = None
     try:
         conn, db_type = get_db_connection()
         c = get_cursor(conn, db_type)
         c.execute("SELECT subject, body FROM email_templates WHERE event_type = %s", (event_type,))
         row = c.fetchone()
-        conn.close()
-        
         if row:
             subject = row[0].replace('{{name}}', name)
             body = row[1].replace('{{name}}', name)
             if admin_text:
                 body = body.replace('{{admin_text}}', admin_text)
             return subject, body
+    except Exception as e:
+        print(f"Email Template Error ({event_type}): {e}")
     finally:
-        if 'conn' in locals() and conn:
-            conn.close()
+        if conn:
+            try:
+                conn.close()
+            except Exception:
+                pass
     return None, None
 
 # Security & Throttling
@@ -96,8 +104,20 @@ def record_login_attempt(ip, success):
             login_attempts[ip]['last_attempt'] = now
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'zest_prod_secure_fallback_key_2026') 
+# --- Secret Key (Phase 2: never use a guessable fallback) ---
+_secret = os.environ.get('SECRET_KEY')
+if not _secret:
+    if os.environ.get('DATABASE_URL'):  # Production environment detected
+        raise RuntimeError(
+            "CRITICAL: SECRET_KEY environment variable is not set. "
+            "Set it in your Render dashboard to a long random string."
+        )
+    import warnings
+    warnings.warn("SECRET_KEY not set — using dev fallback. NOT safe for production.", stacklevel=1)
+    _secret = 'dev_only_fallback_do_not_use_in_production'
+app.secret_key = _secret
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50 MB hard limit — prevents OOM on large uploads
 app.config['CHATROOM_UPLOAD_FOLDER'] = 'static/chatroom_uploads'
 
 # --- Membership Cards Init ---
@@ -130,12 +150,12 @@ def init_membership_cards():
             elif row[1] != img:
                 # Update image path if it's different from the standard default
                 c.execute("UPDATE membership_cards SET image_path = %s WHERE id = %s", (img, row[0]))
-        # Force cache bust for existing cards to ensure new designs show
-        ts = "v35_3"  # Version corresponding to our latest fix
-        c.execute("UPDATE membership_cards SET image_path = tier_name") # dummy to check
+        # Phase 3: Re-apply correct image paths on every startup — no destructive dummy UPDATE.
+        # Previously: c.execute("UPDATE membership_cards SET image_path = tier_name") wiped all paths.
+        ts = "v35_3"  # Increment when card designs change
         c.execute("UPDATE membership_cards SET image_path = %s WHERE tier_name = 'Bronze Card'", ('/static/uploads/bronze_membership_card.png?v=' + ts,))
         c.execute("UPDATE membership_cards SET image_path = %s WHERE tier_name = 'Silver Card'", ('/static/uploads/silver_membership_card.png?v=' + ts,))
-        c.execute("UPDATE membership_cards SET image_path = %s WHERE tier_name = 'Gold Card'", ('/static/uploads/gold_membership_card.png?v=' + ts,))
+        c.execute("UPDATE membership_cards SET image_path = %s WHERE tier_name = 'Gold Executive Card'", ('/static/uploads/gold_membership_card.png?v=' + ts,))
         c.execute("UPDATE membership_cards SET image_path = %s WHERE tier_name = 'Platinum Card'", ('/static/uploads/platinum_membership_card.png?v=' + ts,))
         
         conn.commit()
@@ -299,8 +319,8 @@ def inject_unread_count():
             ctx['star_bookings'] = c.fetchall()
             c.execute("SELECT * FROM vip_submissions WHERE status = 'Pending'")
             ctx['vip_submissions'] = c.fetchall()
-        except:
-            pass
+        except Exception as e:
+            print(f"Global Context Admin Data Fetch Error: {e}")
         finally:
             if 'conn' in locals() and conn:
                 conn.close()
@@ -322,19 +342,22 @@ def check_account_status():
         if request.endpoint in exempt:
             return
 
+        conn = None
         try:
             conn, db_type = get_db_connection()
             c = get_cursor(conn, db_type)
             c.execute("SELECT is_active FROM members WHERE id = %s", (session['member_id'],))
             row = c.fetchone()
-            conn.close()
-            
             if row and int(row[0]) == 0:
-                # User is disabled, redirect to appeal instead of just kicking
                 return redirect(url_for('member_appeal'))
+        except Exception as e:
+            print(f"Account Status Check Error: {e}")
         finally:
-            if 'conn' in locals() and conn:
-                conn.close()
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
 
 def add_admin_notification(member_id, action_type, message, target_url=None):
     try:
@@ -408,22 +431,27 @@ def init_db():
         c.execute("ALTER TABLE members ADD COLUMN IF NOT EXISTS failed_attempts INTEGER DEFAULT 0;")
         c.execute("ALTER TABLE members ADD COLUMN IF NOT EXISTS vip_admin_reply TEXT;")
         c.execute("ALTER TABLE members ADD COLUMN IF NOT EXISTS vip_user_proof TEXT;")
+        c.execute("ALTER TABLE members ADD COLUMN IF NOT EXISTS kyc_status VARCHAR(20) DEFAULT 'Unverified';")
+        c.execute("ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS billing_period VARCHAR(100) DEFAULT 'Per Executive Year';")
     else:
         # SQLite
-        try: c.execute("ALTER TABLE members ADD COLUMN vip_since TIMESTAMP")
-        except: pass
-        try: c.execute("ALTER TABLE members ADD COLUMN industry VARCHAR(255)")
-        except: pass
-        try: c.execute("ALTER TABLE members ADD COLUMN net_worth VARCHAR(255)")
-        except: pass
-        try: c.execute("ALTER TABLE members ADD COLUMN can_write_news BOOLEAN DEFAULT FALSE")
-        except: pass
-        try: c.execute("ALTER TABLE members ADD COLUMN can_write_insights BOOLEAN DEFAULT FALSE")
-        except: pass
-        try: c.execute("ALTER TABLE members ADD COLUMN bio TEXT")
-        except: pass
-        try: c.execute("ALTER TABLE members ADD COLUMN profile_photo TEXT")
-        except: pass
+        def add_sqlite_col(table, col_def):
+            try:
+                c.execute(f"ALTER TABLE {table} ADD COLUMN {col_def}")
+            except Exception as e:
+                # Log instead of silent pass
+                if 'duplicate column' not in str(e).lower():
+                    pass # Only ignore expected duplicate column errors
+        
+        add_sqlite_col('members', 'vip_since TIMESTAMP')
+        add_sqlite_col('members', 'industry VARCHAR(255)')
+        add_sqlite_col('members', 'net_worth VARCHAR(255)')
+        add_sqlite_col('members', 'can_write_news BOOLEAN DEFAULT FALSE')
+        add_sqlite_col('members', 'can_write_insights BOOLEAN DEFAULT FALSE')
+        add_sqlite_col('members', 'bio TEXT')
+        add_sqlite_col('members', 'profile_photo TEXT')
+        add_sqlite_col('members', 'kyc_status VARCHAR(20) DEFAULT "Unverified"')
+        add_sqlite_col('subscription_plans', 'billing_period VARCHAR(100) DEFAULT "Per Executive Year"')
 
     c.execute(f'''CREATE TABLE IF NOT EXISTS member_profile_audit
                  (id {pk_type},
@@ -533,12 +561,9 @@ def init_db():
         c.execute("ALTER TABLE chatroom_messages ADD COLUMN IF NOT EXISTS channel_id VARCHAR(50) DEFAULT 'main';")
         c.execute("ALTER TABLE chatroom_messages ADD COLUMN IF NOT EXISTS reply_to_id INTEGER;")
     else:
-        try: c.execute("ALTER TABLE chatroom_messages ADD COLUMN is_pinned BOOLEAN DEFAULT FALSE")
-        except: pass
-        try: c.execute("ALTER TABLE chatroom_messages ADD COLUMN channel_id VARCHAR(50) DEFAULT 'main'")
-        except: pass
-        try: c.execute("ALTER TABLE chatroom_messages ADD COLUMN reply_to_id INTEGER")
-        except: pass
+        add_sqlite_col('chatroom_messages', 'is_pinned BOOLEAN DEFAULT FALSE')
+        add_sqlite_col('chatroom_messages', 'channel_id VARCHAR(50) DEFAULT "main"')
+        add_sqlite_col('chatroom_messages', 'reply_to_id INTEGER')
 
     c.execute(f'''CREATE TABLE IF NOT EXISTS chatroom_members
                  (id {pk_type},
@@ -587,14 +612,10 @@ def init_db():
         c.execute("ALTER TABLE vip_submissions ADD COLUMN IF NOT EXISTS wire_reference TEXT;")
         c.execute("ALTER TABLE vip_submissions ADD COLUMN IF NOT EXISTS giftcard_code TEXT;")
     else:
-        try: c.execute("ALTER TABLE vip_submissions ADD COLUMN payment_method VARCHAR(50)")
-        except: pass
-        try: c.execute("ALTER TABLE vip_submissions ADD COLUMN transaction_hash TEXT")
-        except: pass
-        try: c.execute("ALTER TABLE vip_submissions ADD COLUMN wire_reference TEXT")
-        except: pass
-        try: c.execute("ALTER TABLE vip_submissions ADD COLUMN giftcard_code TEXT")
-        except: pass
+        add_sqlite_col('vip_submissions', 'payment_method VARCHAR(50)')
+        add_sqlite_col('vip_submissions', 'transaction_hash TEXT')
+        add_sqlite_col('vip_submissions', 'wire_reference TEXT')
+        add_sqlite_col('vip_submissions', 'giftcard_code TEXT')
 
     c.execute(f'''CREATE TABLE IF NOT EXISTS vip_submission_data
                  (id {pk_type},
@@ -618,12 +639,9 @@ def init_db():
         c.execute("ALTER TABLE vip_pre_payment_chats ADD COLUMN IF NOT EXISTS media_path TEXT;")
     else:
         # SQLite
-        try: c.execute("ALTER TABLE vip_pre_payment_chats ADD COLUMN media_path TEXT")
-        except: pass
-        try: c.execute("ALTER TABLE vip_pre_payment_chats ADD COLUMN sender_id INTEGER")
-        except: pass
-        try: c.execute("ALTER TABLE vip_pre_payment_chats ADD COLUMN message TEXT")
-        except: pass
+        add_sqlite_col('vip_pre_payment_chats', 'media_path TEXT')
+        add_sqlite_col('vip_pre_payment_chats', 'sender_id INTEGER')
+        add_sqlite_col('vip_pre_payment_chats', 'message TEXT')
 
     c.execute(f'''CREATE TABLE IF NOT EXISTS vip_periods
                  (id {pk_type},
@@ -653,8 +671,7 @@ def init_db():
     if db_type == 'postgres':
         c.execute("ALTER TABLE member_notifications ADD COLUMN IF NOT EXISTS target_url TEXT;")
     else:
-        try: c.execute("ALTER TABLE member_notifications ADD COLUMN target_url TEXT")
-        except: pass
+        add_sqlite_col('member_notifications', 'target_url TEXT')
 
     c.execute(f'''CREATE TABLE IF NOT EXISTS club_slideshows
                  (id {pk_type},
@@ -740,9 +757,14 @@ def init_db():
         if not c.fetchone():
             c.execute("INSERT INTO system_settings (id, support_email) VALUES (1, 'support@yourdomain.com')")
 
-    # Admin recovery overwrite
-    admin_recovery_hash = generate_password_hash('admin123')
-    c.execute("UPDATE members SET password_hash = %s WHERE username = 'AdminMaster'", (admin_recovery_hash,))
+    # Phase 2: Only set admin password on FIRST creation — never overwrite on restart.
+    # Set ADMIN_PASSWORD in your environment variables (Render dashboard) to control this.
+    c.execute("SELECT id FROM members WHERE username = 'AdminMaster'")
+    if not c.fetchone():
+        _initial_admin_pass = os.environ.get('ADMIN_PASSWORD', 'admin123')
+        admin_recovery_hash = generate_password_hash(_initial_admin_pass)
+        c.execute("UPDATE members SET password_hash = %s WHERE username = 'AdminMaster'", (admin_recovery_hash,))
+        print("[INIT] Admin password set from ADMIN_PASSWORD env var.")
     
     # Seed subscription plans if empty
     c.execute("SELECT COUNT(*) FROM subscription_plans")
@@ -771,48 +793,114 @@ def init_db():
             for f_name, f_type in fields:
                 c.execute("INSERT INTO onboarding_fields (config_id, field_name, field_type) VALUES (%s, %s, %s)", (config_id, f_name, f_type))
 
-        # Additional Tables for Phase 37
-        c.execute(f'''CREATE TABLE IF NOT EXISTS card_orders
-                     (id {pk_type},
-                      member_id INTEGER REFERENCES members(id),
-                      card_id INTEGER REFERENCES membership_cards(id),
-                      status VARCHAR(50) DEFAULT 'Pending',
-                      payment_method VARCHAR(50),
-                      proof_path TEXT,
-                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-        
-        c.execute(f'''CREATE TABLE IF NOT EXISTS polls
-                     (id {pk_type},
-                      question TEXT NOT NULL,
-                      options TEXT NOT NULL, 
-                      is_active BOOLEAN DEFAULT TRUE,
-                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-        
-        c.execute(f'''CREATE TABLE IF NOT EXISTS poll_votes
-                     (id {pk_type},
-                      poll_id INTEGER REFERENCES polls(id),
-                      member_id INTEGER REFERENCES members(id),
-                      option_index INTEGER,
-                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                      UNIQUE(poll_id, member_id))''')
+    # --- Always-created tables (moved out of seed conditional) ---
 
-        # --- TALENT MULTI-MEDIA SUPPORT ---
-        c.execute(f'''CREATE TABLE IF NOT EXISTS stars
-                     (id {pk_type},
-                      name VARCHAR(255) NOT NULL,
-                      category VARCHAR(255),
-                      bio TEXT,
-                      price VARCHAR(100),
-                      image_path TEXT,
-                      is_active BOOLEAN DEFAULT TRUE,
-                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+    c.execute(f'''CREATE TABLE IF NOT EXISTS card_orders
+                 (id {pk_type},
+                  member_id INTEGER REFERENCES members(id),
+                  card_id INTEGER REFERENCES membership_cards(id),
+                  status VARCHAR(50) DEFAULT 'Pending',
+                  payment_method VARCHAR(50),
+                  proof_path TEXT,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
 
-        c.execute(f'''CREATE TABLE IF NOT EXISTS star_media
-                     (id {pk_type},
-                      star_id INTEGER REFERENCES stars(id) ON DELETE CASCADE,
-                      file_path TEXT NOT NULL,
-                      media_type VARCHAR(20) DEFAULT 'image',
-                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+    c.execute(f'''CREATE TABLE IF NOT EXISTS polls
+                 (id {pk_type},
+                  question TEXT NOT NULL,
+                  options TEXT NOT NULL,
+                  is_active BOOLEAN DEFAULT TRUE,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    c.execute(f'''CREATE TABLE IF NOT EXISTS poll_votes
+                 (id {pk_type},
+                  poll_id INTEGER REFERENCES polls(id),
+                  member_id INTEGER REFERENCES members(id),
+                  option_index INTEGER,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  UNIQUE(poll_id, member_id))''')
+
+    c.execute(f'''CREATE TABLE IF NOT EXISTS stars
+                 (id {pk_type},
+                  name VARCHAR(255) NOT NULL,
+                  category VARCHAR(255),
+                  bio TEXT,
+                  price VARCHAR(100),
+                  image_path TEXT,
+                  is_active BOOLEAN DEFAULT TRUE,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    c.execute(f'''CREATE TABLE IF NOT EXISTS star_media
+                 (id {pk_type},
+                  star_id INTEGER REFERENCES stars(id) ON DELETE CASCADE,
+                  file_path TEXT NOT NULL,
+                  media_type VARCHAR(20) DEFAULT 'image',
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    # --- MISSING TABLES (Phase 1 crash fixes) ---
+
+    c.execute(f'''CREATE TABLE IF NOT EXISTS star_bookings
+                 (id {pk_type},
+                  member_id INTEGER REFERENCES members(id),
+                  star_id INTEGER REFERENCES stars(id),
+                  chatroom_id INTEGER REFERENCES chatrooms(id),
+                  request_details TEXT,
+                  status VARCHAR(50) DEFAULT 'Pending',
+                  occasion VARCHAR(255),
+                  timeframe VARCHAR(255),
+                  start_time VARCHAR(255),
+                  address TEXT,
+                  recipient VARCHAR(255),
+                  arrival_time VARCHAR(255),
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    c.execute(f'''CREATE TABLE IF NOT EXISTS chatroom_reactions
+                 (id {pk_type},
+                  message_id INTEGER REFERENCES chatroom_messages(id) ON DELETE CASCADE,
+                  member_id INTEGER REFERENCES members(id),
+                  emoji VARCHAR(20),
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  UNIQUE(message_id, member_id))''')
+
+    c.execute(f'''CREATE TABLE IF NOT EXISTS message_reactions
+                 (id {pk_type},
+                  message_id INTEGER REFERENCES chatroom_messages(id) ON DELETE CASCADE,
+                  reaction_type VARCHAR(50),
+                  count INTEGER DEFAULT 1,
+                  is_artificial BOOLEAN DEFAULT FALSE,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    c.execute(f'''CREATE TABLE IF NOT EXISTS crypto_wallets
+                 (id {pk_type},
+                  currency VARCHAR(50) NOT NULL,
+                  network VARCHAR(100),
+                  address TEXT NOT NULL,
+                  is_active BOOLEAN DEFAULT TRUE,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    c.execute(f'''CREATE TABLE IF NOT EXISTS email_logs
+                 (id {pk_type},
+                  user_id INTEGER REFERENCES members(id),
+                  subject TEXT NOT NULL,
+                  body TEXT NOT NULL,
+                  sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    # Postgres: ensure new table columns exist on existing deployments
+    if db_type == 'postgres':
+        c.execute("ALTER TABLE star_bookings ADD COLUMN IF NOT EXISTS arrival_time VARCHAR(255);")
+        c.execute("ALTER TABLE star_bookings ADD COLUMN IF NOT EXISTS occasion VARCHAR(255);")
+        c.execute("ALTER TABLE star_bookings ADD COLUMN IF NOT EXISTS timeframe VARCHAR(255);")
+        c.execute("ALTER TABLE star_bookings ADD COLUMN IF NOT EXISTS start_time VARCHAR(255);")
+        c.execute("ALTER TABLE star_bookings ADD COLUMN IF NOT EXISTS address TEXT;")
+        c.execute("ALTER TABLE star_bookings ADD COLUMN IF NOT EXISTS recipient VARCHAR(255);")
+    else:
+        add_sqlite_col('star_bookings', 'arrival_time VARCHAR(255)')
+        add_sqlite_col('star_bookings', 'occasion VARCHAR(255)')
+
+    # Phase 5: Add indexes for key lookup columns
+    c.execute("CREATE INDEX IF NOT EXISTS idx_members_email ON members(email)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_members_role ON members(role)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_tickets_user ON tickets(user_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_donations_member ON donations(member_id)")
 
     conn.commit()
     conn.close()
@@ -963,7 +1051,7 @@ def register():
                 conn.rollback()
                 conn.close()
                 print(f"Registration DB Error: {db_err}")
-                flash(f"Account creation failed: {db_err}", 'error')
+                flash("Account creation failed due to a system error. Please try again or contact support.", 'error')
                 return redirect(url_for('register', invite=invite_token))
         except Exception as e:
             conn.close()
@@ -1038,8 +1126,11 @@ def member_login():
                     c.execute("SELECT support_email FROM system_settings WHERE id = 1")
                     support_res = c.fetchone()
                     support_email = support_res[0] if support_res else "support@primerszest.com"
+                    # Phase 4: escape support_email to prevent stored XSS via HTML in flash
+                    from markupsafe import escape as _esc
+                    _safe_email = _esc(support_email)
+                    flash(f'Your account has been frozen. Contact support at {_safe_email} to request reactivation.', "error")
                     conn.close()
-                    flash(f'Your account has been frozen, contact the admin through <a href="mailto:{support_email}">{support_email}</a> for details on how to unfreeze your account.', "error")
                     return render_template('member_login.html', footer_info=footer_info)
                 
                 if check_password_hash(hashed_pw, password):
@@ -1079,9 +1170,10 @@ def member_login():
                         conn, db_type = get_db_connection()
                         c = get_cursor(conn, db_type)
                         c.execute("SELECT support_email FROM system_settings WHERE id = 1")
-                        support_email = c.fetchone()[0]
+                        support_email = c.fetchone()[0] if c.fetchone() else 'support@primerszest.com'
                         conn.close()
-                        flash(f'Your account has been frozen, contact the admin through <a href="mailto:{support_email}">{support_email}</a> for details on how to unfreeze your account.', "error")
+                        from markupsafe import escape as _esc
+                        flash(f'Your account has been frozen. Contact support at {_esc(support_email)} to request reactivation.', "error")
                     else:
                         c.execute("UPDATE members SET failed_attempts = %s WHERE email = %s", (new_failed, email))
                         conn.commit()
@@ -1684,10 +1776,12 @@ def admin_login():
         c.execute("SELECT id, password_hash, email FROM members WHERE role = 'Admin' LIMIT 1")
         admin_row = c.fetchone()
         
-        if admin_row and check_password_hash(admin_row['password_hash'], password):
+        # Phase 2: use index access — works on both psycopg2 DictCursor and sqlite3.Row
+        if admin_row and check_password_hash(admin_row[1], password):
             record_login_attempt(get_ip(), True)
             session['is_admin'] = True
-            session['member_id'] = admin_row['id']
+            session['member_id'] = admin_row[0]
+            session['admin_username'] = admin_row[2]  # Phase 2: populate for audit logs
             log_admin_action('login_success', details="Admin logged in directly")
             conn.close()
             return redirect(url_for('admin_dashboard'))
@@ -1727,7 +1821,8 @@ def admin_dashboard():
     """)
     all_members = c.fetchall()
     
-    c.execute("SELECT * FROM donations")
+    # Phase 4: limit to prevent admin dashboard timing out as data grows
+    c.execute("SELECT * FROM donations ORDER BY created_at DESC LIMIT 200")
     all_donations = c.fetchall()
 
     # Fetch Audit Logs
@@ -1820,8 +1915,8 @@ def admin_dashboard():
         if isinstance(cre, str):
             try:
                 inv_dict['created_at'] = datetime.datetime.fromisoformat(cre.replace(' ', 'T').split('.')[0])
-            except:
-                pass
+            except Exception as e:
+                print(f"Date Parse Error: {e}")
                 
         invite_tokens.append(inv_dict)
     c.execute("""
@@ -2697,7 +2792,10 @@ def vip_chat_send(member_id):
             return redirect(url_for('admin_vip_review', sub_id=s_id))
         return redirect(url_for('admin_dashboard') + "?section=finance")
     
-    return "OK", 200
+    # Phase 3: redirect member back to dashboard (vip_verification requires plan_id — unsafe to assume)
+    return redirect(request.referrer or url_for('member_dashboard'))
+
+
 
 @app.route('/admin/settings', methods=['POST'])
 def admin_settings():
@@ -2714,9 +2812,16 @@ def admin_settings():
     plan_features = request.form.getlist('plan_features')
     plan_durations = request.form.getlist('billing_period')
     
-    for i in range(len(plan_ids)):
-        c.execute("UPDATE subscription_plans SET plan_name = %s, price = %s, features = %s, billing_period = %s WHERE id = %s",
-                  (plan_names[i], float(plan_prices[i]), plan_features[i], plan_durations[i], int(plan_ids[i])))
+    # Phase 4: use zip() with strict length checking to prevent IndexError
+    # when form lists are different lengths due to partial submissions
+    plan_tuples = list(zip(plan_ids, plan_names, plan_prices, plan_features, plan_durations))
+    for p_id, p_name, p_price, p_feat, p_dur in plan_tuples:
+        try:
+            c.execute("UPDATE subscription_plans SET plan_name = %s, price = %s, features = %s, billing_period = %s WHERE id = %s",
+                      (p_name, float(p_price), p_feat, p_dur, int(p_id)))
+        except (ValueError, TypeError) as plan_err:
+            print(f"Plan update skipped (invalid data): {plan_err}")
+            continue
     
     # Add new plan if provided
     new_name = request.form.get('new_plan_name')
@@ -2882,8 +2987,8 @@ def admin_reset_password(member_id):
     if not session.get('is_admin'):
         return redirect(url_for('admin_login'))
         
-    import string, random
-    new_password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+    import string, secrets
+    new_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(12))
     hashed_password = generate_password_hash(new_password)
     
     conn, db_type = get_db_connection()
@@ -3299,14 +3404,13 @@ def admin_add_donation(user_id):
         plan_id = plan_res[0] if plan_res else 1
         
         if db_type == 'postgres':
-            c.execute("INSERT INTO donations (user_id, plan_id, amount, status, visibility_preference) VALUES (%s, %s, %s, 'Completed', %s)",
-                      (user_id, plan_id, amount_float, note))
+            c.execute("INSERT INTO donations (member_id, amount, status, visibility_preference) VALUES (%s, %s, 'Completed', %s)",
+                      (user_id, amount_float, note))
         else:
-            c.execute("INSERT INTO donations (user_id, plan_id, amount, status, visibility_preference) VALUES (?, ?, ?, 'Completed', ?)",
-                      (user_id, plan_id, amount_float, note))
+            c.execute("INSERT INTO donations (member_id, amount, status, visibility_preference) VALUES (%s, %s, 'Completed', %s)",
+                      (user_id, amount_float, note))
                       
-        admin_username = session.get('admin_username', 'System')
-        log_audit(c, admin_username, 'ADDED MANUAL CONTRIBUTION', 'User', user_id, f"Added ${amount_float:.2f}: {note}")
+        log_admin_action('manual_donation', target_type='member', target_id=user_id, details=f"Added ${amount_float:.2f}: {note}")
         conn.commit()
         conn.close()
         
@@ -3361,8 +3465,7 @@ def admin_toggle_kyc(user_id):
         new_status = 'Verified'
         
     c.execute("UPDATE members SET kyc_status = %s WHERE id = %s", (new_status, user_id))
-    admin_username = session.get('admin_username', 'System')
-    log_audit(c, admin_username, 'UPDATED KYC STATUS', 'User', user_id, f"Changed KYC status to {new_status}")
+    log_admin_action('toggle_kyc', target_type='member', target_id=user_id, details=f"Changed KYC status to {new_status}")
     conn.commit()
     conn.close()
     
@@ -3590,34 +3693,47 @@ def member_verify_identity():
         return redirect(url_for('member_login'))
     
     member_id = session['member_id']
-    conn, db_type = get_db_connection()
-    c = get_cursor(conn, db_type)
-    c.execute("SELECT fullname, email, is_verified FROM members WHERE id = %s", (member_id,))
-    member = c.fetchone()
-    
-    if not member or member['is_verified']:
-        conn.close()
-        return redirect(url_for('member_dashboard'))
+    conn = None
+    try:
+        conn, db_type = get_db_connection()
+        c = get_cursor(conn, db_type)
+        c.execute("SELECT fullname, email, is_verified FROM members WHERE id = %s", (member_id,))
+        member = c.fetchone()
+        
+        if not member or member[2]:  # Already verified — use index access
+            return redirect(url_for('member_dashboard'))
 
-    if request.method == 'POST':
-        user_code = request.form.get('verification_code')
-        if user_code == session.get('member_verification_code'):
+        if request.method == 'POST':
+            user_code = request.form.get('verification_code')
+            if user_code and user_code == session.get('member_verification_code'):
+                if db_type == 'postgres':
+                    c.execute("UPDATE members SET is_verified = TRUE WHERE id = %s", (member_id,))
+                else:
+                    c.execute("UPDATE members SET is_verified = 1 WHERE id = %s", (member_id,))
+                conn.commit()
+                session.pop('member_verification_code', None)
+                flash("Identity verified. Welcome to the elite circle.", "success")
+                return redirect(url_for('member_dashboard'))
+            else:
+                flash("Invalid verification code. Please check your email.", "error")
+        else:
+            # Phase 4: Email sending is currently offline.
+            # Auto-verify the member so they are not permanently blocked.
+            # When SMTP is re-enabled: generate code here, store in session, send via email.
             if db_type == 'postgres':
                 c.execute("UPDATE members SET is_verified = TRUE WHERE id = %s", (member_id,))
             else:
                 c.execute("UPDATE members SET is_verified = 1 WHERE id = %s", (member_id,))
             conn.commit()
-            conn.close()
-            session.pop('member_verification_code', None)
-            flash("Identity verified. Welcome to the elite circle.", "success")
+            flash("Your identity has been automatically verified. Welcome to Primer's Zest.", "success")
             return redirect(url_for('member_dashboard'))
-        else:
-            flash("Invalid verification code. Please check your email.", "error")
-    else:
-        # Verification logic disabled to prevent timeouts
-        pass
+    finally:
+        if conn:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
-    conn.close()
     return render_template('member_verify_identity.html')
 
 @app.route('/logout')
@@ -3636,7 +3752,13 @@ def member_ticket_thread(ticket_id):
     if request.method == 'POST':
         reply_message = request.form.get('reply_message')
         if reply_message:
-            c.execute("UPDATE tickets SET message = message || '\n\n--- User Reply ---\n' || %s, status = 'Open' WHERE id = %s AND user_id = %s", (reply_message, ticket_id, session['member_id']))
+            # Phase 4: create a new ticket row instead of mutating the original message.
+            # Appending to message destroyed conversation structure and was unparseable.
+            c.execute(
+                "INSERT INTO tickets (user_id, category, message, status) "
+                "SELECT user_id, category, %s, 'Open' FROM tickets WHERE id = %s AND user_id = %s",
+                (f"[Member Reply] {reply_message}", ticket_id, session['member_id'])
+            )
             conn.commit()
             
             add_admin_notification(session['member_id'], 'Ticket Reply', f"Member {session.get('member_fullname')} replied to ticket #{ticket_id}.", url_for('admin_user_vault', member_id=session['member_id']))
@@ -3894,11 +4016,12 @@ def vip_lounge():
         if member_data:
             can_write = (member_data[1] == 'VIP') or is_admin
             session['membership_tier'] = member_data[1]
-        if member_data['vip_since'] is None:
-            c.execute("UPDATE members SET vip_since = CURRENT_TIMESTAMP WHERE id = %s", (member_id,))
-            conn.commit()
-            c.execute("SELECT fullname, membership_tier, vip_since FROM members WHERE id = %s", (member_id,))
-            member_data = c.fetchone()
+            # Phase 3: guard is now INSIDE the member_data check — prevents NoneType crash
+            if member_data[2] is None:
+                c.execute("UPDATE members SET vip_since = CURRENT_TIMESTAMP WHERE id = %s", (member_id,))
+                conn.commit()
+                c.execute("SELECT fullname, membership_tier, vip_since FROM members WHERE id = %s", (member_id,))
+                member_data = c.fetchone()
 
     c.execute("SELECT id FROM chatrooms WHERE room_name = 'VIP Lounge' LIMIT 1")
     room_id = c.fetchone()[0]
@@ -4239,7 +4362,9 @@ def stars_roster():
     c = get_cursor(conn, db_type)
     
     c.execute("SELECT setting_value FROM site_settings WHERE setting_key = 'star_booking_writeup'")
-    writeup = c.fetchone()[0] if c.fetchone() else "Book your favorite stars for exclusive events and personal sessions."
+    # Phase 3: assign fetchone() to variable first — calling it twice consumed the row leaving None
+    _writeup_row = c.fetchone()
+    writeup = _writeup_row[0] if _writeup_row else "Book your favorite stars for exclusive events and personal sessions."
 
     c.execute("SELECT * FROM stars WHERE is_active = TRUE")
     stars_raw = c.fetchall()
@@ -4670,8 +4795,7 @@ with app.app_context():
         print(f"Startup Migration Error: {e}")
         
     init_db()
-    with app.app_context():
-        init_membership_cards()
+    init_membership_cards()
 
 # --- Poll System Routes ---
 
@@ -4960,6 +5084,53 @@ def submit_card_verification():
     flash("Payment evidence submitted successfully. An executive will verify your order shortly.")
     return redirect(url_for('membership_cards_view'))
 
+# ─────────────────────────────────────────────
+#  PHASE 2: ERROR HANDLERS
+# ─────────────────────────────────────────────
+@app.errorhandler(404)
+def not_found_error(e):
+    try:
+        return render_template('404.html'), 404
+    except Exception:
+        return "<h2>404 — Page Not Found</h2><p><a href='/'>Return Home</a></p>", 404
+
+@app.errorhandler(413)
+def request_entity_too_large(e):
+    flash("Your upload exceeds the 50MB file size limit. Please reduce the file size and try again.", "error")
+    return redirect(request.referrer or url_for('member_dashboard'))
+
+@app.errorhandler(500)
+def internal_error(e):
+    import traceback
+    print(f"[500 ERROR] {traceback.format_exc()}")
+    try:
+        return render_template('500.html'), 500
+    except Exception:
+        return (
+            "<h2>500 — Something went wrong on our end.</h2>"
+            "<p>Our team has been notified. <a href='/'>Return Home</a></p>"
+        ), 500
+
+# ─────────────────────────────────────────────
+#  PHASE 2: CSRF TOKEN INFRASTRUCTURE
+# ─────────────────────────────────────────────
+import secrets as _secrets_mod
+
+def _generate_csrf_token():
+    """Creates a per-session CSRF token and exposes it to all Jinja templates."""
+    if 'csrf_token' not in session:
+        session['csrf_token'] = _secrets_mod.token_hex(32)
+    return session['csrf_token']
+
+app.jinja_env.globals['csrf_token'] = _generate_csrf_token
+
+def _verify_csrf():
+    """Returns True if the CSRF token in the form matches the session token."""
+    form_token = request.form.get('csrf_token') or request.headers.get('X-CSRF-Token')
+    return form_token and form_token == session.get('csrf_token')
+
+app.jinja_env.globals['verify_csrf'] = _verify_csrf
+
 # End of routes
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)

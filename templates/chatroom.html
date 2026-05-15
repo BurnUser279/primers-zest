@@ -17,6 +17,9 @@
     @media (max-width: 768px) {
         .chat-container {
             margin: -20px -15px; /* Counteract layout.html mobile padding */
+            width: calc(100% + 30px) !important;
+            max-width: calc(100% + 30px) !important;
+            overflow-x: hidden !important;
         }
     }
 
@@ -376,72 +379,93 @@
         .chat-container {
             height: calc(100vh - 120px); /* Account for mobile navigation */
             margin: -20px -15px;
+            width: calc(100% + 30px) !important;
+            max-width: calc(100% + 30px) !important;
+            display: flex;
+            flex-direction: column;
         }
         
         .chat-box {
-            padding: 12px;
-            gap: 10px;
+            padding: 15px 12px;
+            gap: 15px;
+            width: 100%;
+            overflow-x: hidden;
         }
 
         .message-bubble {
-            max-width: 95%;
-            padding: 8px 12px;
+            max-width: 92%;
+            padding: 12px;
             font-size: 0.85rem;
         }
 
         .chat-header {
             padding: 10px 15px;
-            flex-direction: row; /* Keep it row but tight */
+            flex-direction: row; 
             justify-content: space-between;
             gap: 10px;
+            width: 100%;
         }
 
-        .chat-header h2 { font-size: 0.9rem; }
+        .chat-header h2 { 
+            font-size: 0.9rem; 
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
         
         .poll-form-container {
-            padding: 10px !important;
+            padding: 12px !important;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .poll-form-container form {
             flex-direction: column !important;
-            gap: 8px !important;
+            gap: 10px !important;
+            align-items: stretch !important;
         }
         
         .poll-form-container input {
             width: 100% !important;
             flex: none !important;
-            font-size: 0.85rem !important;
-            padding: 6px !important;
+            font-size: 0.9rem !important;
+            padding: 12px !important;
+            box-sizing: border-box;
         }
 
         .poll-container {
-            padding: 12px !important;
-            margin: 10px 0 !important;
-            background: rgba(212,175,55,0.03) !important;
-            width: 100%;
-        }
-        
-        .poll-option {
-            padding: 8px 10px !important;
-            font-size: 0.85rem;
+            padding: 15px !important;
+            margin: 15px 0 !important;
+            width: 100% !important;
+            box-sizing: border-box;
         }
 
         .chat-footer {
-            padding: 8px;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .input-area {
-            padding: 2px !important;
-            gap: 5px !important;
+            width: 100%;
+            padding: 4px !important;
+            box-sizing: border-box;
         }
 
         .chat-input {
-            font-size: 0.85rem;
-            padding: 6px 10px;
+            font-size: 0.9rem;
+            min-width: 0;
+        }
+
+        .mobile-channel-nav {
+            width: 100%;
+            padding: 10px 15px !important;
+            box-sizing: border-box;
         }
 
         .btn-sm {
-            padding: 6px 12px;
+            padding: 8px 14px;
             font-size: 0.75rem;
         }
 
@@ -590,10 +614,10 @@
 
         <!-- Mobile-only Channel Navigation -->
         {% if not is_star_booking %}
-        <div class="mobile-channel-nav only-mobile" style="padding: 10px; background: var(--bg-card); border-bottom: 1px solid var(--border-color); overflow-x: auto; display: flex; gap: 10px; white-space: nowrap;">
-            <a href="?channel=main" class="btn btn-sm {% if channel_id == 'main' %}btn-primary{% else %}btn-secondary{% endif %}" style="font-size: 0.7rem; padding: 5px 12px;"># Main</a>
-            <a href="?channel=announcements" class="btn btn-sm {% if channel_id == 'announcements' %}btn-primary{% else %}btn-secondary{% endif %}" style="font-size: 0.7rem; padding: 5px 12px;"># News</a>
-            <a href="?channel=strategic" class="btn btn-sm {% if channel_id == 'strategic' %}active btn-primary{% else %}btn-secondary{% endif %}" style="font-size: 0.7rem; padding: 5px 12px;"># Insights</a>
+        <div class="mobile-channel-nav only-mobile" style="padding: 10px; background: var(--bg-card); border-bottom: 1px solid var(--border-color); overflow-x: auto; display: flex; gap: 8px; white-space: nowrap; -webkit-overflow-scrolling: touch;">
+            <a href="?channel=main" class="btn btn-sm {% if channel_id == 'main' %}btn-primary{% else %}btn-secondary{% endif %}" style="padding: 6px 14px;"># Main</a>
+            <a href="?channel=announcements" class="btn btn-sm {% if channel_id == 'announcements' %}btn-primary{% else %}btn-secondary{% endif %}" style="padding: 6px 14px;"># News</a>
+            <a href="?channel=strategic" class="btn btn-sm {% if channel_id == 'strategic' %}btn-primary{% else %}btn-secondary{% endif %}" style="padding: 6px 14px;"># Insights</a>
         </div>
         {% endif %}
 

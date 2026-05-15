@@ -1,0 +1,51 @@
+{% extends 'layout.html' %}
+{% block title %}500 — System Error | Primer's Zest{% endblock %}
+{% block extra_head %}
+<style>
+.error-page {
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 20px;
+}
+.error-code {
+    font-family: 'Outfit', sans-serif;
+    font-size: 8rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 16px;
+}
+.error-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--text-main);
+}
+.error-sub {
+    color: var(--text-muted);
+    font-size: 1rem;
+    max-width: 420px;
+    line-height: 1.7;
+    margin-bottom: 40px;
+}
+.error-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="error-page">
+    <div class="error-code">500</div>
+    <h1 class="error-title">Something Went Wrong</h1>
+    <p class="error-sub">An unexpected error occurred on our end. Our team has been notified and is working on a fix. Please try again shortly.</p>
+    <div class="error-actions">
+        <a href="{{ url_for('index') }}" class="btn btn-primary">Return Home</a>
+        <a href="javascript:history.back()" class="btn btn-secondary">Go Back</a>
+    </div>
+</div>
+{% endblock %}
