@@ -151,7 +151,7 @@
             display: flex;
             flex-direction: column;
             width: 100%;
-            {% if (session.get('member_id') or session.get('is_admin')) and request.endpoint not in ['index', 'member_login', 'admin_login', 'register', 'privacy_policy', 'terms_of_service'] %}
+            {% if (session.get('member_id') or session.get('is_admin')) and request.endpoint not in ['index', 'member_login', 'admin_login', 'register', 'privacy_policy', 'terms_of_service', 'landing'] %}
             margin-left: var(--sidebar-width);
             {% else %}
             margin-left: 0;
@@ -835,6 +835,21 @@
             </div>
 
             <div class="sidebar-footer">
+        {% if session.get('is_admin') %}
+        <div class="porter-compliance" style="padding: 15px; background: rgba(197, 160, 89, 0.05); border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--border-color);">
+            <div style="font-size: 0.65rem; font-weight: 800; color: var(--primary); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;">Portal Compliance</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; opacity: 0.7;">
+                <span style="font-size: 0.6rem; font-weight: 800; color: var(--text-main);">GSMA</span>
+                <span style="font-size: 0.6rem; font-weight: 800; color: var(--text-main);">PCI</span>
+                <span style="font-size: 0.6rem; font-weight: 800; color: var(--text-main);">ITU</span>
+                <span style="font-size: 0.6rem; font-weight: 800; color: var(--text-main);">ISO</span>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <a href="/privacy" style="font-size: 0.65rem; color: var(--text-muted); text-decoration: none;">Privacy</a>
+                <a href="/terms" style="font-size: 0.65rem; color: var(--text-muted); text-decoration: none;">Terms</a>
+            </div>
+        </div>
+        {% endif %}
                 <div class="user-profile-sm">
                     <div class="user-avatar">
                         {% if session.get('is_admin') %}A{% else %}{{ session.get('member_fullname', '?')[0]|upper }}{% endif %}
@@ -888,7 +903,8 @@
                 {% block content %}{% endblock %}
             </main>
 
-            {% if request.endpoint not in ['vip_lounge', 'star_booking_chat'] %}
+            {% block footer %}
+            {% if request.endpoint not in ['vip_lounge', 'star_booking_chat', 'vip_verification', 'admin_reply_member'] %}
             <footer class="main-footer" style="position: relative; overflow: hidden; padding: 60px 40px; border-top: 1px solid var(--border-color); background: var(--bg-card);">
                 <div class="footer-trust-grid">
                     <div class="trust-item">
@@ -974,6 +990,7 @@
                 </div>
             </footer>
             {% endif %}
+            {% endblock %}
         </div>
     </div>
 
