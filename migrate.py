@@ -7,10 +7,27 @@ def run_migrations():
         print("Error: DATABASE_URL environment variable not found.")
         return
 
+    import time
+    max_retries = 3
+    retry_delay = 1
+    conn = None
+    
+    for attempt in range(max_retries):
+        try:
+            conn = psycopg2.connect(db_url)
+            break
+        except psycopg2.OperationalError as e:
+            if "max clients reached" in str(e).lower() and attempt < max_retries - 1:
+                print(f"Migration DB Pool Full (Attempt {attempt+1}/{max_retries}). Retrying in {retry_delay}s...")
+                time.sleep(retry_delay)
+                retry_delay *= 2
+                continue
+            print(f"MIGRATION CONNECTION FAILED: {e}")
+            return
+
+    if not conn: return
+    c = conn.cursor()
     try:
-        conn = psycopg2.connect(db_url)
-        c = conn.cursor()
-        
         # 0. members (Standard table)
         c.execute("""
             CREATE TABLE IF NOT EXISTS members (
