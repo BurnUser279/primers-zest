@@ -670,8 +670,12 @@ def init_db():
 
     if db_type == 'postgres':
         c.execute("ALTER TABLE member_notifications ADD COLUMN IF NOT EXISTS target_url TEXT;")
+        c.execute("ALTER TABLE member_notifications ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE;")
+        c.execute("ALTER TABLE admin_notifications ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE;")
     else:
         add_sqlite_col('member_notifications', 'target_url TEXT')
+        add_sqlite_col('member_notifications', 'is_read BOOLEAN DEFAULT FALSE')
+        add_sqlite_col('admin_notifications', 'is_read BOOLEAN DEFAULT FALSE')
 
     c.execute(f'''CREATE TABLE IF NOT EXISTS club_slideshows
                  (id {pk_type},
