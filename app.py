@@ -205,31 +205,71 @@ class PostgresConnectionWrapper:
     def __exit__(self, exc_type, exc_val, exc_tb): self.close()
 
 def get_db_connection():
+    from flask import g
+    
+    # Return existing connection if already opened in this request context
+    if 'db_conn' in g:
+        return g.db_conn, g.db_type
+
     db_url = os.environ.get('DATABASE_URL')
     
-    # If DATABASE_URL is missing or doesn't start with postgres, use SQLite
+    # SQLite Path
     if not db_url or not str(db_url).startswith('postgres'):
         conn = sqlite3.connect('dev_database.db', check_same_thread=False)
         conn.row_factory = sqlite3.Row
+        g.db_conn = conn
+        g.db_type = 'sqlite'
         return conn, 'sqlite'
     
-    # Postgres with Retry Logic & Pool Support
+    # Postgres with Pool Support
     if _db_pool is None:
         init_pool()
 
     max_retries = 5
     retry_delay = 1
+    conn = None
+    
     for attempt in range(max_retries):
         try:
             if _db_pool:
-                return PostgresConnectionWrapper(_db_pool.getconn(), _db_pool), 'postgres'
-            return PostgresConnectionWrapper(psycopg2.connect(db_url, cursor_factory=psycopg2.extras.DictCursor)), 'postgres'
+                conn = _db_pool.getconn()
+            else:
+                conn = psycopg2.connect(db_url, cursor_factory=psycopg2.extras.DictCursor)
+            break
         except Exception as e:
             if "max clients reached" in str(e).lower() and attempt < max_retries - 1:
                 time.sleep(retry_delay)
                 retry_delay *= 1.5
                 continue
             raise e
+
+    if conn:
+        # Wrap the connection to handle monkey-patched close (backward compatibility)
+        wrapped_conn = PostgresConnectionWrapper(conn, _db_pool)
+        g.db_conn = wrapped_conn
+        g.db_type = 'postgres'
+        return wrapped_conn, 'postgres'
+    
+    raise Exception("Failed to acquire database connection.")
+
+@app.teardown_appcontext
+def teardown_db(exception):
+    from flask import g
+    conn = g.pop('db_conn', None)
+    db_type = g.pop('db_type', None)
+    
+    if conn is not None:
+        if db_type == 'postgres' and _db_pool:
+            try:
+                # If it's a wrapper, we use its underlying connection
+                raw_conn = conn._conn if hasattr(conn, '_conn') else conn
+                _db_pool.putconn(raw_conn)
+            except:
+                try: conn.close()
+                except: pass
+        else:
+            try: conn.close()
+            except: pass
 
 class SQLiteCursorWrapper:
     """Wraps sqlite3 cursor to mimic psycopg2 behavior (like %s placeholders and RETURNING id)."""
@@ -883,9 +923,15 @@ def init_db():
                   category VARCHAR(255),
                   bio TEXT,
                   price VARCHAR(100),
+                  location VARCHAR(255),
                   image_path TEXT,
                   is_active BOOLEAN DEFAULT TRUE,
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    if db_type == 'postgres':
+        c.execute("ALTER TABLE stars ADD COLUMN IF NOT EXISTS location VARCHAR(255);")
+    else:
+        add_sqlite_col('stars', 'location VARCHAR(255)')
 
     c.execute(f'''CREATE TABLE IF NOT EXISTS star_media
                  (id {pk_type},
@@ -2038,6 +2084,7 @@ def admin_add_star():
     category = request.form.get('category')
     bio = request.form.get('bio')
     price = request.form.get('price')
+    location = request.form.get('location')
     media_files = request.files.getlist('star_media')
     
     conn, db_type = get_db_connection()
@@ -2045,12 +2092,12 @@ def admin_add_star():
     
     # Insert base star record
     if db_type == 'postgres':
-        c.execute("INSERT INTO stars (name, category, bio, price) VALUES (%s, %s, %s, %s) RETURNING id", 
-                  (name, category, bio, price))
+        c.execute("INSERT INTO stars (name, category, bio, price, location) VALUES (%s, %s, %s, %s, %s) RETURNING id", 
+                  (name, category, bio, price, location))
         star_id = c.fetchone()[0]
     else:
-        c.execute("INSERT INTO stars (name, category, bio, price) VALUES (%s, %s, %s, %s)", 
-                  (name, category, bio, price))
+        c.execute("INSERT INTO stars (name, category, bio, price, location) VALUES (%s, %s, %s, %s, %s)", 
+                  (name, category, bio, price, location))
         star_id = c.cursor.lastrowid
         
     # Process multiple media files (Limit to 10)

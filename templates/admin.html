@@ -459,6 +459,10 @@
                         <label>Base Price ($)</label>
                         <input type="number" name="price" required class="admin-input" placeholder="0">
                     </div>
+                    <div class="admin-form-group">
+                        <label>Current Location</label>
+                        <input type="text" name="location" class="admin-input" placeholder="e.g. London, UK">
+                    </div>
                 </div>
                 <div class="admin-form-group">
                     <label>Biography / Feature List</label>
@@ -485,6 +489,7 @@
                 <thead>
                     <tr>
                         <th>Star</th>
+                        <th>Location</th>
                         <th>Category</th>
                         <th>Price</th>
                         <th>Status</th>
@@ -498,6 +503,7 @@
                             <img src="/{{ star['image_path'] if star['image_path'] else 'static/img/default_star.jpg' }}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;">
                             <div style="font-weight: 700;">{{ star['name'] }}</div>
                         </td>
+                        <td data-label="Location" class="text-muted" style="font-size: 0.85rem;">{{ star['location'] or 'Not Specified' }}</td>
                         <td data-label="Category">{{ star['category'] }}</td>
                         <td data-label="Price" style="font-weight: 800; color: var(--primary);">${{ star['price'] }}</td>
                         <td data-label="Status">
