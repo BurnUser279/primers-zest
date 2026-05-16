@@ -7,16 +7,32 @@ load_dotenv()
 
 def run_migrations():
     """Live PostgreSQL schema migration utility."""
-    try:
-        # Establish connection
-        db_url = os.environ.get('DATABASE_URL')
-        if not db_url:
-            print("DATABASE_URL not found. Skipping migrations.")
+    db_url = os.environ.get('DATABASE_URL')
+    if not db_url:
+        print("DATABASE_URL not found. Skipping migrations.")
+        return
+
+    import time
+    max_retries = 3
+    retry_delay = 1
+    conn = None
+    
+    for attempt in range(max_retries):
+        try:
+            conn = psycopg2.connect(db_url)
+            break
+        except psycopg2.OperationalError as e:
+            if "max clients reached" in str(e).lower() and attempt < max_retries - 1:
+                print(f"Migration DB Pool Full (Attempt {attempt+1}/{max_retries}). Retrying in {retry_delay}s...")
+                time.sleep(retry_delay)
+                retry_delay *= 2
+                continue
+            print(f"MIGRATION CONNECTION FAILED: {e}")
             return
 
-        conn = psycopg2.connect(db_url)
-        c = conn.cursor()
-        
+    if not conn: return
+    c = conn.cursor()
+    try:
         # 1. Base Tables (handled by app.py)
         # Migrations below use IF NOT EXISTS to safely update schema
 
@@ -188,6 +204,7 @@ def run_migrations():
         print("Database migrations completed successfully.")
     except Exception as e:
         print(f"MIGRATION FAILED: {e}")
+        if conn: conn.close()
 
 if __name__ == '__main__':
     run_migrations()

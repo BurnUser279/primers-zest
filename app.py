@@ -170,12 +170,26 @@ os.makedirs('static/chatroom_uploads', exist_ok=True)
 # --- DB COMPATIBILITY LAYER ---
 def get_db_connection():
     db_url = os.environ.get('DATABASE_URL')
+    
     # If DATABASE_URL is missing or doesn't start with postgres, use SQLite
     if not db_url or not str(db_url).startswith('postgres'):
         conn = sqlite3.connect('dev_database.db', check_same_thread=False)
         conn.row_factory = sqlite3.Row # Make results behave like dictionaries/tuples
         return conn, 'sqlite'
-    return psycopg2.connect(db_url, cursor_factory=psycopg2.extras.DictCursor), 'postgres'
+    
+    # Postgres with Retry Logic for Supabase Pool Limits
+    max_retries = 3
+    retry_delay = 1 # second
+    for attempt in range(max_retries):
+        try:
+            return psycopg2.connect(db_url, cursor_factory=psycopg2.extras.DictCursor), 'postgres'
+        except psycopg2.OperationalError as e:
+            if "max clients reached" in str(e).lower() and attempt < max_retries - 1:
+                print(f"DB Pool Full (Attempt {attempt+1}/{max_retries}). Retrying in {retry_delay}s...")
+                time.sleep(retry_delay)
+                retry_delay *= 2 # Exponential backoff
+                continue
+            raise e
 
 class SQLiteCursorWrapper:
     """Wraps sqlite3 cursor to mimic psycopg2 behavior (like %s placeholders and RETURNING id)."""
