@@ -138,6 +138,23 @@
             gap: 10px;
         }
     }
+
+    /* Dashboard Grid Mobile Fix */
+    @media (max-width: 992px) {
+        .dashboard-main-grid {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 20px !important;
+        }
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+    }
+    @media (max-width: 480px) {
+        .stats-grid {
+            grid-template-columns: 1fr !important;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -240,30 +257,30 @@
     <div id="section-overview" class="admin-section active">
         <h1 style="margin-bottom: 30px;">System Overview</h1>
         
-        <div style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); display: grid; gap: 20px; margin-bottom: 40px;">
-            <div class="stat-card">
-                <div class="stat-label">Total Members</div>
-                <div class="stat-value">{{ members|length }}</div>
+        <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 30px;">
+            <div class="stat-card" style="padding: 20px;">
+                <div class="stat-label" style="font-size: 0.7rem;">Total Members</div>
+                <div class="stat-value" style="font-size: 1.5rem;">{{ members|length }}</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">VIP Chats</div>
-                <div class="stat-value">{{ active_chats|length }}</div>
+            <div class="stat-card" style="padding: 20px;">
+                <div class="stat-label" style="font-size: 0.7rem;">VIP Chats</div>
+                <div class="stat-value" style="font-size: 1.5rem;">{{ active_chats|length }}</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">Star Bookings</div>
-                <div class="stat-value">{{ star_bookings|length }}</div>
+            <div class="stat-card" style="padding: 20px;">
+                <div class="stat-label" style="font-size: 0.7rem;">Star Bookings</div>
+                <div class="stat-value" style="font-size: 1.5rem;">{{ star_bookings|length }}</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">Total Revenue</div>
-                <div class="stat-value">${{ "%.2f"|format(donations|sum(attribute='amount')) if donations else "0.00" }}</div>
+            <div class="stat-card" style="padding: 20px;">
+                <div class="stat-label" style="font-size: 0.7rem;">Total Revenue</div>
+                <div class="stat-value" style="font-size: 1.5rem;">${{ "%.2f"|format(donations|sum(attribute='amount')) if donations else "0.00" }}</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">Unread Notifications</div>
-                <div class="stat-value">{{ notifications|rejectattr('is_read')|list|length }}</div>
+            <div class="stat-card" style="padding: 20px;">
+                <div class="stat-label" style="font-size: 0.7rem;">Unread Notifications</div>
+                <div class="stat-value" style="font-size: 1.5rem;">{{ notifications|rejectattr('is_read')|list|length }}</div>
             </div>
         </div>
 
-        <div class="grid-2" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
+        <div class="grid-2 dashboard-main-grid">
             <div>
                 <h2>Recent VIP Submissions</h2>
                 <div class="table-card table-responsive">
