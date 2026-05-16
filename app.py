@@ -2249,8 +2249,8 @@ def api_vote_poll():
     c.execute("SELECT id FROM lounge_poll_votes WHERE poll_id = %s AND member_id = %s", (poll_id, member_id))
     existing_vote = c.fetchone()
     if existing_vote:
-        # Update their existing vote
-        c.execute("UPDATE lounge_poll_votes SET option_index = %s WHERE id = %s", (option_index, existing_vote[0]))
+        conn.close()
+        return jsonify({"error": "You have already cast your vote."}), 403
     else:
         # Insert new vote
         c.execute("INSERT INTO lounge_poll_votes (poll_id, option_index, member_id) VALUES (%s, %s, %s)", (poll_id, option_index, member_id))
@@ -4120,12 +4120,12 @@ def vip_lounge():
             FROM chatroom_messages cm
             JOIN members m ON cm.sender_id = m.id
             WHERE cm.room_id = %s AND cm.channel_id = %s
-            AND EXISTS (
+            AND (cm.channel_id = 'announcements' OR EXISTS (
                 SELECT 1 FROM vip_periods vp 
                 WHERE vp.user_id = %s 
                 AND cm.created_at >= vp.start_time 
                 AND (vp.end_time IS NULL OR cm.created_at <= vp.end_time)
-            )
+            ))
             ORDER BY cm.created_at ASC
         """, (room_id, channel_id, member_id))
     
@@ -4618,10 +4618,15 @@ def api_chat_messages(room_id):
                 vote_sum = c.fetchone()[0] or 0
                 options_data.append({'id': idx, 'text': opt_text.strip(), 'votes': vote_sum})
                 
+            c.execute("SELECT option_index FROM lounge_poll_votes WHERE poll_id = %s AND member_id = %s", (p_id, current_uid))
+            u_vote_row = c.fetchone()
+            u_vote = u_vote_row[0] if u_vote_row else None
+            
             active_polls.append({
                 'id': p_id,
                 'question': poll_row[1],
-                'options': options_data
+                'options': options_data,
+                'user_vote': u_vote
             })
 
     conn.close()

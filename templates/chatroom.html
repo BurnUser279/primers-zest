@@ -7,20 +7,20 @@
     *, *::before, *::after { box-sizing: border-box; }
     
     /* Chat Layout */
+    .content-area {
+        padding: 0 !important;
+        max-width: 100% !important;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
     .chat-container {
         display: flex;
-        height: calc(100vh - 70px);
+        flex: 1;
         overflow: hidden;
-        margin: -40px; /* Counteract layout.html padding */
-    }
-
-    @media (max-width: 768px) {
-        .chat-container {
-            margin: -20px -15px; /* Counteract layout.html mobile padding */
-            width: calc(100% + 30px) !important;
-            max-width: calc(100% + 30px) !important;
-            overflow-x: hidden !important;
-        }
+        margin: 0;
+        width: 100%;
+        height: 100%;
     }
 
     .chat-sidebar {
@@ -302,6 +302,23 @@
     }
 
     /* Poll UI */
+    .poll-form {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .poll-input {
+        flex: 2;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 8px;
+        background: var(--bg-body);
+    }
+    .poll-btn {
+        white-space: nowrap;
+        font-weight: 800;
+    }
+
     .poll-container {
         background: rgba(212,175,55,0.05);
         border: 1px solid var(--primary);
@@ -377,12 +394,10 @@
     /* Mobile Specific Overrides */
     @media (max-width: 768px) {
         .chat-container {
-            height: calc(100vh - 70px); /* Fill space better */
-            margin: -20px -15px;
-            width: calc(100% + 30px) !important;
-            max-width: calc(100% + 30px) !important;
-            display: flex;
             flex-direction: column;
+            height: calc(100dvh - 70px); /* Fill space accurately on mobile */
+            width: 100% !important;
+            max-width: 100% !important;
         }
         
         .chat-box {
@@ -399,19 +414,19 @@
         }
 
         .chat-header {
-            padding: 8px 15px;
+            padding: 8px 10px;
             flex-wrap: nowrap;
-            gap: 8px;
+            gap: 5px;
             background: var(--bg-card);
             border-bottom: 1px solid var(--border-color);
         }
 
         .chat-header h2 { 
-            font-size: 0.95rem; 
+            font-size: 0.9rem; 
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 120px;
+            max-width: 110px;
         }
 
         .mobile-channel-nav {
@@ -426,28 +441,24 @@
             border-radius: 20px !important;
         }
         .poll-form-container {
-            padding: 10px 15px !important;
+            padding: 10px 12px !important;
         }
 
-        .poll-form-container form {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: stretch !important;
-            gap: 8px !important;
-            width: 100% !important;
+        .poll-form {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
         }
-
         
-        .poll-form-container input {
-            width: 100% !important;
-            font-size: 0.85rem !important;
-            padding: 10px !important;
-            margin: 0 !important;
+        .poll-input {
+            width: 100%;
+            font-size: 0.9rem;
+            padding: 10px;
         }
 
-        .poll-form-container button {
-            width: 100% !important;
-            padding: 10px !important;
+        .poll-btn {
+            width: 100%;
+            padding: 12px;
             margin-top: 4px;
         }
 
@@ -645,10 +656,10 @@
 
         {% if is_admin and channel_id == 'announcements' %}
         <div class="poll-form-container" style="padding: 12px 20px; background: rgba(0,0,0,0.15); border-bottom: 1px solid var(--border-color);">
-            <form action="/admin/create_executive_poll" method="POST" style="display:flex; gap:10px; align-items:center;">
-                <input type="text" name="question" placeholder="Poll Question" required class="chat-input" style="flex:2; border:1px solid var(--border-color); border-radius:8px; padding:8px; background: var(--bg-body);">
-                <input type="text" name="options" placeholder="Options (comma separated)" required class="chat-input" style="flex:2; border:1px solid var(--border-color); border-radius:8px; padding:8px; background: var(--bg-body);">
-                <button type="submit" class="btn btn-primary btn-sm" style="white-space: nowrap; font-weight: 800;">Inject Poll</button>
+            <form action="/admin/create_executive_poll" method="POST" class="poll-form">
+                <input type="text" name="question" placeholder="Poll Question" required class="chat-input poll-input">
+                <input type="text" name="options" placeholder="Options (comma separated)" required class="chat-input poll-input">
+                <button type="submit" class="btn btn-primary btn-sm poll-btn">Inject Poll</button>
             </form>
         </div>
         {% endif %}
@@ -875,8 +886,11 @@
             let optsHtml = '';
             poll.options.forEach(opt => {
                 let pct = totalVotes > 0 ? (opt.votes / totalVotes * 100).toFixed(0) : 0;
+                let hasVoted = poll.user_vote != null;
+                let isMyVote = poll.user_vote === opt.id;
+                
                 optsHtml += `
-                    <div class="poll-option" onclick="votePoll(${poll.id}, ${opt.id})" style="margin-bottom: 8px; border-radius: 10px;">
+                    <div class="poll-option" ${!hasVoted ? `onclick="votePoll(${poll.id}, ${opt.id})"` : ''} style="margin-bottom: 8px; border-radius: 10px; cursor: ${hasVoted ? 'default' : 'pointer'}; ${isMyVote ? 'border-color:var(--primary); background:rgba(212,175,55,0.1);' : ''}">
                         <div class="poll-progress" style="width: ${pct}%"></div>
                         <div style="display:flex; justify-content:space-between; align-items:center; width:100%; position:relative; z-index:1; padding: 2px 0;">
                             <div style="flex:1; min-width:0; padding-right:10px;">
@@ -887,7 +901,7 @@
                                 {% if is_admin %}
                                 <button onclick="event.stopPropagation(); openInjectionModal('poll', ${poll.id}, ${opt.id}, '${opt.text.replace(/'/g, "\\'")}')" style="background:rgba(212,175,55,0.2); color:var(--primary); border:1px solid var(--primary); padding:4px 8px; border-radius:6px; font-size:0.6rem; cursor:pointer; font-weight:800; text-transform:uppercase;">INJECT</button>
                                 {% else %}
-                                <button class="btn-vote" style="background:var(--primary); color:#000; border:none; padding:4px 10px; border-radius:6px; font-size:0.65rem; cursor:pointer; font-weight:800; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">CAST VOTE</button>
+                                ${!hasVoted ? `<button class="btn-vote" style="background:var(--primary); color:#000; border:none; padding:4px 10px; border-radius:6px; font-size:0.65rem; cursor:pointer; font-weight:800; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">CAST VOTE</button>` : `<span style="font-size:0.7rem; color:var(--primary); font-weight:800;">${isMyVote ? 'VOTED' : ''}</span>`}
                                 {% endif %}
                             </div>
                         </div>
@@ -1120,76 +1134,17 @@
         dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
     }
 
-    // --- Advanced Poll System ---
-    function renderPolls() {
-        fetch('/get_polls')
-            .then(res => res.json())
-            .then(polls => {
-                const container = document.getElementById('polls-container');
-                if (!container) return;
-                
-                // Only re-render if content changed or if we're in 'News' channel
-                {% if channel_id != 'announcements' %}
-                if (polls.length === 0) {
-                    container.style.display = 'none';
-                    return;
-                }
-                {% endif %}
-                
-                container.style.display = 'block';
-                let html = '';
-                
-                polls.forEach(poll => {
-                    if (!poll.is_active && polls.length > 1 && "{{ channel_id }}" !== 'announcements') return;
-                    
-                    html += `
-                        <div class="poll-container" style="background: rgba(212,175,55,0.05); border: 1px solid var(--primary); padding: 25px; border-radius: 15px; margin-bottom: 25px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                                <span style="font-size:0.7rem; font-weight:800; color:var(--primary); letter-spacing:2px; text-transform:uppercase;">Anonymous Executive Poll</span>
-                                ${!poll.is_active ? '<span style="color:#ef4444; font-size:0.7rem; font-weight:800; text-transform:uppercase;">Closed</span>' : ''}
-                                {% if is_admin %}
-                                <button onclick="closePoll(${poll.id})" style="background:none; border:none; color:#ef4444; font-size:0.7rem; cursor:pointer; font-weight:700;">[Close Poll]</button>
-                                {% endif %}
-                            </div>
-                            <h3 style="margin-bottom:20px; font-size:1.2rem; font-weight:800;">${poll.question}</h3>
-                            <div style="display:flex; flex-direction:column; gap:10px;">
-                                ${poll.options.map((opt, idx) => `
-                                    <div class="poll-option" onclick="${poll.is_active && poll.user_vote === null ? `castVote(${poll.id}, ${idx})` : ''}" style="cursor:${poll.is_active && poll.user_vote === null ? 'pointer' : 'default'}; ${poll.user_vote === idx ? 'border-color:var(--primary); background:rgba(212,175,55,0.1);' : ''}">
-                                        <div class="poll-progress" style="width:${opt.percent}%"></div>
-                                        <span style="position:relative; z-index:1; font-weight:700;">${opt.text}</span>
-                                        <span style="position:relative; z-index:1; font-size:0.8rem; font-weight:600; opacity:0.8;">${opt.votes} votes (${opt.percent}%)</span>
-                                    </div>
-                                `).join('')}
-                            </div>
-                            <div style="margin-top:15px; font-size:0.75rem; color:var(--text-muted); font-weight:600;">Total Votes: ${poll.total_votes}</div>
-                        </div>
-                    `;
-                });
-                
-                if (container.innerHTML !== html) {
-                    container.innerHTML = html;
-                }
-            });
-    }
-
-    function castVote(pollId, idx) {
-        fetch('/vote_poll', {
+    function votePoll(pollId, idx) {
+        fetch('/api/lounge/vote', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({poll_id: pollId, option_idx: idx})
+            body: JSON.stringify({poll_id: pollId, option_index: idx})
         }).then(res => res.json()).then(data => {
-            if (data.success) renderPolls();
-            else alert("You have already participated in this executive poll.");
+            if (data.status === 'success') pollMessages();
+            else alert(data.error || "You have already participated in this executive poll.");
         });
     }
 
-    function closePoll(pollId) {
-        if(confirm("Are you sure you want to finalize and close this poll?")) {
-            fetch(`/admin/close_poll/${pollId}`, { method: 'POST' }).then(() => renderPolls());
-        }
-    }
-
-    // Restored Utility Functions
     function boostEngagement(msgId) {
         openInjectionModal('message', msgId);
     }
@@ -1207,12 +1162,6 @@
                 .catch(() => alert("System offline. Please contact support via the dashboard."));
             document.getElementById('quickActionsDropdown').style.display = 'none';
         }
-    }
-
-    function toggleQuickActions(event) {
-        event.stopPropagation();
-        const dropdown = document.getElementById('quickActionsDropdown');
-        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
     }
 
     // Injection Modal Logic
@@ -1269,21 +1218,8 @@
         if(qa) qa.style.display = 'none';
     });
 
-    function pollMessages() {
-        const url = `/api/chat/get/{{ channel_id }}?last_id=${lastMsgId}`;
-        fetch(url)
-            .then(res => res.json())
-            .then(data => {
-                if (data.messages && data.messages.length > 0) {
-                    data.messages.forEach(msg => appendMessage(msg));
-                    lastMsgId = data.messages[data.messages.length - 1].id;
-                }
-                renderPolls();
-            });
-    }
-
+    pollMessages(); // Initial load
     setInterval(pollMessages, 5000);
-    renderPolls(); // Initial load
 
     const chatBox = document.getElementById('chat-box');
     if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
