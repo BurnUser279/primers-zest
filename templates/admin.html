@@ -427,7 +427,11 @@
                         </td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">No active star booking requests.</td></tr>
+                    <tr><td colspan="6" style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
+                        <div style="font-size: 2.5rem; margin-bottom: 15px; opacity: 0.3;">📅</div>
+                        <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 5px;">No Active Requests</div>
+                        <p style="font-size: 0.85rem; margin: 0;">The talent booking pipeline is currently clear.</p>
+                    </td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -602,7 +606,11 @@
                             </td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">No active appeals.</td></tr>
+                        <tr><td colspan="5" style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
+                            <div style="font-size: 2.5rem; margin-bottom: 15px; opacity: 0.3;">✨</div>
+                            <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 5px;">No Active Appeals</div>
+                            <p style="font-size: 0.85rem; margin: 0;">Members are currently following all strategic protocols.</p>
+                        </td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -722,7 +730,7 @@
                             <td data-label="Actions">
                                 <div style="display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;">
                                     <a href="/admin/user/{{ member['id'] }}" class="action-btn btn-blue" style="flex: 1; min-width: 100px;">Manage</a>
-                                    <form action="/admin/toggle_vip/{{ member['id'] }}" method="POST" style="flex: 1; min-width: 100px;">
+                                    <form action="/admin/toggle_vip/{{ member['id'] }}" method="POST" style="flex: 1; min-width: 100px;" onsubmit="return confirm('Confirm Action: Are you sure you want to change this member\'s VIP status?');">
                                         <button type="submit" class="action-btn {% if member['membership_tier'] == 'VIP' %}btn-red{% else %}btn-green{% endif %}" style="width: 100%;">
                                             {% if member['membership_tier'] == 'VIP' %}Revoke{% else %}Grant VIP{% endif %}
                                         </button>
@@ -741,7 +749,7 @@
     <div id="section-plans" class="admin-section">
         <h1 style="margin-bottom: 30px;">Subscription Plans</h1>
         <div class="table-card table-responsive">
-            <table class="premium-table">
+            <table class="premium-table mobile-card-table">
                 <thead>
                     <tr>
                         <th>Plan Name</th>
@@ -1337,7 +1345,7 @@
         <p style="color: var(--text-muted); margin-bottom: 30px;">A secure, immutable record of all administrative actions.</p>
         
         <div class="table-card table-responsive">
-            <table class="premium-table">
+            <table class="premium-table mobile-card-table">
                 <thead>
                     <tr>
                         <th>Timestamp</th>

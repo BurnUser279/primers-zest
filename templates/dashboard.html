@@ -263,9 +263,9 @@
     </div>
 
     <!-- Announcements Slideshow -->
-    <div class="announcement-card">
+    <div class="announcement-card" id="executiveSlideshow">
         {% for slide in slides %}
-        <div class="slide" style="display: {% if loop.first %}block{% else %}none{% endif %};">
+        <div class="slide" style="display: {% if loop.first %}block{% else %}none{% endif %};" data-index="{{ loop.index0 }}">
             <a href="/vip_verification/{{ plans[0]['id'] if plans|length > 0 else 1 }}">
                 <img src="/{{ slide['image_path'] }}" class="slide-image" alt="Announcements">
             </a>
@@ -274,7 +274,52 @@
             </div>
         </div>
         {% endfor %}
+        
+        <!-- Navigation Dots -->
+        <div style="position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px;">
+            {% for slide in slides %}
+            <div class="slide-dot {% if loop.first %}active{% endif %}" data-index="{{ loop.index0 }}" style="width: 8px; height: 8px; border-radius: 50%; background: rgba(0,0,0,0.2); cursor: pointer; transition: 0.3s;"></div>
+            {% endfor %}
+        </div>
     </div>
+
+    <style>
+        .slide-dot.active { background: var(--primary) !important; width: 24px !important; border-radius: 10px !important; }
+        .slide { animation: fadeIn 0.8s ease; }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const slides = document.querySelectorAll('#executiveSlideshow .slide');
+            const dots = document.querySelectorAll('#executiveSlideshow .slide-dot');
+            if (slides.length <= 1) return;
+            
+            let currentIndex = 0;
+            function showSlide(index) {
+                slides.forEach(s => s.style.display = 'none');
+                dots.forEach(d => d.classList.remove('active'));
+                
+                slides[index].style.display = 'block';
+                dots[index].classList.add('active');
+                currentIndex = index;
+            }
+
+            function nextSlide() {
+                let next = (currentIndex + 1) % slides.length;
+                showSlide(next);
+            }
+
+            let slideInterval = setInterval(nextSlide, 5000);
+
+            dots.forEach(dot => {
+                dot.addEventListener('click', () => {
+                    clearInterval(slideInterval);
+                    showSlide(parseInt(dot.dataset.index));
+                    slideInterval = setInterval(nextSlide, 5000);
+                });
+            });
+        });
+    </script>
 
     <!-- Stats / Status Area -->
     <div class="stat-grid">
