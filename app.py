@@ -925,12 +925,8 @@ def index():
                            member_count=member_count_display, 
                            footer_info=footer_info)
 
-@app.route('/robots.txt')
-def robots_txt():
-    """Block all search engine crawlers — site is private."""
     from flask import Response
     return Response("User-agent: *\nDisallow: /\n", mimetype='text/plain')
-
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
