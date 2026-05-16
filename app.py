@@ -168,26 +168,66 @@ os.makedirs('static/uploads', exist_ok=True)
 os.makedirs('static/chatroom_uploads', exist_ok=True)
 
 # --- DB COMPATIBILITY LAYER ---
+# --- Database Connectivity & Global Pool ---
+_db_pool = None
+
+def init_pool():
+    global _db_pool
+    db_url = os.environ.get('DATABASE_URL')
+    if _db_pool is None and db_url and str(db_url).startswith('postgres'):
+        try:
+            from psycopg2 import pool
+            # Use a small pool to stay within Supabase limits (e.g., 5 per worker)
+            _db_pool = pool.SimpleConnectionPool(1, 5, db_url, cursor_factory=psycopg2.extras.DictCursor)
+            print("Database Connection Pool Initialized.")
+        except Exception as e:
+            print(f"CRITICAL: Pool Initialization Failed: {e}")
+
+class PostgresConnectionWrapper:
+    def __init__(self, conn, pool=None):
+        self._conn = conn
+        self._pool = pool
+    def cursor(self, *args, **kwargs):
+        return self._conn.cursor(*args, **kwargs)
+    def commit(self):
+        return self._conn.commit()
+    def rollback(self):
+        return self._conn.rollback()
+    def close(self):
+        if self._pool:
+            try:
+                self._pool.putconn(self._conn)
+            except:
+                self._conn.close()
+        else:
+            self._conn.close()
+    def __enter__(self): return self
+    def __exit__(self, exc_type, exc_val, exc_tb): self.close()
+
 def get_db_connection():
     db_url = os.environ.get('DATABASE_URL')
     
     # If DATABASE_URL is missing or doesn't start with postgres, use SQLite
     if not db_url or not str(db_url).startswith('postgres'):
         conn = sqlite3.connect('dev_database.db', check_same_thread=False)
-        conn.row_factory = sqlite3.Row # Make results behave like dictionaries/tuples
+        conn.row_factory = sqlite3.Row
         return conn, 'sqlite'
     
-    # Postgres with Retry Logic for Supabase Pool Limits
-    max_retries = 3
-    retry_delay = 1 # second
+    # Postgres with Retry Logic & Pool Support
+    if _db_pool is None:
+        init_pool()
+
+    max_retries = 5
+    retry_delay = 1
     for attempt in range(max_retries):
         try:
-            return psycopg2.connect(db_url, cursor_factory=psycopg2.extras.DictCursor), 'postgres'
-        except psycopg2.OperationalError as e:
+            if _db_pool:
+                return PostgresConnectionWrapper(_db_pool.getconn(), _db_pool), 'postgres'
+            return PostgresConnectionWrapper(psycopg2.connect(db_url, cursor_factory=psycopg2.extras.DictCursor)), 'postgres'
+        except Exception as e:
             if "max clients reached" in str(e).lower() and attempt < max_retries - 1:
-                print(f"DB Pool Full (Attempt {attempt+1}/{max_retries}). Retrying in {retry_delay}s...")
                 time.sleep(retry_delay)
-                retry_delay *= 2 # Exponential backoff
+                retry_delay *= 1.5
                 continue
             raise e
 
@@ -4825,17 +4865,30 @@ def privacy_policy():
 def cookie_policy():
     return render_template('cookies.html')
 
-# Initialize DB within app context for safety
-with app.app_context():
-    # Auto-migration on startup
-    try:
-        from initialize_remote import run_migrations
-        run_migrations()
-    except Exception as e:
-        print(f"Startup Migration Error: {e}")
-        
-    init_db()
-    init_membership_cards()
+# Initialize DB within app context for safety - ensure it only runs once per process
+_db_initialized = False
+
+def run_startup_logic():
+    global _db_initialized
+    if _db_initialized: return
+    
+    with app.app_context():
+        # Auto-migration on startup
+        try:
+            from initialize_remote import run_migrations
+            run_migrations()
+        except Exception as e:
+            print(f"Startup Migration Error: {e}")
+            
+        try:
+            init_db()
+            init_membership_cards()
+            _db_initialized = True
+        except Exception as e:
+            print(f"Startup DB Init Error: {e}")
+
+# Call startup logic once at module level (still runs per worker, but we limited workers to 2)
+run_startup_logic()
 
 # --- Poll System Routes ---
 
