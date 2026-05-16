@@ -1009,9 +1009,22 @@
             }
         }
         function updateFileName(input) {
-            const fileName = input.files[0] ? input.files[0].name : 'No file chosen';
-            const display = input.parentElement.querySelector('.file-name-text');
-            if (display) display.textContent = fileName;
+            // Walk up to the custom-file-wrapper, then find the sibling span
+            const wrapper = input.closest('.custom-file-wrapper');
+            const display = wrapper ? wrapper.querySelector('.file-name-text') : null;
+            if (!display) return;
+            if (!input.files || input.files.length === 0) {
+                display.textContent = 'No files selected';
+                display.style.color = '';
+                return;
+            }
+            if (input.files.length === 1) {
+                display.textContent = input.files[0].name;
+            } else {
+                display.textContent = `${input.files.length} files selected`;
+            }
+            display.style.color = 'var(--primary)';
+            display.style.fontWeight = '700';
         }
 
         // Theme Toggle Logic

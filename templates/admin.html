@@ -93,6 +93,46 @@
         .sidebar-nav { transform: translateX(-100%); }
         .sidebar-nav.active { transform: translateX(0); }
     }
+
+    /* Talent Roster Responsive Fixes */
+    .talent-form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    .talent-form-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+    .talent-form-footer .admin-form-group {
+        margin-bottom: 0;
+        flex: 1;
+        min-width: 200px;
+    }
+    .talent-form-footer .btn {
+        flex-shrink: 0;
+        align-self: flex-end;
+    }
+
+    /* Roster table mobile */
+    @media (max-width: 768px) {
+        .premium-table th:nth-child(2),
+        .premium-table td:nth-child(2),
+        .premium-table th:nth-child(3),
+        .premium-table td:nth-child(3) {
+            display: none;
+        }
+        .premium-table td:first-child {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -344,7 +384,7 @@
         <div class="table-card" style="padding: 25px; margin-bottom: 40px;">
             <h2 style="font-size: 1.1rem; margin-bottom: 20px;">Add New Talent</h2>
             <form action="/admin/stars/add" method="POST" enctype="multipart/form-data">
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div class="talent-form-grid">
                     <div class="admin-form-group">
                         <label>Full Name</label>
                         <input type="text" name="name" required class="admin-input" placeholder="e.g. John Legend">
@@ -362,8 +402,8 @@
                     <label>Biography / Feature List</label>
                     <textarea name="bio" rows="1" required class="admin-input" placeholder="Describe what they offer..." style="overflow:hidden;"></textarea>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
-                    <div class="admin-form-group" style="margin-bottom: 0;">
+                <div class="talent-form-footer">
+                    <div class="admin-form-group">
                         <label style="margin-bottom: 8px; display: block;">Portfolio Media (Max 10 Photos/Videos)</label>
                         <div class="custom-file-wrapper">
                             <label class="file-cta">
@@ -412,7 +452,7 @@
                     <tr id="star-edit-{{ star['id'] }}" style="display: none; background: rgba(255,255,255,0.02);">
                         <td colspan="5">
                             <form action="/admin/stars/edit/{{ star['id'] }}" method="POST" enctype="multipart/form-data" style="padding: 20px;">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                <div class="talent-form-grid">
                                     <div class="admin-form-group">
                                         <label>Full Name</label>
                                         <input type="text" name="name" value="{{ star['name'] }}" required class="admin-input">
@@ -430,8 +470,8 @@
                                     <label>Biography</label>
                                     <textarea name="bio" rows="1" required class="admin-input" style="overflow:hidden;">{{ star['bio'] }}</textarea>
                                 </div>
-                                <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                                    <div class="admin-form-group" style="margin-bottom: 0;">
+                                <div class="talent-form-footer">
+                                    <div class="admin-form-group">
                                         <label style="margin-bottom: 8px; display: block;">Add More Media (Photos/Videos)</label>
                                         <div class="custom-file-wrapper">
                                             <label class="file-cta">
@@ -441,7 +481,7 @@
                                             <span class="file-name-text">No files selected</span>
                                         </div>
                                     </div>
-                                    <div style="display: flex; gap: 10px;">
+                                    <div style="display: flex; gap: 10px; flex-shrink: 0; align-self: flex-end;">
                                         <button type="button" onclick="toggleEdit('star-edit-{{ star['id'] }}')" class="btn btn-sm" style="background: #333;">Cancel</button>
                                         <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
                                     </div>
