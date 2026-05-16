@@ -139,8 +139,43 @@
         }
     }
 
+    /* Admin Loader Styles */
+    #admin-loader {
+        position: fixed;
+        inset: 0;
+        background: var(--bg-body);
+        z-index: 10001;
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+        transition: opacity 0.5s ease-out;
+    }
+
+    .loader-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .loader-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 20px;
+    }
+
     /* Dashboard Grid Mobile Fix */
     @media (max-width: 992px) {
+        #admin-loader {
+            padding: 20px 15px;
+            gap: 20px;
+        }
+        .loader-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 15px;
+        }
         .dashboard-main-grid {
             display: flex !important;
             flex-direction: column !important;
@@ -151,6 +186,9 @@
         }
     }
     @media (max-width: 480px) {
+        .loader-grid {
+            grid-template-columns: 1fr !important;
+        }
         .stats-grid {
             grid-template-columns: 1fr !important;
         }
@@ -236,12 +274,12 @@
 {% endblock %}
 
 {% block content %}
-<div id="admin-loader" style="position: fixed; inset: 0; background: var(--bg-body); z-index: 10001; padding: 40px; display: flex; flex-direction: column; gap: 30px; transition: opacity 0.5s ease-out;">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+<div id="admin-loader">
+    <div class="loader-header">
         <div class="skeleton" style="width: 200px; height: 40px;"></div>
         <div class="skeleton" style="width: 150px; height: 40px;"></div>
     </div>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 20px;">
+    <div class="loader-grid">
         <div class="skeleton" style="height: 120px;"></div>
         <div class="skeleton" style="height: 120px;"></div>
         <div class="skeleton" style="height: 120px;"></div>
