@@ -6,13 +6,29 @@
 <style>
     *, *::before, *::after { box-sizing: border-box; }
     
-    /* Chat Layout */
+    /* Chat Layout Viewport Lock */
+    html, body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+    }
+    .app-container {
+        height: 100vh;
+        overflow: hidden;
+    }
+    .main-wrapper {
+        height: 100vh;
+        overflow: hidden;
+    }
+
     .content-area {
         padding: 0 !important;
         max-width: 100% !important;
         display: flex;
         flex-direction: column;
         flex: 1;
+        height: 100%;
+        overflow: hidden;
     }
     .chat-container {
         display: flex;
@@ -306,9 +322,11 @@
         display: flex;
         gap: 10px;
         align-items: center;
+        flex-wrap: wrap; /* Prevent horizontal overflow */
     }
     .poll-input {
-        flex: 2;
+        flex: 1;
+        min-width: 200px; /* Force wrap if too narrow */
         border: 1px solid var(--border-color);
         border-radius: 8px;
         padding: 8px;
@@ -317,6 +335,7 @@
     .poll-btn {
         white-space: nowrap;
         font-weight: 800;
+        min-width: 100px;
     }
 
     .poll-container {
@@ -392,10 +411,10 @@
     }
 
     /* Mobile Specific Overrides */
-    @media (max-width: 768px) {
+    @media (max-width: 992px) {
         .chat-container {
             flex-direction: column;
-            height: calc(100dvh - 70px); /* Fill space accurately on mobile */
+            height: calc(100dvh - 70px); /* Accurate mobile fill */
             width: 100% !important;
             max-width: 100% !important;
         }
@@ -415,18 +434,16 @@
 
         .chat-header {
             padding: 8px 10px;
-            flex-wrap: nowrap;
-            gap: 5px;
+            flex-wrap: wrap; /* Allow wrapping on very small screens */
+            gap: 8px;
             background: var(--bg-card);
             border-bottom: 1px solid var(--border-color);
         }
 
         .chat-header h2 { 
             font-size: 0.9rem; 
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 110px;
+            max-width: none;
+            flex: 1;
         }
 
         .mobile-channel-nav {
@@ -665,6 +682,16 @@
         {% endif %}
 
         <div class="chat-box" id="chat-box">
+            <div id="slides-container" style="margin-bottom: 20px;">
+                {% if slides %}
+                    {% for slide in slides %}
+                        <div class="announcement-slide" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden; margin-bottom: 15px;">
+                            <img src="{{ slide.image }}" style="width: 100%; height: auto; display: block;">
+                            <div style="padding: 15px; text-align: center; font-size: 0.9rem; font-weight: 600;">{{ slide.text }}</div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
             <div id="polls-container" style="margin-bottom: 20px;"></div>
             {% if messages %}
                 {% for msg in messages %}
@@ -833,10 +860,10 @@
             .then(data => {
                 if(data.active_polls) {
                     renderPolls(data.active_polls);
-                    // Check for new polls to badge
-                    if (data.active_polls.length > 0 && '{{ channel_id }}' !== 'announcements') {
-                        document.getElementById('news-badge').style.display = 'inline-block';
-                    }
+                }
+
+                if(data.slides) {
+                    renderSlides(data.slides);
                 }
                 
                 // Handle new messages
@@ -871,6 +898,25 @@
                     });
                 }
             });
+    }
+
+    function renderSlides(slides) {
+        const container = document.getElementById('slides-container');
+        if (!container || !slides || slides.length === 0) {
+            if (container) container.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+        slides.forEach(slide => {
+            html += `
+                <div class="announcement-slide" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden; margin-bottom: 15px;">
+                    <img src="${slide.image}" style="width: 100%; height: auto; display: block;">
+                    <div style="padding: 15px; text-align: center; font-size: 0.9rem; font-weight: 600;">${slide.text}</div>
+                </div>
+            `;
+        });
+        if (container.innerHTML !== html) container.innerHTML = html;
     }
 
     function renderPolls(polls) {

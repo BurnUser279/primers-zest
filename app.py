@@ -4168,6 +4168,13 @@ def vip_lounge():
         elif channel_id == 'strategic' and (not p or not p[1]):
             can_write = False
 
+    slides = []
+    if channel_id == 'announcements':
+        c.execute("SELECT image_path, info_text FROM club_slideshows WHERE is_active = TRUE ORDER BY created_at DESC")
+        slide_rows = c.fetchall()
+        for row in slide_rows:
+            slides.append({'image': row[0], 'text': row[1]})
+
     conn.close()
     return render_template('chatroom.html', 
                            messages=display_messages, 
@@ -4629,8 +4636,16 @@ def api_chat_messages(room_id):
                 'user_vote': u_vote
             })
 
+    # 6. Fetch Slideshows (Only for #News)
+    slides = []
+    if channel_id == 'announcements':
+        c.execute("SELECT image_path, info_text FROM club_slideshows WHERE is_active = TRUE ORDER BY created_at DESC")
+        slide_rows = c.fetchall()
+        for row in slide_rows:
+            slides.append({'image': row[0], 'text': row[1]})
+
     conn.close()
-    return {"messages": messages, "active_polls": active_polls, "reaction_sync": reaction_sync}
+    return {"messages": messages, "active_polls": active_polls, "reaction_sync": reaction_sync, "slides": slides}
 
 @app.route('/star_booking_chat/<int:room_id>', methods=['GET', 'POST'])
 def star_booking_chat(room_id):
