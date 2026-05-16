@@ -4183,6 +4183,7 @@ def vip_lounge():
                            channel_id=channel_id,
                            room_id=room_id,
                            can_write=can_write,
+                           slides=slides,
                            fullname=member_data[0] if member_data else 'Official Admin')
 
 @app.route('/trigger_admin_alert')
