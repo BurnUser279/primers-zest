@@ -2020,6 +2020,21 @@ def admin_add_star():
     flash(f"New talent '{name}' added with {len(media_files[:10])} media assets.")
     return redirect(url_for('admin_dashboard', section='stars-roster'))
 
+@app.route('/api/admin/unread_count')
+def api_admin_unread_count():
+    if not session.get('is_admin'):
+        return {"error": "Unauthorized"}, 401
+    
+    conn, db_type = get_db_connection()
+    c = get_cursor(conn, db_type)
+    if db_type == 'postgres':
+        c.execute("SELECT COUNT(*) FROM admin_notifications WHERE is_read = FALSE")
+    else:
+        c.execute("SELECT COUNT(*) FROM admin_notifications WHERE is_read = 0")
+    count = c.fetchone()[0]
+    conn.close()
+    return {"unread_count": count}
+
 @app.route('/admin/stars/edit/<int:star_id>', methods=['POST'])
 def admin_edit_star(star_id):
     if not session.get('is_admin'):
@@ -2775,18 +2790,8 @@ def vip_chat_send(member_id):
         conn.close()
 
     if is_admin:
-        # Redirect back to the review page if admin is replying
-        conn, db_type = get_db_connection()
-        c = get_cursor(conn, db_type)
-        c.execute("SELECT id FROM vip_submissions WHERE user_id = %s ORDER BY created_at DESC LIMIT 1", (member_id,))
-        sub = c.fetchone()
-        conn.close()
-        
-        if sub:
-            # Handle both tuple and dict-like results
-            s_id = sub[0] if isinstance(sub, (tuple, list)) else sub['id']
-            return redirect(url_for('admin_vip_review', sub_id=s_id))
-        return redirect(url_for('admin_dashboard') + "?section=finance")
+        # Redirect back to the page the admin was on (Vault or Review)
+        return redirect(request.referrer or url_for('admin_dashboard'))
     
     # Phase 3: redirect member back to dashboard (vip_verification requires plan_id — unsafe to assume)
     return redirect(request.referrer or url_for('member_dashboard'))

@@ -123,7 +123,7 @@
             color: var(--text-main);
             transition: background-color 0.3s ease, color 0.3s ease;
             overflow-x: hidden;
-            min-height: 100vh;
+            min-height: 100dvh;
             color-scheme: dark light;
         }
 
@@ -143,7 +143,7 @@
         /* Layout Structure */
         .app-container {
             display: flex;
-            min-height: 100vh;
+            min-height: 100dvh;
         }
 
         .main-wrapper {
@@ -280,7 +280,7 @@
                 width: 100%;
                 display: flex;
                 flex-direction: column;
-                min-height: 100vh;
+                min-height: 100dvh;
             }
             .content-area { 
                 padding: 20px 15px; 
@@ -542,7 +542,7 @@
             display: flex;
             flex-direction: column;
             position: fixed;
-            height: 100vh;
+            height: 100dvh;
             z-index: 1000;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -1265,5 +1265,27 @@
         });
     </script>
     {% block extra_scripts %}{% endblock %}
+    <!-- Admin Real-time Polling -->
+    {% if session.get('is_admin') %}
+    <script>
+        function pollAdminStats() {
+            fetch('/api/admin/unread_count')
+                .then(r => r.json())
+                .then(data => {
+                    const notifBadge = document.getElementById('admin-notif-badge');
+                    if (notifBadge) {
+                        if (data.unread_count > 0) {
+                            notifBadge.innerText = data.unread_count;
+                            notifBadge.style.display = 'flex';
+                        } else {
+                            notifBadge.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(e => console.error('Admin poll error:', e));
+        }
+        setInterval(pollAdminStats, 10000); // 10 second loop
+    </script>
+    {% endif %}
 </body>
 </html>

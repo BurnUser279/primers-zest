@@ -13,7 +13,7 @@
         overflow: hidden;
     }
     .app-container {
-        height: 100vh;
+        height: 100dvh;
         overflow: hidden;
         display: flex;
         flex-direction: column;
@@ -882,7 +882,10 @@
                         }
                     });
                     const chatBox = document.getElementById('chat-box');
-                    chatBox.scrollTop = chatBox.scrollHeight;
+                    const isAtBottom = chatBox.scrollHeight - chatBox.clientHeight <= chatBox.scrollTop + 150; // Increased buffer for mobile
+                    if (isAtBottom) {
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                    }
                 }
                 
                 // Sync reactions for existing messages

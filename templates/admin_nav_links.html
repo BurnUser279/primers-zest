@@ -7,7 +7,7 @@
     {% if notifications %}
     {% set unread_count = notifications|rejectattr('is_read')|list|length %}
     {% if unread_count > 0 %}
-    <span style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: var(--primary); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; font-weight: 700;">{{ unread_count }}</span>
+    <span id="admin-notif-badge" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: var(--primary); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; font-weight: 700;">{{ unread_count }}</span>
     {% endif %}
     {% endif %}
 </a>
@@ -43,7 +43,7 @@
     {% if vip_submissions %}
     {% set pending_vip = vip_submissions|selectattr('status', 'equalto', 'Pending')|list %}
     {% if pending_vip|length > 0 %}
-    <span style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: var(--primary); color: #000; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; font-weight: 800;">{{ pending_vip|length }}</span>
+    <span id="admin-vip-badge" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: var(--primary); color: #000; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; font-weight: 800;">{{ pending_vip|length }}</span>
     {% endif %}
     {% endif %}
 </a>
