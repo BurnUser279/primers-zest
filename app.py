@@ -6,6 +6,15 @@ import psycopg2
 import psycopg2.extras
 from dotenv import load_dotenv
 load_dotenv()
+
+# Auto-clean CLOUDINARY_URL environment variable if malformed or copied with prefix/quotes
+_c_url = os.environ.get('CLOUDINARY_URL')
+if _c_url:
+    _c_url = _c_url.strip().strip('"').strip("'")
+    if _c_url.startswith('CLOUDINARY_URL='):
+        _c_url = _c_url[len('CLOUDINARY_URL='):].strip().strip('"').strip("'")
+    os.environ['CLOUDINARY_URL'] = _c_url
+
 from flask import Flask, render_template, request, session, redirect, url_for, flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
