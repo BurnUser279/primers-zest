@@ -817,6 +817,8 @@ def init_db():
         c.execute("ALTER TABLE vip_pre_payment_chats ADD COLUMN IF NOT EXISTS submission_id INTEGER REFERENCES vip_submissions(id);")
         c.execute("ALTER TABLE vip_pre_payment_chats ADD COLUMN IF NOT EXISTS member_id INTEGER REFERENCES members(id);")
         c.execute("ALTER TABLE vip_pre_payment_chats ADD COLUMN IF NOT EXISTS media_path TEXT;")
+        c.execute("ALTER TABLE vip_pre_payment_chats ADD COLUMN IF NOT EXISTS sender_id INTEGER;")
+        c.execute("ALTER TABLE vip_pre_payment_chats ADD COLUMN IF NOT EXISTS message TEXT;")
     else:
         # SQLite
         add_sqlite_col('vip_pre_payment_chats', 'media_path TEXT')
