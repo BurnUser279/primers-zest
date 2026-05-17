@@ -14,6 +14,51 @@ import sqlite3
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import datetime
+import cloudinary
+import cloudinary.uploader
+
+# Cloudinary Setup
+HAS_CLOUDINARY = False
+if os.environ.get('CLOUDINARY_URL') or (os.environ.get('CLOUDINARY_CLOUD_NAME') and os.environ.get('CLOUDINARY_API_KEY') and os.environ.get('CLOUDINARY_API_SECRET')):
+    if not os.environ.get('CLOUDINARY_URL'):
+        cloudinary.config(
+            cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+            api_key=os.environ.get('CLOUDINARY_API_KEY'),
+            api_secret=os.environ.get('CLOUDINARY_API_SECRET'),
+            secure=True
+        )
+    HAS_CLOUDINARY = True
+    print("Cloudinary Media Storage Active.")
+else:
+    print("Local Filesystem Media Storage Active.")
+
+def save_uploaded_file(file, folder=None, custom_filename=None):
+    """
+    Saves an uploaded file. If Cloudinary is configured, uploads directly to Cloudinary.
+    Otherwise, saves to the local filesystem (fallback).
+    """
+    if not file or file.filename == '':
+        return None
+        
+    filename = custom_filename or secure_filename(file.filename)
+    if custom_filename is None:
+        filename = f"{int(time.time())}_{uuid.uuid4().hex[:8]}_{filename}"
+        
+    if HAS_CLOUDINARY:
+        try:
+            # Upload directly to Cloudinary with automatic resource type detection (image/video/raw)
+            upload_result = cloudinary.uploader.upload(file, resource_type="auto", folder="primers_zest")
+            return upload_result.get('secure_url')
+        except Exception as e:
+            print(f"Cloudinary Upload Failed, falling back to local: {e}")
+            
+    # Fallback/Local storage
+    target_folder = folder or 'static/uploads'
+    os.makedirs(target_folder, exist_ok=True)
+    file_path = os.path.join(target_folder, filename)
+    file.seek(0) # Ensure we are at the start of the stream
+    file.save(file_path)
+    return file_path.replace('\\', '/')
 
 # Email Notification Utility
 def send_email_notification(recipient_email, subject, body, user_id=None):
@@ -177,9 +222,9 @@ def init_pool():
     if _db_pool is None and db_url and str(db_url).startswith('postgres'):
         try:
             from psycopg2 import pool
-            # Use a small pool to stay within Supabase limits (e.g., 5 per worker)
-            _db_pool = pool.SimpleConnectionPool(1, 5, db_url, cursor_factory=psycopg2.extras.DictCursor)
-            print("Database Connection Pool Initialized.")
+            # Use ThreadedConnectionPool to ensure thread-safety across Gunicorn threads
+            _db_pool = pool.ThreadedConnectionPool(2, 10, db_url, cursor_factory=psycopg2.extras.DictCursor)
+            print("Database Threaded Connection Pool Initialized.")
         except Exception as e:
             print(f"CRITICAL: Pool Initialization Failed: {e}")
 
@@ -194,15 +239,11 @@ class PostgresConnectionWrapper:
     def rollback(self):
         return self._conn.rollback()
     def close(self):
-        if self._pool:
-            try:
-                self._pool.putconn(self._conn)
-            except:
-                self._conn.close()
-        else:
-            self._conn.close()
+        # In a request-bound environment (flask.g), we don't close manually.
+        # The teardown_db function handles the actual release.
+        pass
     def __enter__(self): return self
-    def __exit__(self, exc_type, exc_val, exc_tb): self.close()
+    def __exit__(self, exc_type, exc_val, exc_tb): pass # Don't close on exit either
 
 def get_db_connection():
     from flask import g
@@ -233,15 +274,27 @@ def get_db_connection():
         try:
             if _db_pool:
                 conn = _db_pool.getconn()
+                # Proactively verify the connection is alive
+                if getattr(conn, 'closed', 0) != 0:
+                    _db_pool.putconn(conn, close=True)
+                    continue
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute("SELECT 1")
+                except Exception:
+                    _db_pool.putconn(conn, close=True)
+                    continue
             else:
                 conn = psycopg2.connect(db_url, cursor_factory=psycopg2.extras.DictCursor)
-            break
+            
+            break # Successfully got a valid connection
         except Exception as e:
             if "max clients reached" in str(e).lower() and attempt < max_retries - 1:
                 time.sleep(retry_delay)
                 retry_delay *= 1.5
                 continue
-            raise e
+            if attempt == max_retries - 1:
+                raise e
 
     if conn:
         # Wrap the connection to handle monkey-patched close (backward compatibility)
@@ -263,9 +316,23 @@ def teardown_db(exception):
             try:
                 # If it's a wrapper, we use its underlying connection
                 raw_conn = conn._conn if hasattr(conn, '_conn') else conn
-                _db_pool.putconn(raw_conn)
+                
+                # If the request had an exception or the connection is broken, close it
+                close_it = False
+                if exception is not None or getattr(raw_conn, 'closed', 0) != 0:
+                    close_it = True
+                
+                if not close_it:
+                    try:
+                        raw_conn.rollback() # Reset transaction state
+                    except:
+                        close_it = True
+                
+                _db_pool.putconn(raw_conn, close=close_it)
             except:
-                try: conn.close()
+                try:
+                    raw_conn = conn._conn if hasattr(conn, '_conn') else conn
+                    raw_conn.close()
                 except: pass
         else:
             try: conn.close()
@@ -341,6 +408,16 @@ def add_security_headers(response):
     # Strict-Transport-Security is only effective over HTTPS
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response
+
+@app.template_filter('media_url')
+def media_url_filter(path):
+    if not path:
+        return '/static/img/default_star.jpg'
+    if path.startswith(('http://', 'https://')):
+        return path
+    if path.startswith('/'):
+        return path
+    return '/' + path
 
 def datetimeformat(value, format='%Y-%m-%d %H:%M'):
     if not value: return ""
@@ -2106,15 +2183,12 @@ def admin_add_star():
         if media and media.filename != '':
             filename = secure_filename(media.filename)
             filename = f"star_{star_id}_{int(time.time())}_{i}_{filename}"
-            upload_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            media.save(upload_path)
-            db_path = f"static/uploads/{filename}"
-            
-            if i == 0: primary_path = db_path
-            
-            m_type = 'video' if filename.lower().endswith(('.mp4', '.mov', '.avi')) else 'image'
-            c.execute("INSERT INTO star_media (star_id, file_path, media_type) VALUES (%s, %s, %s)", 
-                      (star_id, db_path, m_type))
+            db_path = save_uploaded_file(media, custom_filename=filename)
+            if db_path:
+                if i == 0: primary_path = db_path
+                m_type = 'video' if filename.lower().endswith(('.mp4', '.mov', '.avi')) else 'image'
+                c.execute("INSERT INTO star_media (star_id, file_path, media_type) VALUES (%s, %s, %s)", 
+                          (star_id, db_path, m_type))
     
     # Update primary image path for legacy support
     if primary_path:
@@ -2149,13 +2223,14 @@ def admin_edit_star(star_id):
     category = request.form.get('category')
     bio = request.form.get('bio')
     price = request.form.get('price')
+    location = request.form.get('location')
     new_media = request.files.getlist('star_media')
     
     conn, db_type = get_db_connection()
     c = get_cursor(conn, db_type)
     
-    c.execute("UPDATE stars SET name=%s, category=%s, bio=%s, price=%s WHERE id=%s",
-              (name, category, bio, price, star_id))
+    c.execute("UPDATE stars SET name=%s, category=%s, bio=%s, price=%s, location=%s WHERE id=%s",
+              (name, category, bio, price, location, star_id))
     
     # Add new media if provided
     count_existing = 0
@@ -2168,19 +2243,18 @@ def admin_edit_star(star_id):
         if media and media.filename != '':
             filename = secure_filename(media.filename)
             filename = f"star_{star_id}_update_{int(time.time())}_{i}_{filename}"
-            upload_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            media.save(upload_path)
-            db_path = f"static/uploads/{filename}"
-            
-            m_type = 'video' if filename.lower().endswith(('.mp4', '.mov', '.avi')) else 'image'
-            c.execute("INSERT INTO star_media (star_id, file_path, media_type) VALUES (%s, %s, %s)", 
-                      (star_id, db_path, m_type))
-            count_existing += 1
-            
-            # If no primary image exists, update it
-            c.execute("SELECT image_path FROM stars WHERE id = %s", (star_id,))
-            if not c.fetchone()[0]:
-                c.execute("UPDATE stars SET image_path = %s WHERE id = %s", (db_path, star_id))
+            db_path = save_uploaded_file(media, custom_filename=filename)
+            if db_path:
+                m_type = 'video' if filename.lower().endswith(('.mp4', '.mov', '.avi')) else 'image'
+                c.execute("INSERT INTO star_media (star_id, file_path, media_type) VALUES (%s, %s, %s)", 
+                          (star_id, db_path, m_type))
+                count_existing += 1
+                
+                # If no primary image exists, update it
+                c.execute("SELECT image_path FROM stars WHERE id = %s", (star_id,))
+                row = c.fetchone()
+                if not row or not row[0]:
+                    c.execute("UPDATE stars SET image_path = %s WHERE id = %s", (db_path, star_id))
                   
     conn.commit()
     conn.close()
@@ -2458,9 +2532,7 @@ def admin_add_slideshow():
     if image and image.filename != '':
         filename = secure_filename(image.filename)
         filename = f"slide_{int(time.time())}_{filename}"
-        image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        image.save(image_path)
-        db_path = f"static/uploads/{filename}"
+        db_path = save_uploaded_file(image, custom_filename=filename)
         
         conn, db_type = get_db_connection()
         c = get_cursor(conn, db_type)
@@ -2500,9 +2572,7 @@ def admin_edit_slide(slide_id):
         if image and image.filename != '':
             filename = secure_filename(image.filename)
             filename = f"slide_{int(time.time())}_{filename}"
-            image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            image.save(image_path)
-            db_path = f"static/uploads/{filename}"
+            db_path = save_uploaded_file(image, custom_filename=filename)
             c.execute("UPDATE club_slideshows SET image_path = %s, info_text = %s WHERE id = %s", (db_path, info_text, slide_id))
         else:
             c.execute("UPDATE club_slideshows SET info_text = %s WHERE id = %s", (info_text, slide_id))
@@ -2874,8 +2944,7 @@ def vip_chat_send(member_id):
         if chat_media and chat_media.filename != '':
             filename = secure_filename(chat_media.filename)
             filename = f"chat_{member_id}_{uuid.uuid4().hex}_{filename}"
-            chat_media.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            media_path = f"/static/uploads/{filename}"
+            media_path = save_uploaded_file(chat_media, custom_filename=filename)
 
         c.execute("INSERT INTO vip_pre_payment_chats (member_id, sender_id, message, media_path) VALUES (%s, %s, %s, %s)",
                   (member_id, sender_id, message, media_path))
@@ -4185,9 +4254,10 @@ def vip_lounge():
                     for f in files:
                         if f and f.filename != '':
                             filename = f"{int(time.time())}_{secure_filename(f.filename)}"
-                            f.save(os.path.join(app.config['CHATROOM_UPLOAD_FOLDER'], filename))
-                            c.execute("INSERT INTO chatroom_attachments (message_id, file_path, file_size) VALUES (%s, %s, %s)",
-                                      (msg_id, f"/static/chatroom_uploads/{filename}", total_size)) 
+                            db_path = save_uploaded_file(f, folder='static/chatroom_uploads', custom_filename=filename)
+                            if db_path:
+                                c.execute("INSERT INTO chatroom_attachments (message_id, file_path, file_size) VALUES (%s, %s, %s)",
+                                          (msg_id, db_path, total_size)) 
                     conn.commit()
                     # Success flash removed as requested
                     conn.close()
@@ -4391,15 +4461,21 @@ def chat_react():
         return e
 
     emoji = canon(data.get('emoji'))
+    
+    # Prioritize session member_id (works for both Members and Admins logged in as members)
     member_id = session.get('member_id')
     
-    if not member_id: # Admin reacting
+    if not member_id:
+        # Fallback for pure Admin logins
         conn, db_type = get_db_connection()
         c = get_cursor(conn, db_type)
         c.execute("SELECT id FROM members WHERE username = 'AdminMaster' LIMIT 1")
         row = c.fetchone()
-        member_id = row[0] if row else 0
+        member_id = row[0] if row else None
         conn.close()
+
+    if not member_id:
+        return jsonify({"error": "Identity could not be verified"}), 403
 
     conn, db_type = get_db_connection()
     c = get_cursor(conn, db_type)
@@ -4602,7 +4678,8 @@ def api_chat_messages(room_id):
     
     # Get current user's identity for reaction highlighting
     current_uid = session.get('member_id')
-    if not current_uid and session.get('is_admin'):
+    if not current_uid:
+        # Check for AdminMaster fallback
         c.execute("SELECT id FROM members WHERE username = 'AdminMaster' LIMIT 1")
         row = c.fetchone()
         current_uid = row[0] if row else 0
@@ -4819,11 +4896,15 @@ def star_booking_chat(room_id):
                     
                     for f in real_files:
                         filename = f"{int(time.time())}_{secure_filename(f.filename)}"
-                        save_path = os.path.join(app.config['CHATROOM_UPLOAD_FOLDER'], filename)
-                        f.save(save_path)
-                        f_size = os.path.getsize(save_path)
-                        c.execute("INSERT INTO chatroom_attachments (message_id, file_path, file_size) VALUES (%s, %s, %s)",
-                                  (msg_id, f"/static/chatroom_uploads/{filename}", f_size))
+                        # Determine file size safely from the stream before upload
+                        f.seek(0, 2)
+                        f_size = f.tell()
+                        f.seek(0)
+                        
+                        db_path = save_uploaded_file(f, folder='static/chatroom_uploads', custom_filename=filename)
+                        if db_path:
+                            c.execute("INSERT INTO chatroom_attachments (message_id, file_path, file_size) VALUES (%s, %s, %s)",
+                                      (msg_id, db_path, f_size))
                     conn.commit()
                     
                     # Notify Member if Admin replied

@@ -137,42 +137,42 @@
     <div style="margin-bottom: 50px;">
         <h2 style="font-size: 1.2rem; margin-bottom: 20px;">My Active Requests</h2>
         <div class="booking-list">
-            {% for b in my_bookings %}
-            <div class="booking-card">
-                <img src="/{{ b['image_path'] if b['image_path'] else 'static/img/default_star.jpg' }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
-                <div style="flex: 1;">
-                    <div style="font-weight: 700;">{{ b['star_name'] }}</div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted);">{{ b['created_at'] }}</div>
-                </div>
-                <span class="booking-status status-{{ b['status']|lower }}">{{ b['status'] }}</span>
-                <a href="/star_booking_chat/{{ b['chatroom_id'] }}" class="btn btn-primary btn-sm">Enter Chat</a>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-
-    <h2 style="font-size: 1.2rem; margin-bottom: 25px;">Available Roster</h2>
-    <div class="roster-grid">
-        {% for star in stars %}
-        <div class="star-card" id="star-{{ star.id }}">
-            <div class="star-img-wrapper">
-                <div class="media-carousel" id="carousel-{{ star.id }}">
-                    {% if star.media %}
-                        {% for item in star.media %}
-                        <div class="carousel-item">
-                            {% if item.media_type == 'video' %}
-                            <video src="/{{ item.file_path }}" class="star-media-content" muted loop playsinline onmouseover="this.play()" onmouseout="this.pause()"></video>
-                            {% else %}
-                            <img src="/{{ item.file_path }}" class="star-media-content" alt="{{ star.name }}">
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="carousel-item">
-                            <img src="/{{ star.image_path if star.image_path else 'static/img/default_star.jpg' }}" class="star-media-content" alt="{{ star.name }}">
-                        </div>
-                    {% endif %}
+             {% for b in my_bookings %}
+             <div class="booking-card">
+                 <img src="{{ b['image_path']|media_url }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                 <div style="flex: 1;">
+                     <div style="font-weight: 700;">{{ b['star_name'] }}</div>
+                     <div style="font-size: 0.8rem; color: var(--text-muted);">{{ b['created_at'] }}</div>
+                 </div>
+                 <span class="booking-status status-{{ b['status']|lower }}">{{ b['status'] }}</span>
+                 <a href="/star_booking_chat/{{ b['chatroom_id'] }}" class="btn btn-primary btn-sm">Enter Chat</a>
+             </div>
+             {% endfor %}
+         </div>
+     </div>
+     {% endif %}
+ 
+     <h2 style="font-size: 1.2rem; margin-bottom: 25px;">Available Roster</h2>
+     <div class="roster-grid">
+         {% for star in stars %}
+         <div class="star-card" id="star-{{ star.id }}">
+             <div class="star-img-wrapper">
+                 <div class="media-carousel" id="carousel-{{ star.id }}">
+                     {% if star.media %}
+                         {% for item in star.media %}
+                         <div class="carousel-item">
+                             {% if item.media_type == 'video' %}
+                             <video src="{{ item.file_path|media_url }}" class="star-media-content" muted loop playsinline onmouseover="this.play()" onmouseout="this.pause()"></video>
+                             {% else %}
+                             <img src="{{ item.file_path|media_url }}" class="star-media-content" alt="{{ star.name }}">
+                             {% endif %}
+                         </div>
+                         {% endfor %}
+                     {% else %}
+                         <div class="carousel-item">
+                             <img src="{{ star.image_path|media_url }}" class="star-media-content" alt="{{ star.name }}">
+                         </div>
+                     {% endif %}
                 </div>
 
                 {% if star.media and star.media|length > 1 %}
@@ -192,7 +192,15 @@
                 {% endif %}
             </div>
             <div class="star-info">
-                <span class="star-category">{{ star.category }}</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                    <span class="star-category" style="margin-bottom: 0;">{{ star.category }}</span>
+                    {% if star.location %}
+                    <span style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; font-weight: 500;">
+                        <svg width="12" height="12" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        {{ star.location }}
+                    </span>
+                    {% endif %}
+                </div>
                 <h3 class="star-name">{{ star.name }}</h3>
                 <p class="star-bio">{{ star.bio }}</p>
                 <div class="star-footer">

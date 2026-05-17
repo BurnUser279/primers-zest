@@ -500,7 +500,7 @@
                     {% for star in all_stars %}
                     <tr>
                         <td data-label="Star" style="display: flex; align-items: center; gap: 15px; justify-content: flex-end;">
-                            <img src="/{{ star['image_path'] if star['image_path'] else 'static/img/default_star.jpg' }}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;">
+                            <img src="{{ star['image_path']|media_url }}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;">
                             <div style="font-weight: 700;">{{ star['name'] }}</div>
                         </td>
                         <td data-label="Location" class="text-muted" style="font-size: 0.85rem;">{{ star['location'] or 'Not Specified' }}</td>
@@ -532,6 +532,10 @@
                                     <div class="admin-form-group">
                                         <label>Base Price ($)</label>
                                         <input type="number" name="price" value="{{ star['price'] }}" required class="admin-input">
+                                    </div>
+                                    <div class="admin-form-group">
+                                        <label>Current Location</label>
+                                        <input type="text" name="location" value="{{ star['location'] if star['location'] else '' }}" class="admin-input" placeholder="e.g. London, UK">
                                     </div>
                                 </div>
                                 <div class="admin-form-group">
@@ -954,7 +958,7 @@
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
             {% for slide in slides %}
             <div class="table-card table-responsive">
-                <img src="{{ url_for('static', filename=slide['image_path'].replace('static/', '')) }}" style="width: 100%; height: 180px; object-fit: cover;" alt="Slide">
+                <img src="{{ slide['image_path']|media_url }}" style="width: 100%; height: 180px; object-fit: cover;" alt="Slide">
                 <div style="padding: 15px;">
                     <p style="font-size: 0.85rem; margin-bottom: 15px; height: 40px; overflow: hidden;">{{ slide['info_text'] }}</p>
                     <div style="display: flex; gap: 10px;">

@@ -62,6 +62,14 @@ def run_migrations():
             )
         """)
 
+        # Ensure AdminMaster system user exists
+        c.execute("SELECT id FROM members WHERE username = 'AdminMaster'")
+        if not c.fetchone():
+            c.execute("""
+                INSERT INTO members (username, email, mobile, fullname, age, gender, travel, income, password_hash, role)
+                VALUES ('AdminMaster', 'admin@system.internal', '+0000000000', 'Administrator', 99, 'Other', 'None', 'None', 'SYSTEM_ACCOUNT', 'Admin')
+            """)
+
         # 1. admin_audit_logs
         c.execute("""
             CREATE TABLE IF NOT EXISTS admin_audit_logs (
@@ -83,6 +91,7 @@ def run_migrations():
                 category VARCHAR(255),
                 bio TEXT,
                 price VARCHAR(100),
+                location VARCHAR(255),
                 image_path TEXT,
                 is_active BOOLEAN DEFAULT TRUE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -298,6 +307,7 @@ def run_migrations():
         # --- Schema Patching (For existing tables) ---
         c.execute("ALTER TABLE donations ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
         c.execute("ALTER TABLE members ADD COLUMN IF NOT EXISTS kyc_status VARCHAR(20) DEFAULT 'Unverified'")
+        c.execute("ALTER TABLE stars ADD COLUMN IF NOT EXISTS location VARCHAR(255)")
         
         conn.commit()
         conn.close()

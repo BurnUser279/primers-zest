@@ -267,7 +267,7 @@
         {% for slide in slides %}
         <div class="slide" style="display: {% if loop.first %}block{% else %}none{% endif %};" data-index="{{ loop.index0 }}">
             <a href="/vip_verification/{{ plans[0]['id'] if plans|length > 0 else 1 }}">
-                <img src="/{{ slide['image_path'] }}" class="slide-image" alt="Announcements">
+                <img src="{{ slide['image_path']|media_url }}" class="slide-image" alt="Announcements">
             </a>
             <div class="slide-caption">
                 <p style="font-weight: 700; font-size: 1.1rem; color: var(--text-main);">{{ slide['info_text'] }}</p>

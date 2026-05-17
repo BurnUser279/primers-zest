@@ -1282,6 +1282,12 @@
     let currentInjectionTarget = null;
     let selectedEmoji = null;
 
+    function selectEmoji(emoji, btn) {
+        selectedEmoji = emoji;
+        document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+    }
+
     function openInjectionModal(type, targetId, subId, label) {
         currentInjectionTarget = { type, targetId, subId };
         const modal = document.getElementById('injectionModal');
@@ -1291,6 +1297,12 @@
         
         modal.style.display = 'flex';
         
+        // Reset selection UI
+        document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('active'));
+        selectedEmoji = '❤️';
+        const defaultHeart = Array.from(document.querySelectorAll('.emoji-btn')).find(b => b.innerText.trim() === '❤️');
+        if (defaultHeart) defaultHeart.classList.add('active');
+
         if (type === 'poll') {
             title.innerText = "Inject Poll Votes";
             desc.innerText = `Injecting artificial consensus for: "${label}"`;
@@ -1300,7 +1312,6 @@
             title.innerText = "Boost Message Engagement";
             desc.innerText = "Select a reaction to amplify for this message:";
             emojiSel.style.display = 'grid';
-            selectedEmoji = '❤️';
         }
         document.getElementById('confirmInjectionBtn').onclick = executeInjection;
     }
