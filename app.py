@@ -55,8 +55,17 @@ def save_uploaded_file(file, folder=None, custom_filename=None):
         
     if HAS_CLOUDINARY:
         try:
+            # Extract public ID (filename without extension) to preserve original filename in Cloudinary URL
+            name_without_ext = os.path.splitext(filename)[0] if filename else None
             # Upload directly to Cloudinary with automatic resource type detection (image/video/raw)
-            upload_result = cloudinary.uploader.upload(file, resource_type="auto", folder="primers_zest")
+            upload_result = cloudinary.uploader.upload(
+                file, 
+                resource_type="auto", 
+                folder="primers_zest",
+                public_id=name_without_ext,
+                use_filename=True,
+                unique_filename=False
+            )
             return upload_result.get('secure_url')
         except Exception as e:
             print(f"Cloudinary Upload Failed, falling back to local: {e}")
