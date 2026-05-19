@@ -65,12 +65,16 @@ def save_uploaded_file(file, folder=None, custom_filename=None):
     # Check if a custom prefix/pattern is requested (like star_ or slide_ or chat_)
     prefix = ""
     if custom_filename:
-        for p in ['star_', 'slide_', 'chat_']:
-            if custom_filename.startswith(p):
-                parts = custom_filename.split('_')
-                if len(parts) > 1:
-                    prefix = "_".join(parts[:-1]) + "_"
-                break
+        parts = custom_filename.split('_')
+        if custom_filename.startswith('star_'):
+            if 'update' in parts:
+                prefix = "_".join(parts[:5]) + "_"
+            else:
+                prefix = "_".join(parts[:4]) + "_"
+        elif custom_filename.startswith('slide_'):
+            prefix = "_".join(parts[:2]) + "_"
+        elif custom_filename.startswith('chat_'):
+            prefix = "_".join(parts[:3]) + "_"
                 
     filename = f"{prefix}{unique_id}{ext}"
         
