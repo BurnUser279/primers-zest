@@ -56,6 +56,27 @@
             --shadow-lg: 0 40px 80px rgba(0, 0, 0, 0.8);
         }
 
+        /* High Contrast Pricing in Dark Mode */
+        .vip-theme .card-price,
+        .vip-theme .star-price,
+        .vip-theme .plan-accent {
+            color: #ffca28 !important; /* Premium High Contrast Gold */
+            text-shadow: 0 0 8px rgba(255, 202, 40, 0.2);
+        }
+        .vip-theme td[style*="color: var(--primary)"] {
+            color: #ffca28 !important;
+            text-shadow: 0 0 8px rgba(255, 202, 40, 0.2);
+        }
+        .vip-theme .btn-secondary {
+            background: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid rgba(212, 175, 55, 0.35) !important;
+            color: var(--text-main) !important;
+        }
+        .vip-theme .btn-secondary:hover {
+            background: rgba(212, 175, 55, 0.1) !important;
+            border-color: var(--primary) !important;
+        }
+
         .light-theme {
             --bg-body: #f8fafc;
             --bg-card: #ffffff;
@@ -621,7 +642,7 @@
 
         /* Theme Toggle Button */
         .theme-toggle-btn {
-            background: rgba(var(--primary), 0.1);
+            background: rgba(var(--primary-rgb), 0.1);
             border: 1px solid var(--border-color);
             color: var(--primary);
             padding: 8px 12px;
@@ -705,12 +726,16 @@
 
         @media (max-width: 768px) {
             .grid-2 { grid-template-columns: 1fr !important; }
-            .hide-mobile { display: none !important; }
-            .only-mobile { display: block !important; }
             .full-mobile { width: 100% !important; }
         }
-        @media (min-width: 769px) {
+        @media (max-width: 992px) {
+            .hide-mobile { display: none !important; }
+            .only-mobile { display: block !important; }
+            .only-mobile-inline { display: inline-block !important; }
+        }
+        @media (min-width: 993px) {
             .only-mobile { display: none !important; }
+            .only-mobile-inline { display: none !important; }
         }
 
         /* Scrollbar styling */
@@ -884,7 +909,7 @@
             border-radius: 6px;
             font-size: 0.7rem;
             font-weight: 700;
-            background: rgba(var(--primary), 0.05);
+            background: rgba(var(--primary-rgb), 0.05);
             color: var(--primary);
         }
 
