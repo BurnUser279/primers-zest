@@ -1490,7 +1490,8 @@
 <script>
     function toggleSection(sectionId, navEl) {
         document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
-        document.getElementById(sectionId).classList.add('active');
+        const targetSec = document.getElementById(sectionId);
+        if (targetSec) targetSec.classList.add('active');
         
         // Update nav active state (both sidebar and bottom nav)
         document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(n => n.classList.remove('active'));
@@ -1515,7 +1516,7 @@
 
     function toggleEdit(id) {
         const el = document.getElementById(id);
-        el.style.display = el.style.display === 'none' ? 'table-row' : 'none';
+        if (el) el.style.display = el.style.display === 'none' ? 'table-row' : 'none';
     }
 
     function copyInviteLink(link) {

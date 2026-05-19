@@ -101,7 +101,6 @@ def send_email_notification(recipient_email, subject, body, user_id=None):
             c = get_cursor(conn, db_type)
             c.execute("INSERT INTO email_logs (user_id, subject, body) VALUES (%s, %s, %s)", (user_id, subject, body))
             conn.commit()
-            conn.close()
         except Exception as log_err:
             print(f"Log Error: {log_err}")
 
@@ -122,12 +121,6 @@ def get_templated_email(event_type, name, admin_text=None):
             return subject, body
     except Exception as e:
         print(f"Email Template Error ({event_type}): {e}")
-    finally:
-        if conn:
-            try:
-                conn.close()
-            except Exception:
-                pass
     return None, None
 
 # Security & Throttling
@@ -237,6 +230,30 @@ def init_pool():
         except Exception as e:
             print(f"CRITICAL: Pool Initialization Failed: {e}")
 
+class SQLiteConnectionWrapper:
+    def __init__(self, conn):
+        super().__setattr__('_conn', conn)
+    def cursor(self, *args, **kwargs):
+        return self._conn.cursor(*args, **kwargs)
+    def commit(self):
+        return self._conn.commit()
+    def rollback(self):
+        return self._conn.rollback()
+    def close(self):
+        # In a request-bound environment (flask.g), we don't close manually.
+        # The teardown_db function handles the actual release.
+        pass
+    def __enter__(self): return self
+    def __exit__(self, exc_type, exc_val, exc_tb): pass
+    
+    def __getattr__(self, name):
+        return getattr(self._conn, name)
+    def __setattr__(self, name, value):
+        if name == '_conn':
+            super().__setattr__(name, value)
+        else:
+            setattr(self._conn, name, value)
+
 class PostgresConnectionWrapper:
     def __init__(self, conn, pool=None):
         self._conn = conn
@@ -267,9 +284,10 @@ def get_db_connection():
     if not db_url or not str(db_url).startswith('postgres'):
         conn = sqlite3.connect('dev_database.db', check_same_thread=False)
         conn.row_factory = sqlite3.Row
-        g.db_conn = conn
+        wrapped_conn = SQLiteConnectionWrapper(conn)
+        g.db_conn = wrapped_conn
         g.db_type = 'sqlite'
-        return conn, 'sqlite'
+        return wrapped_conn, 'sqlite'
     
     # Postgres with Pool Support
     if _db_pool is None:
@@ -344,7 +362,9 @@ def teardown_db(exception):
                     raw_conn.close()
                 except: pass
         else:
-            try: conn.close()
+            try:
+                raw_conn = conn._conn if hasattr(conn, '_conn') else conn
+                raw_conn.close()
             except: pass
 
 class SQLiteCursorWrapper:
@@ -402,7 +422,6 @@ def log_admin_action(action, target_type=None, target_id=None, details=None):
             VALUES (%s, %s, %s, %s, %s)
         """, (admin_id, action, target_type, target_id, details))
         conn.commit()
-        conn.close()
     except Exception as e:
         print(f"Audit Log Error: {e}")
 
@@ -451,7 +470,6 @@ def get_site_setting(key, default=""):
         c = get_cursor(conn, db_type)
         c.execute("SELECT setting_value FROM site_settings WHERE setting_key = %s", (key,))
         row = c.fetchone()
-        conn.close()
         if row:
             # Handle both Row objects and tuples
             return row[0] if isinstance(row, (tuple, list)) else row['setting_value']
@@ -484,9 +502,6 @@ def inject_unread_count():
         except:
             ctx['unread_notifications_count'] = 0
             ctx['membership_tier'] = 'Regular'
-        finally:
-            if 'conn' in locals() and conn:
-                conn.close()
         return ctx
     
     if session.get('is_admin'):
@@ -501,9 +516,6 @@ def inject_unread_count():
             ctx['vip_submissions'] = c.fetchall()
         except Exception as e:
             print(f"Global Context Admin Data Fetch Error: {e}")
-        finally:
-            if 'conn' in locals() and conn:
-                conn.close()
 
     ctx['unread_notifications_count'] = 0
     ctx['membership_tier'] = None
@@ -522,7 +534,6 @@ def check_account_status():
         if request.endpoint in exempt:
             return
 
-        conn = None
         try:
             conn, db_type = get_db_connection()
             c = get_cursor(conn, db_type)
@@ -532,12 +543,6 @@ def check_account_status():
                 return redirect(url_for('member_appeal'))
         except Exception as e:
             print(f"Account Status Check Error: {e}")
-        finally:
-            if conn:
-                try:
-                    conn.close()
-                except Exception:
-                    pass
 
 def add_admin_notification(member_id, action_type, message, target_url=None):
     try:
@@ -546,7 +551,6 @@ def add_admin_notification(member_id, action_type, message, target_url=None):
         c.execute("INSERT INTO admin_notifications (member_id, action_type, message, target_url) VALUES (%s, %s, %s, %s)",
                   (member_id, action_type, message, target_url))
         conn.commit()
-        conn.close()
     except Exception as e:
         print(f"Notification Error: {e}")
 
@@ -557,7 +561,6 @@ def add_member_notification(member_id, action_type, message, target_url=None):
         c.execute("INSERT INTO member_notifications (member_id, action_type, message, target_url) VALUES (%s, %s, %s, %s)",
                   (member_id, action_type, message, target_url))
         conn.commit()
-        conn.close()
     except Exception as e:
         print(f"Member Notification Error: {e}")
 
@@ -1095,7 +1098,6 @@ def init_db():
     c.execute("CREATE INDEX IF NOT EXISTS idx_donations_member ON donations(member_id)")
 
     conn.commit()
-    conn.close()
 
 # Database initialization removed from top level to prevent import-time crashes.
 # It is now called inside the if __name__ == '__main__': block.
@@ -1112,7 +1114,6 @@ def index():
     row_count = c.fetchone()
     member_count_display = row_count[0] if row_count else "4,726"
     
-    conn.close()
     return render_template('landing.html', 
                            member_count=member_count_display, 
                            footer_info=footer_info)

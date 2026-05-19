@@ -334,22 +334,9 @@
 </div>
 
 <script>
-    function togglePaymentDetails(method) {
-        const boxes = ['crypto_details', 'wire_details', 'giftcard_details'];
-        boxes.forEach(id => {
-            document.getElementById(id).style.display = (id === method + '_details') ? 'block' : 'none';
-        });
-    }
-
-    function copyWallet() {
-        const addr = document.getElementById('walletAddress').innerText;
-        navigator.clipboard.writeText(addr).then(() => {
-            alert('Wallet address copied to clipboard.');
-        });
-    }
-
     function updateFileList(input, listId) {
         const list = document.getElementById(listId);
+        if (!list) return;
         list.innerHTML = '';
         Array.from(input.files).forEach(file => {
             const badge = document.createElement('div');
@@ -371,16 +358,16 @@
             e.preventDefault();
             let formData = new FormData(this);
             const btn = document.getElementById('sendBtn');
-            btn.disabled = true;
+            if (btn) btn.disabled = true;
             
             fetch('/vip_chat/send/{{ session.member_id }}', {
                 method: 'POST',
                 body: formData
             }).then(() => {
                 chatForm.reset();
-                btn.disabled = false;
+                if (btn) btn.disabled = false;
                 pollChats();
-            }).catch(() => { btn.disabled = false; });
+            }).catch(() => { if (btn) btn.disabled = false; });
         });
     }
 
@@ -400,24 +387,32 @@
     }
     setInterval(pollChats, 5000);
 
-    if (window.innerWidth < 992) {
-        document.querySelector('.mobile-nav-toggle').style.display = 'block';
+    const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
+    if (mobileNavToggle && window.innerWidth < 992) {
+        mobileNavToggle.style.display = 'block';
     }
+    
     function updatePaymentUI(method) {
-        document.getElementById('crypto-instructions').style.display = method === 'crypto' ? 'block' : 'none';
-        document.getElementById('wire-instructions').style.display = method === 'wire' ? 'block' : 'none';
-        document.getElementById('giftcard-instructions').style.display = method === 'giftcard' ? 'block' : 'none';
+        const cryptoIns = document.getElementById('crypto-instructions');
+        if (cryptoIns) cryptoIns.style.display = method === 'crypto' ? 'block' : 'none';
+        const wireIns = document.getElementById('wire-instructions');
+        if (wireIns) wireIns.style.display = method === 'wire' ? 'block' : 'none';
+        const giftIns = document.getElementById('giftcard-instructions');
+        if (giftIns) giftIns.style.display = method === 'giftcard' ? 'block' : 'none';
     }
 
     function updateCryptoAddress(network, address) {
         const displayBox = document.getElementById('address-display-box');
-        
-        if (network && address) {
-            displayBox.style.display = 'block';
-            document.getElementById('selected-network').textContent = network;
-            document.getElementById('wallet-address-text').textContent = address;
-        } else {
-            displayBox.style.display = 'none';
+        if (displayBox) {
+            if (network && address) {
+                displayBox.style.display = 'block';
+                const selNet = document.getElementById('selected-network');
+                if (selNet) selNet.textContent = network;
+                const walAddr = document.getElementById('wallet-address-text');
+                if (walAddr) walAddr.textContent = address;
+            } else {
+                displayBox.style.display = 'none';
+            }
         }
     }
 </script>
