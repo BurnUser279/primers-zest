@@ -164,23 +164,82 @@
         position: relative;
     }
 
-    .slide-image {
+    .slide-link {
+        display: block;
+        position: relative;
         width: 100%;
         height: 500px;
-        object-fit: contain;
-        background-color: #111; /* Sleek dark background for letterboxing */
+        overflow: hidden;
     }
 
     @media (max-width: 768px) {
-        .slide-image {
+        .slide-link {
             height: 300px;
         }
     }
+
+    .slide-bg-blur {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: center;
+        filter: blur(25px) brightness(0.35) saturate(1.2);
+        transform: scale(1.15); /* Prevent white edges from blur */
+        z-index: 1;
+    }
+
+    .slide-image {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        z-index: 2;
+    }
+
+    .slide-btn {
+        position: absolute;
+        top: 250px; /* Center of the 500px slide link */
+        transform: translateY(-50%);
+        background: rgba(0, 0, 0, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: rgba(255, 255, 255, 0.85);
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 10;
+        backdrop-filter: blur(4px);
+    }
+
+    @media (max-width: 768px) {
+        .slide-btn {
+            top: 150px;
+            width: 38px;
+            height: 38px;
+        }
+    }
+
+    .slide-btn:hover {
+        background: rgba(212, 175, 55, 0.8); /* Gold accent on hover */
+        border-color: var(--primary);
+        color: #000;
+        transform: translateY(-50%) scale(1.1);
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+    }
+
+    .slide-btn-prev { left: 20px; }
+    .slide-btn-next { right: 20px; }
 
     .slide-caption {
         padding: 25px;
         text-align: center;
         background: linear-gradient(transparent, rgba(0,0,0,0.05));
+        position: relative;
+        z-index: 3;
     }
 
     /* Tiered Pricing Styles */
@@ -346,7 +405,10 @@
     <div class="announcement-card" id="executiveSlideshow">
         {% for slide in slides %}
         <div class="slide" style="display: {% if loop.first %}block{% else %}none{% endif %};" data-index="{{ loop.index0 }}">
-            <a href="/vip_verification/{{ plans[0]['id'] if plans|length > 0 else 1 }}">
+            <a href="/stars" class="slide-link">
+                <!-- Blurred Mirror Background -->
+                <div class="slide-bg-blur" style="background-image: url('{{ slide['image_path']|media_url }}');"></div>
+                <!-- Clean Foreground Image -->
                 <img src="{{ slide['image_path']|media_url }}" class="slide-image" alt="Announcements">
             </a>
             <div class="slide-caption">
@@ -354,11 +416,21 @@
             </div>
         </div>
         {% endfor %}
+
+        <!-- Navigation Buttons -->
+        {% if slides|length > 1 %}
+        <button class="slide-btn slide-btn-prev" aria-label="Previous Slide">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button class="slide-btn slide-btn-next" aria-label="Next Slide">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+        {% endif %}
         
         <!-- Navigation Dots -->
-        <div style="position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px;">
+        <div style="position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10;">
             {% for slide in slides %}
-            <div class="slide-dot {% if loop.first %}active{% endif %}" data-index="{{ loop.index0 }}" style="width: 8px; height: 8px; border-radius: 50%; background: rgba(0,0,0,0.2); cursor: pointer; transition: 0.3s;"></div>
+            <div class="slide-dot {% if loop.first %}active{% endif %}" data-index="{{ loop.index0 }}" style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.4); cursor: pointer; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>
             {% endfor %}
         </div>
     </div>
@@ -370,17 +442,22 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const slides = document.querySelectorAll('#executiveSlideshow .slide');
-            const dots = document.querySelectorAll('#executiveSlideshow .slide-dot');
+            const container = document.getElementById('executiveSlideshow');
+            if (!container) return;
+            
+            const slides = container.querySelectorAll('.slide');
+            const dots = container.querySelectorAll('.slide-dot');
             if (slides.length <= 1) return;
             
             let currentIndex = 0;
+            let slideInterval = null;
+
             function showSlide(index) {
                 slides.forEach(s => s.style.display = 'none');
                 dots.forEach(d => d.classList.remove('active'));
                 
                 slides[index].style.display = 'block';
-                dots[index].classList.add('active');
+                if (dots[index]) dots[index].classList.add('active');
                 currentIndex = index;
             }
 
@@ -389,15 +466,54 @@
                 showSlide(next);
             }
 
-            let slideInterval = setInterval(nextSlide, 5000);
+            function prevSlide() {
+                let prev = (currentIndex - 1 + slides.length) % slides.length;
+                showSlide(prev);
+            }
+
+            function startAutoplay() {
+                stopAutoplay();
+                slideInterval = setInterval(nextSlide, 5000);
+            }
+
+            function stopAutoplay() {
+                if (slideInterval) {
+                    clearInterval(slideInterval);
+                    slideInterval = null;
+                }
+            }
+
+            // Event listener setup
+            const btnPrev = container.querySelector('.slide-btn-prev');
+            const btnNext = container.querySelector('.slide-btn-next');
+
+            if (btnPrev) {
+                btnPrev.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    prevSlide();
+                    startAutoplay();
+                });
+            }
+
+            if (btnNext) {
+                btnNext.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    nextSlide();
+                    startAutoplay();
+                });
+            }
 
             dots.forEach(dot => {
-                dot.addEventListener('click', () => {
-                    clearInterval(slideInterval);
-                    showSlide(parseInt(dot.dataset.index));
-                    slideInterval = setInterval(nextSlide, 5000);
+                dot.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetIndex = parseInt(this.getAttribute('data-index'));
+                    showSlide(targetIndex);
+                    startAutoplay();
                 });
             });
+
+            // Start standard play
+            startAutoplay();
         });
     </script>
 
