@@ -4,9 +4,9 @@
 
 {% block content %}
 <div class="profile-container" style="max-width: 800px; margin: 40px auto;">
-    <div style="text-align: center; margin-bottom: 30px;">
-        <h1 style="font-size: 2rem; margin-bottom: 10px;">Identity Verification</h1>
-        <p style="color: var(--text-muted);">Please complete the KYC process to unlock full platform features.</p>
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h1 style="font-size: 2.2rem; margin-bottom: 10px;">Identity Verification</h1>
+        <p style="color: var(--text-muted);">Please complete the KYC verification steps below to authenticate your account.</p>
     </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -19,61 +19,464 @@
       {% endif %}
     {% endwith %}
 
-    <div class="table-card" style="padding: 30px;">
+    <div class="table-card" style="padding: 40px; background: var(--bg-card); border-radius: 18px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
         {% if kyc_status == 'Pending' %}
-        <div style="text-align: center; padding: 40px;">
-            <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color: #f59e0b; margin-bottom: 15px;"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <h2 style="margin: 0 0 10px; font-size: 1.25rem;">Verification Pending</h2>
-            <p style="color: var(--text-muted); margin: 0;">Your KYC application is currently being reviewed by the executive compliance team. You will be notified once complete.</p>
-            <a href="/profile" class="btn btn-secondary" style="margin-top: 20px;">Return to Profile</a>
+        <!-- Review Pending Screen -->
+        <div style="text-align: center; padding: 20px 10px;">
+            <div style="display: inline-flex; align-items: center; justify-content: center; width: 80px; height: 80px; border-radius: 50%; background: rgba(212, 175, 55, 0.08); border: 2px solid rgba(212, 175, 55, 0.2); margin-bottom: 25px;">
+                <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color: var(--primary); animation: spin 4s linear infinite;"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path></svg>
+            </div>
+            
+            <h2 style="margin: 0 0 10px; font-size: 1.6rem; font-weight: 800; color: var(--text-main); letter-spacing: 0.5px;">Verification Pending</h2>
+            <p style="color: var(--text-muted); margin: 0 auto 40px; font-size: 0.95rem; line-height: 1.6; max-width: 500px;">Your KYC credentials have been securely received and are undergoing review by our executive compliance team.</p>
+            
+            <!-- Auditing Timeline Stepper -->
+            <div class="pending-stepper" style="max-width: 400px; margin: 0 auto 45px; display: flex; flex-direction: column; gap: 25px; text-align: left; background: rgba(255, 255, 255, 0.01); border: 1px solid var(--border-color); border-radius: 12px; padding: 25px;">
+                <!-- Step 1 -->
+                <div style="display: flex; gap: 15px; align-items: flex-start;">
+                    <div style="width: 24px; height: 24px; border-radius: 50%; background: #28a745; color: white; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; flex-shrink: 0;">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"></path></svg>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9rem; font-weight: 700; color: var(--text-main);">Application Dispatched</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Your documents and screenshots were uploaded successfully.</div>
+                    </div>
+                </div>
+                
+                <!-- Step 2 -->
+                <div style="display: flex; gap: 15px; align-items: flex-start;">
+                    <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(212, 175, 55, 0.2); border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--primary); display: block; animation: pulse 1.5s infinite;"></span>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9rem; font-weight: 700; color: var(--primary);">Document Audit in Progress</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Our team is reviewing your files for legibility and region compliance.</div>
+                    </div>
+                </div>
+                
+                <!-- Step 3 -->
+                <div style="display: flex; gap: 15px; align-items: flex-start; opacity: 0.4;">
+                    <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--bg-body); border: 2px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; color: var(--text-muted); flex-shrink: 0;">3</div>
+                    <div>
+                        <div style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">Account Authentication</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Platform features will be unlocked once approved.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <a href="/profile" class="btn btn-secondary" style="padding: 12px 35px; border-radius: 50px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem;">Back to Profile</a>
         </div>
         {% else %}
-        <form action="/member/kyc_verify" method="POST" enctype="multipart/form-data">
+        
+        <!-- Multi-Step Wizard Form -->
+        <form id="kycForm" action="/member/kyc_verify" method="POST" enctype="multipart/form-data">
             
-            <div style="margin-bottom: 30px; padding-bottom: 30px; border-bottom: 1px solid var(--border-color);">
-                <h3 style="margin-top: 0; color: var(--primary); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-                    <span style="background: var(--primary); color: var(--bg-body); width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800;">1</span>
-                    Required Documents
-                </h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Based on your region ({{ country }}), we require the following documents: <strong style="color: var(--text-main);">{{ config[2] }}</strong></p>
-                <div class="admin-form-group" style="margin: 0;">
-                    <label>Upload Document Scans</label>
-                    <input type="file" name="kyc_documents" required multiple class="admin-input" accept="image/*,.pdf" style="padding: 10px; background: var(--bg-body);">
+            <!-- Step Progress Bar -->
+            <div class="wizard-progress-bar" style="display: flex; justify-content: space-between; position: relative; margin-bottom: 50px; padding: 0 20px;">
+                <div class="progress-line" style="position: absolute; top: 20px; left: 20px; right: 20px; height: 3px; background: var(--border-color); z-index: 1;"></div>
+                <div class="progress-line-active" id="progressLineActive" style="position: absolute; top: 20px; left: 20px; width: 0%; height: 3px; background: var(--primary); z-index: 2; transition: width 0.3s ease;"></div>
+                
+                <!-- Node 1: Documents -->
+                <div class="wizard-step-node active" data-step="1" style="z-index: 3; text-align: center; width: 80px; position: relative;">
+                    <div class="node-circle" style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: var(--bg-body); display: inline-flex; align-items: center; justify-content: center; font-weight: 800; border: 2px solid var(--primary); transition: all 0.3s; margin: 0 auto;">1</div>
+                    <div class="node-label" style="font-size: 0.7rem; font-weight: 700; color: var(--text-main); margin-top: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Documents</div>
+                </div>
+                
+                <!-- Node 2: Live Verification Link (Conditional) -->
+                {% if config[3] %}
+                <div class="wizard-step-node" data-step="2" style="z-index: 3; text-align: center; width: 80px; position: relative;">
+                    <div class="node-circle" style="width: 40px; height: 40px; border-radius: 50%; background: var(--bg-card); color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; font-weight: 800; border: 2px solid var(--border-color); transition: all 0.3s; margin: 0 auto;">2</div>
+                    <div class="node-label" style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted); margin-top: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Live Check</div>
+                </div>
+                {% endif %}
+                
+                <!-- Node 3: Details & Evidence -->
+                <div class="wizard-step-node" data-step="3" style="z-index: 3; text-align: center; width: 80px; position: relative;">
+                    <div class="node-circle" style="width: 40px; height: 40px; border-radius: 50%; background: var(--bg-card); color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; font-weight: 800; border: 2px solid var(--border-color); transition: all 0.3s; margin: 0 auto;">{{ '3' if config[3] else '2' }}</div>
+                    <div class="node-label" style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted); margin-top: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Details</div>
                 </div>
             </div>
 
-            {% if config[3] %}
-            <div style="margin-bottom: 30px; padding-bottom: 30px; border-bottom: 1px solid var(--border-color);">
-                <h3 style="margin-top: 0; color: var(--primary); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-                    <span style="background: var(--primary); color: var(--bg-body); width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800;">2</span>
-                    External Verification Step
+            <!-- Wizard Step 1: Upload Documents -->
+            <div class="wizard-step" id="step1" style="display: block;">
+                <h3 style="margin-top: 0; color: var(--primary); font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    Required Documents
                 </h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Please click the secure link below to complete the live identity check. Do not close this page.</p>
-                <a href="{{ config[3] }}" target="_blank" class="btn btn-secondary" style="display: inline-block; padding: 10px 20px;">Proceed to Secure Verification &rarr;</a>
+                
+                {% if not config[2] or config[2].lower() in ['none', 'no', 'null', ''] %}
+                <div style="background: rgba(255, 255, 255, 0.02); border: 1px dashed var(--border-color); padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">No document specifications have been requested by the admin yet.</p>
+                </div>
+                {% else %}
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 25px; line-height: 1.6;">
+                    Based on your region (<strong>{{ country }}</strong>), please provide clean, legible scans of: 
+                    <strong style="color: var(--text-main); background: rgba(212, 175, 55, 0.1); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(212, 175, 55, 0.2); margin-left: 5px;">{{ config[2] }}</strong>
+                </p>
+                
+                <div class="admin-form-group" style="margin-bottom: 25px;">
+                    <div class="upload-dropzone" id="dropzoneStep1" style="border: 2px dashed var(--border-color); border-radius: 12px; padding: 45px 20px; text-align: center; cursor: pointer; transition: all 0.3s; background: rgba(255, 255, 255, 0.01);">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color: var(--primary); margin-bottom: 15px; transition: transform 0.3s ease;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"></path>
+                        </svg>
+                        <div style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Drag & Drop document scans here</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">or click to browse files</div>
+                        <span style="font-size: 0.75rem; color: var(--text-muted); padding: 6px 14px; background: var(--bg-body); border-radius: 6px; border: 1px solid var(--border-color); display: inline-block;">PDF, PNG, JPG (Max 10MB)</span>
+                        <input type="file" name="kyc_documents" id="kycDocumentsInput" required multiple accept="image/*,.pdf" style="display: none;">
+                    </div>
+                    <div class="selected-files-list" id="filesListStep1" style="margin-top: 15px; display: flex; flex-direction: column; gap: 8px;"></div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Wizard Step 2: Live Verification -->
+            {% if config[3] %}
+            <div class="wizard-step" id="step2" style="display: none;">
+                <h3 style="margin-top: 0; color: var(--primary); font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    Live Verification Link
+                </h3>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 25px; line-height: 1.6;">
+                    Please click the secure link below to complete the external live identity check. Do not close this browser tab.
+                </p>
+                
+                <div style="background: rgba(255, 255, 255, 0.01); border: 1px solid var(--border-color); border-radius: 12px; padding: 35px 20px; text-align: center; margin-bottom: 30px;">
+                    <a href="{{ config[3] }}" target="_blank" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; border-radius: 50px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <span>Proceed to Secure Verification</span>
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    </a>
+                </div>
+                
+                <div style="display: flex; gap: 10px; background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.1); border-radius: 10px; padding: 15px; font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--primary); flex-shrink: 0; margin-top: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div>
+                        Once you have completed the verification process on the external platform, return to this page and click <strong>Next</strong> to upload your proof of completion.
+                    </div>
+                </div>
             </div>
             {% endif %}
 
-            <div style="margin-bottom: 30px;">
-                <h3 style="margin-top: 0; color: var(--primary); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-                    <span style="background: var(--primary); color: var(--bg-body); width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800;">{{ '3' if config[3] else '2' }}</span>
-                    Verification Details & Evidence
+            <!-- Wizard Step 3: Details & Evidence -->
+            <div class="wizard-step" id="step3" style="display: none;">
+                <h3 style="margin-top: 0; color: var(--primary); font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    Verification Details & Proof
                 </h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">After completing the steps above, please provide the following details: <strong style="color: var(--text-main);">{{ config[4] }}</strong></p>
-                <div class="admin-form-group" style="margin-bottom: 15px;">
-                    <textarea name="post_info_data" required rows="3" class="admin-input" placeholder="Enter the required details here..."></textarea>
+                
+                <!-- Admin instructions check -->
+                {% if not config[4] or config[4].lower() in ['none', 'no', 'null', ''] %}
+                <div style="background: rgba(255, 255, 255, 0.01); border: 1px dashed var(--border-color); padding: 25px; border-radius: 12px; text-align: center; margin-bottom: 25px;">
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">No additional information is required by the admin. You can proceed directly to uploads.</p>
                 </div>
-                <div class="admin-form-group">
-                    <label>Upload Verification Evidence (Multi-file enabled)</label>
-                    <input type="file" name="post_kyc_documents" multiple class="admin-input" accept="image/*,.pdf" style="padding: 10px; background: var(--bg-body);">
-                    <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 5px;">You can upload up to 10 screenshots or document scans of your verification result.</p>
+                <input type="hidden" name="post_info_data" value="None Required">
+                {% else %}
+                <div class="admin-form-group" style="margin-bottom: 25px;">
+                    <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.5px;">
+                        Required Details: <span style="color: var(--text-main); font-weight: 800;">{{ config[4] }}</span>
+                    </label>
+                    <textarea name="post_info_data" id="postInfoData" rows="3" class="admin-input" placeholder="Enter the requested details here..." style="width: 100%; padding: 15px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-main); font-family: inherit; font-size: 0.9rem; resize: none;"></textarea>
+                </div>
+                {% endif %}
+                
+                <!-- Proof Upload Dropzone -->
+                <div class="admin-form-group" style="margin-bottom: 25px;">
+                    <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">
+                        Upload Verification Evidence (Screenshots / Proofs)
+                    </label>
+                    <div class="upload-dropzone" id="dropzoneStep3" style="border: 2px dashed var(--border-color); border-radius: 12px; padding: 45px 20px; text-align: center; cursor: pointer; transition: all 0.3s; background: rgba(255, 255, 255, 0.01);">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color: var(--primary); margin-bottom: 15px; transition: transform 0.3s ease;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"></path>
+                        </svg>
+                        <div style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Drag & Drop proof screenshots here</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">or click to browse files</div>
+                        <span style="font-size: 0.75rem; color: var(--text-muted); padding: 6px 14px; background: var(--bg-body); border-radius: 6px; border: 1px solid var(--border-color); display: inline-block;">PDF, PNG, JPG (Max 10MB)</span>
+                        <input type="file" name="post_kyc_documents" id="postKycDocumentsInput" multiple accept="image/*,.pdf" style="display: none;">
+                    </div>
+                    <div class="selected-files-list" id="filesListStep3" style="margin-top: 15px; display: flex; flex-direction: column; gap: 8px;"></div>
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 15px; font-size: 1rem;">Submit Application for Review</button>
+            <!-- Navigation Buttons -->
+            <div class="wizard-navigation" style="margin-top: 40px; display: flex; justify-content: space-between; gap: 15px; border-top: 1px solid var(--border-color); padding-top: 25px;">
+                <button type="button" class="btn btn-secondary" id="prevBtn" style="display: none; padding: 12px 30px; font-weight: 700; border-radius: 50px;">Back</button>
+                <button type="button" class="btn btn-primary" id="nextBtn" style="margin-left: auto; padding: 12px 30px; font-weight: 700; border-radius: 50px;">Next</button>
+                <button type="button" class="btn btn-primary" id="submitBtn" style="display: none; width: 100%; padding: 15px; font-size: 1rem; font-weight: 700; border-radius: 50px;">Submit Application</button>
+            </div>
+            
         </form>
         {% endif %}
     </div>
 </div>
+
+<script>
+    // File upload logic for Step 1
+    const dropzone = document.getElementById('dropzoneStep1');
+    const fileInput = document.getElementById('kycDocumentsInput');
+    const filesList = document.getElementById('filesListStep1');
+
+    if (dropzone && fileInput) {
+        dropzone.addEventListener('click', () => fileInput.click());
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.style.borderColor = 'var(--primary)';
+            dropzone.style.background = 'rgba(212, 175, 55, 0.04)';
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.style.borderColor = 'var(--border-color)';
+            dropzone.style.background = 'rgba(255, 255, 255, 0.01)';
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.style.borderColor = 'var(--border-color)';
+            dropzone.style.background = 'rgba(255, 255, 255, 0.01)';
+            if (e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                updateFilesList();
+            }
+        });
+
+        fileInput.addEventListener('change', updateFilesList);
+    }
+
+    function updateFilesList() {
+        if (!filesList || !fileInput) return;
+        filesList.innerHTML = '';
+        if (fileInput.files.length > 0) {
+            Array.from(fileInput.files).forEach((file) => {
+                const item = document.createElement('div');
+                item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 10px; font-size: 0.85rem;';
+                
+                const info = document.createElement('div');
+                info.style.cssText = 'display: flex; align-items: center; gap: 10px; color: var(--text-main); font-weight: 600;';
+                info.innerHTML = `
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--primary);"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                    ${file.name}
+                    <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(${(file.size / (1024 * 1024)).toFixed(2)} MB)</span>
+                `;
+                item.appendChild(info);
+                filesList.appendChild(item);
+            });
+        }
+    }
+
+    // File upload logic for Step 3
+    const dropzone3 = document.getElementById('dropzoneStep3');
+    const fileInput3 = document.getElementById('postKycDocumentsInput');
+    const filesList3 = document.getElementById('filesListStep3');
+
+    if (dropzone3 && fileInput3) {
+        dropzone3.addEventListener('click', () => fileInput3.click());
+
+        dropzone3.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone3.style.borderColor = 'var(--primary)';
+            dropzone3.style.background = 'rgba(212, 175, 55, 0.04)';
+        });
+
+        dropzone3.addEventListener('dragleave', () => {
+            dropzone3.style.borderColor = 'var(--border-color)';
+            dropzone3.style.background = 'rgba(255, 255, 255, 0.01)';
+        });
+
+        dropzone3.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone3.style.borderColor = 'var(--border-color)';
+            dropzone3.style.background = 'rgba(255, 255, 255, 0.01)';
+            if (e.dataTransfer.files.length > 0) {
+                fileInput3.files = e.dataTransfer.files;
+                updateFilesList3();
+            }
+        });
+
+        fileInput3.addEventListener('change', updateFilesList3);
+    }
+
+    function updateFilesList3() {
+        if (!filesList3 || !fileInput3) return;
+        filesList3.innerHTML = '';
+        if (fileInput3.files.length > 0) {
+            Array.from(fileInput3.files).forEach((file) => {
+                const item = document.createElement('div');
+                item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 10px; font-size: 0.85rem;';
+                
+                const info = document.createElement('div');
+                info.style.cssText = 'display: flex; align-items: center; gap: 10px; color: var(--text-main); font-weight: 600;';
+                info.innerHTML = `
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--primary);"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                    ${file.name}
+                    <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(${(file.size / (1024 * 1024)).toFixed(2)} MB)</span>
+                `;
+                item.appendChild(info);
+                filesList3.appendChild(item);
+            });
+        }
+    }
+
+    // Wizard step switching logic
+    let currentStep = 1;
+    const hasStep2 = {% if config[3] %}true{% else %}false{% endif %};
+    const totalSteps = hasStep2 ? 3 : 2;
+    
+    const step1El = document.getElementById('step1');
+    const step2El = document.getElementById('step2');
+    const step3El = document.getElementById('step3');
+    
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    const nodes = document.querySelectorAll('.wizard-step-node');
+    const progressLine = document.getElementById('progressLineActive');
+    
+    function updateWizard() {
+        if (step1El) step1El.style.display = 'none';
+        if (step2El) step2El.style.display = 'none';
+        if (step3El) step3El.style.display = 'none';
+        
+        if (currentStep === 1) {
+            if (step1El) step1El.style.display = 'block';
+            if (prevBtn) prevBtn.style.display = 'none';
+            if (nextBtn) nextBtn.style.display = 'block';
+            if (submitBtn) submitBtn.style.display = 'none';
+        } else if (currentStep === 2 && hasStep2) {
+            if (step2El) step2El.style.display = 'block';
+            if (prevBtn) prevBtn.style.display = 'block';
+            if (nextBtn) nextBtn.style.display = 'block';
+            if (submitBtn) submitBtn.style.display = 'none';
+        } else {
+            if (step3El) step3El.style.display = 'block';
+            if (prevBtn) prevBtn.style.display = 'block';
+            if (nextBtn) nextBtn.style.display = 'none';
+            if (submitBtn) submitBtn.style.display = 'block';
+        }
+        
+        nodes.forEach(node => {
+            const stepNum = parseInt(node.getAttribute('data-step'));
+            const circle = node.querySelector('.node-circle');
+            const label = node.querySelector('.node-label');
+            if (!circle || !label) return;
+            
+            if (stepNum < currentStep) {
+                circle.style.background = 'var(--primary)';
+                circle.style.borderColor = 'var(--primary)';
+                circle.style.color = 'var(--bg-body)';
+                label.style.color = 'var(--primary)';
+            } else if (stepNum === currentStep) {
+                circle.style.background = 'var(--primary)';
+                circle.style.borderColor = 'var(--primary)';
+                circle.style.color = 'var(--bg-body)';
+                label.style.color = 'var(--text-main)';
+            } else {
+                circle.style.background = 'var(--bg-card)';
+                circle.style.borderColor = 'var(--border-color)';
+                circle.style.color = 'var(--text-muted)';
+                label.style.color = 'var(--text-muted)';
+            }
+        });
+        
+        if (progressLine) {
+            let pct = 0;
+            if (totalSteps === 3) {
+                pct = (currentStep - 1) * 50;
+            } else {
+                pct = (currentStep - 1) * 100;
+            }
+            progressLine.style.width = `${pct}%`;
+        }
+    }
+    
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            // Validation for Step 1 files
+            if (currentStep === 1) {
+                const specExists = {% if not config[2] or config[2].lower() in ['none', 'no', 'null', ''] %}false{% else %}true{% endif %};
+                if (specExists && (!fileInput || fileInput.files.length === 0)) {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (!urlParams.has('debug')) {
+                        alert('Please upload the required document scans before proceeding.');
+                        return;
+                    }
+                }
+            }
+            
+            if (currentStep < totalSteps) {
+                if (currentStep === 1 && !hasStep2) {
+                    currentStep = 3;
+                } else {
+                    currentStep++;
+                }
+                updateWizard();
+            }
+        });
+    }
+    
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            if (currentStep > 1) {
+                if (currentStep === 3 && !hasStep2) {
+                    currentStep = 1;
+                } else {
+                    currentStep--;
+                }
+                updateWizard();
+            }
+        });
+    }
+
+    if (submitBtn) {
+        submitBtn.addEventListener('click', (e) => {
+            // Textarea validation for Step 3
+            const postInfoArea = document.getElementById('postInfoData');
+            const spec3Exists = {% if not config[4] or config[4].lower() in ['none', 'no', 'null', ''] %}false{% else %}true{% endif %};
+            if (spec3Exists && postInfoArea && postInfoArea.value.trim() === '') {
+                alert('Please enter the required verification details before submitting.');
+                e.preventDefault();
+                return;
+            }
+
+            // Evidence file validation for Step 3
+            if (fileInput3 && fileInput3.files.length === 0) {
+                const urlParams = new URLSearchParams(window.location.search);
+                if (!urlParams.has('debug')) {
+                    alert('Please upload verification evidence screenshots/scans before submitting.');
+                    e.preventDefault();
+                    return;
+                }
+            }
+
+            // If all validation passes, submit form
+            document.getElementById('kycForm').submit();
+        });
+    }
+    
+    // Initialize wizard status
+    updateWizard();
+</script>
+
+<style>
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.7; transform: scale(1.05); }
+    }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .wizard-step {
+        animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .upload-dropzone:hover {
+        border-color: var(--primary) !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+    }
+    .upload-dropzone:hover svg {
+        transform: translateY(-4px);
+    }
+</style>
 {% endblock %}
 
 {% block nav_links %}
