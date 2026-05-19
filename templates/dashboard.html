@@ -246,23 +246,84 @@
     .plan-exclusive .btn-select { background: #1a1a1a; border-color: #1a1a1a; color: #fff; }
     .plan-exclusive .plan-tier-badge { background: #1a1a1a; }
 
-    /* Dark Mode Overrides for Platinum/Exclusive Tier */
+    /* ── Dark Mode Overrides for Plan Tiers ── */
+    .vip-theme .plan-bronze {
+        border-color: rgba(249, 115, 22, 0.35) !important;
+    }
+    .vip-theme .plan-bronze .plan-accent {
+        color: #ff7c3b !important;
+        text-shadow: 0 0 10px rgba(249, 115, 22, 0.3) !important;
+    }
+    .vip-theme .plan-bronze .btn-select {
+        background: #f97316 !important;
+        border-color: #f97316 !important;
+        color: #ffffff !important;
+    }
+    .vip-theme .plan-bronze .btn-select:hover {
+        background: #ea580c !important;
+        border-color: #ea580c !important;
+    }
+
+    .vip-theme .plan-silver {
+        border-color: rgba(148, 163, 184, 0.35) !important;
+    }
+    .vip-theme .plan-silver .plan-accent {
+        color: #cbd5e1 !important;
+        text-shadow: 0 0 10px rgba(148, 163, 184, 0.2) !important;
+    }
+    .vip-theme .plan-silver .btn-select {
+        background: #64748b !important;
+        border-color: #64748b !important;
+        color: #ffffff !important;
+    }
+    .vip-theme .plan-silver .btn-select:hover {
+        background: #475569 !important;
+        border-color: #475569 !important;
+    }
+
+    .vip-theme .plan-gold {
+        border-color: rgba(255, 202, 40, 0.4) !important;
+    }
+    .vip-theme .plan-gold .plan-accent {
+        color: #ffca28 !important;
+        text-shadow: 0 0 10px rgba(255, 202, 40, 0.3) !important;
+    }
+    .vip-theme .plan-gold .btn-select {
+        background: #ffca28 !important;
+        border-color: #ffca28 !important;
+        color: #000000 !important;
+    }
+    .vip-theme .plan-gold .btn-select:hover {
+        background: #ffb300 !important;
+        border-color: #ffb300 !important;
+    }
+    .vip-theme .plan-gold .plan-tier-badge {
+        background: #ffca28 !important;
+        color: #000000 !important;
+    }
+
     .vip-theme .plan-exclusive {
-        background: linear-gradient(145deg, #0d0d0d, #161616) !important;
-        border-color: rgba(212, 175, 55, 0.4) !important;
+        background: linear-gradient(145deg, #09090b, #18181b) !important;
+        border-color: rgba(192, 132, 252, 0.4) !important;
         color: var(--text-main) !important;
     }
     .vip-theme .plan-exclusive .plan-accent {
-        color: #ffca28 !important;
+        color: #c084fc !important;
+        text-shadow: 0 0 12px rgba(168, 85, 247, 0.4) !important;
     }
     .vip-theme .plan-exclusive .btn-select {
-        background: var(--primary) !important;
-        border-color: var(--primary) !important;
-        color: #000 !important;
+        background: #c084fc !important;
+        border-color: #c084fc !important;
+        color: #000000 !important;
+        font-weight: 800 !important;
+    }
+    .vip-theme .plan-exclusive .btn-select:hover {
+        background: #a855f7 !important;
+        border-color: #a855f7 !important;
     }
     .vip-theme .plan-exclusive .plan-tier-badge {
-        background: var(--primary) !important;
-        color: #000 !important;
+        background: #c084fc !important;
+        color: #000000 !important;
     }
 </style>
 {% endblock %}
