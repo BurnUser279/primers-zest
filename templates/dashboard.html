@@ -651,26 +651,29 @@
         {% for plan in plans %}
         {% set p_name = plan['plan_name'].lower() %}
         {% set tier_class = 'plan-bronze' %}
-        {% if 'monthly' in p_name or 'bronze' in p_name %}
+        {% set badge_text = '' %}
+        {% if 'bronze' in p_name or 'monthly' in p_name or plan['price'] <= 100 %}
             {% set tier_class = 'plan-bronze' %}
-        {% elif 'quarterly' in p_name or 'silver' in p_name or 'exclusive' in p_name or 'platinum' in p_name or plan['price'] == 2700 %}
+            {% set badge_text = 'Bronze VIP' %}
+        {% elif 'silver' in p_name or 'quarterly' in p_name or plan['price'] == 150 or plan['price'] == 2700 %}
             {% set tier_class = 'plan-exclusive' %}
-        {% elif 'annual' in p_name or 'gold' in p_name or 'lifetime' in p_name or plan['price'] >= 5000 %}
+            {% set badge_text = 'Ultra Premium' %}
+        {% elif 'gold' in p_name or 'annual' in p_name or plan['price'] == 500 or plan['price'] == 5999 %}
             {% set tier_class = 'plan-gold' %}
+            {% set badge_text = 'Most Popular' %}
+        {% else %}
+            {% set tier_class = 'plan-gold' %}
+            {% set badge_text = 'Founding Member' %}
         {% endif %}
 
         <div class="plan-card {{ tier_class }}">
             <!-- Shimmer Overlay for Sweep Reflection -->
             <div class="shimmer-overlay"></div>
 
-            {% if 'monthly' in p_name %}
-            <div class="plan-tier-badge badge-bronze">Bronze VIP</div>
-            {% elif 'quarterly' in p_name %}
-            <div class="plan-tier-badge badge-exclusive">Ultra Premium</div>
-            {% elif 'annual' in p_name %}
-            <div class="plan-tier-badge badge-gold">Most Popular</div>
-            {% elif 'lifetime' in p_name %}
-            <div class="plan-tier-badge badge-gold">Founding Member</div>
+            {% if badge_text %}
+            <div class="plan-tier-badge badge-{{ 'bronze' if tier_class == 'plan-bronze' else ('exclusive' if tier_class == 'plan-exclusive' else 'gold') }}">
+                {{ badge_text }}
+            </div>
             {% endif %}
 
             <div>
