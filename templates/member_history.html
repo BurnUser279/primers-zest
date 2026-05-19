@@ -4,6 +4,86 @@
 
 {% block extra_head %}
 <style>
+    .ticket-details {
+        background: var(--bg-card);
+        border-radius: 18px;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 25px;
+        overflow: hidden;
+        transition: var(--transition-smooth);
+    }
+    .ticket-details[open] {
+        box-shadow: var(--shadow-md);
+        border-color: var(--primary);
+    }
+    .ticket-summary {
+        padding: 25px;
+        cursor: pointer;
+        list-style: none;
+        outline: none;
+        user-select: none;
+    }
+    .ticket-summary::-webkit-details-marker {
+        display: none;
+    }
+    .summary-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+    .status-meta {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .accordion-icon {
+        width: 18px;
+        height: 18px;
+        position: relative;
+        transition: transform 0.3s ease;
+    }
+    .accordion-icon::before, .accordion-icon::after {
+        content: '';
+        position: absolute;
+        background-color: var(--text-muted);
+        transition: transform 0.3s ease;
+    }
+    .accordion-icon::before {
+        top: 8px;
+        left: 2px;
+        width: 14px;
+        height: 2px;
+    }
+    .accordion-icon::after {
+        top: 2px;
+        left: 8px;
+        width: 2px;
+        height: 14px;
+    }
+    .ticket-details[open] .accordion-icon {
+        transform: rotate(45deg);
+    }
+    .ticket-details[open] .accordion-icon::after {
+        transform: rotate(90deg);
+    }
+    .category-badge {
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: var(--primary);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .status-Open { background: rgba(212, 175, 55, 0.15); color: var(--primary); }
+    .status-Replied { background: rgba(40, 167, 69, 0.15); color: #28a745; }
 
     .ticket-card {
         background: var(--bg-card);
@@ -20,35 +100,6 @@
         box-shadow: var(--shadow-md);
         border-color: var(--primary);
     }
-
-    .status-badge {
-        padding: 4px 12px;
-        border-radius: 50px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        text-transform: uppercase;
-    }
-
-    .status-Open { background: #fef9c3; color: #854d0e; }
-    .status-Replied { background: #dcfce7; color: #166534; }
-
-    .msg-box {
-        background: var(--bg-body);
-        padding: 15px;
-        border-radius: 12px;
-        margin-top: 15px;
-        font-size: 0.95rem;
-        line-height: 1.5;
-    }
-
-    .admin-reply-box {
-        background: rgba(212, 175, 55, 0.05);
-        border-left: 4px solid var(--primary);
-        padding: 15px;
-        border-radius: 0 12px 12px 0;
-        margin-top: 15px;
-    }
-
 </style>
 {% endblock %}
 
@@ -70,44 +121,73 @@
     {% endif %}
 
     {% for ticket in history %}
-    <div class="ticket-card">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
-            <div>
-                <span style="font-size: 0.75rem; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 1px;">{{ ticket.category }}</span>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">{{ ticket.created_at|datetimeformat }}</div>
+    <details class="ticket-details" {% if loop.first or single_thread %}open{% endif %}>
+        <summary class="ticket-summary">
+            <div class="summary-header">
+                <div>
+                    <span class="category-badge">{{ ticket.category }}</span>
+                    <span class="ticket-id" style="font-size: 0.8rem; color: var(--text-muted); margin-left: 8px;">#{{ ticket.id }}</span>
+                    <div class="ticket-date" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">{{ ticket.created_at|datetimeformat }}</div>
+                </div>
+                <div class="status-meta">
+                    <span class="status-badge status-{{ ticket.status }}">{{ ticket.status }}</span>
+                    <span class="accordion-icon"></span>
+                </div>
             </div>
-            <span class="status-badge status-{{ ticket.status }}">{{ ticket.status }}</span>
-        </div>
+        </summary>
         
-        <div class="msg-box">
-            <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase;">Member Dispatch:</div>
-            <p style="margin: 0;">{{ ticket.message }}</p>
-            {% if ticket.user_attachments %}
-                <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-                    {% for file in ticket.user_attachments %}
-                        <a href="{{ file }}" target="_blank" style="font-size: 0.75rem; color: var(--primary); text-decoration: none; padding: 6px 12px; background: rgba(212, 175, 55, 0.05); border-radius: 6px; border: 1px solid rgba(212, 175, 55, 0.1);">Document {{ loop.index }}</a>
-                    {% endfor %}
+        <div class="ticket-thread-body" style="padding: 25px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 15px; background: var(--bg-card);">
+            
+            <div class="chat-thread-container" style="display: flex; flex-direction: column; gap: 12px; max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                {% for msg in ticket.thread %}
+                    <div class="chat-bubble-wrapper" style="display: flex; flex-direction: column; width: 100%; align-items: {% if msg.sender == 'Member' %}flex-end{% else %}flex-start{% endif %};">
+                        <div class="chat-bubble-sender" style="font-size: 0.7rem; font-weight: 700; color: {% if msg.sender == 'Member' %}var(--primary){% else %}var(--text-muted){% endif %}; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
+                            {{ msg.sender }}
+                        </div>
+                        <div class="chat-bubble-content" style="max-width: 80%; padding: 12px 16px; border-radius: 14px; font-size: 0.9rem; line-height: 1.4; word-break: break-word;
+                            {% if msg.sender == 'Member' %}
+                                background: rgba(212, 175, 55, 0.08);
+                                border: 1px solid rgba(212, 175, 55, 0.2);
+                                border-top-right-radius: 2px;
+                                color: var(--text-main);
+                            {% else %}
+                                background: var(--bg-body);
+                                border: 1px solid var(--border-color);
+                                border-top-left-radius: 2px;
+                                color: var(--text-main);
+                            {% endif %}">
+                            <p style="margin: 0; white-space: pre-wrap;">{{ msg.text }}</p>
+                        </div>
+                        <div class="chat-bubble-time" style="font-size: 0.65rem; color: var(--text-muted); margin-top: 4px; margin-right: 4px; margin-left: 4px;">
+                            {{ msg.created_at|datetimeformat }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            {% if ticket.user_attachments or ticket.admin_attachments %}
+                <div class="thread-attachments" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border-color);">
+                    <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Attachments</div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        {% for file in ticket.user_attachments %}
+                            <a href="{{ file }}" target="_blank" style="font-size: 0.75rem; color: var(--primary); text-decoration: none; padding: 6px 12px; background: rgba(212, 175, 55, 0.05); border-radius: 6px; border: 1px solid rgba(212, 175, 55, 0.1);">User Doc {{ loop.index }}</a>
+                        {% endfor %}
+                        {% for file in ticket.admin_attachments %}
+                            <a href="{{ file }}" target="_blank" style="font-size: 0.75rem; color: #ff8c00; text-decoration: none; padding: 6px 12px; background: rgba(255, 140, 0, 0.05); border-radius: 6px; border: 1px solid rgba(255, 140, 0, 0.1);">Admin Doc {{ loop.index }}</a>
+                        {% endfor %}
+                    </div>
                 </div>
             {% endif %}
-        </div>
-        
-        {% if ticket.admin_reply %}
-        <div class="admin-reply-box">
-            <div style="font-size: 0.75rem; font-weight: 700; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">Concierge Response:</div>
-            <p style="margin: 0; color: var(--text-main);">{{ ticket.admin_reply }}</p>
-        </div>
-        {% endif %}
 
-        {% if single_thread %}
-        <div style="margin-top: 25px; padding-top: 20px; border-top: 1px dashed var(--border-color);">
-            <h4 style="font-size: 0.9rem; margin-bottom: 15px;">Submit Follow-up</h4>
-            <form action="/history/{{ ticket.id }}" method="POST">
-                <textarea name="reply_message" rows="3" placeholder="Type your follow-up message..." required style="width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-main); font-family: inherit; resize: none;"></textarea>
-                <button type="submit" class="btn btn-primary" style="margin-top: 15px; padding: 12px 25px;">Send Reply</button>
-            </form>
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                <h4 style="font-size: 0.85rem; font-weight: 800; color: var(--primary); margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 0.5px;">Submit Follow-up</h4>
+                <form action="/history/{{ ticket.id }}" method="POST">
+                    <textarea name="reply_message" rows="3" placeholder="Type your follow-up message..." required style="width: 100%; padding: 12px 15px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-main); font-family: inherit; font-size: 0.9rem; resize: none;"></textarea>
+                    <button type="submit" class="btn btn-primary" style="margin-top: 12px; padding: 10px 20px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Send Reply</button>
+                </form>
+            </div>
         </div>
-        {% endif %}
-    </div>
+    </details>
     {% endfor %}
 
     <div style="margin-top: 60px;">
@@ -149,7 +229,8 @@
         }
     });
     if (window.innerWidth < 992) {
-        document.querySelector('.mobile-nav-toggle').style.display = 'block';
+        const mobileToggle = document.querySelector('.mobile-nav-toggle');
+        if (mobileToggle) mobileToggle.style.display = 'block';
     }
 </script>
 {% endblock %}

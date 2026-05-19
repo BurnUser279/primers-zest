@@ -716,6 +716,7 @@ def init_db():
                   status TEXT DEFAULT 'Open',
                   admin_reply TEXT,
                   admin_media TEXT,
+                  parent_id INTEGER,
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                   FOREIGN KEY(user_id) REFERENCES members(id))''')
 
@@ -2664,15 +2665,16 @@ def vip_verification(plan_id):
     c.execute("SELECT setting_key, setting_value FROM site_settings")
     settings = {row[0]: row[1] for row in c.fetchall()}
         
+    c.execute("SELECT id FROM vip_submissions WHERE user_id = %s ORDER BY created_at DESC LIMIT 1", (user_id,))
+    sub_row = c.fetchone()
+    submission_id = sub_row[0] if sub_row else None
+
     # Notify Admin that user is in the concierge
     if not session.get('is_admin'):
         c.execute("SELECT fullname FROM members WHERE id = %s", (user_id,))
         m_row = c.fetchone()
         m_name = m_row[0] if m_row else "Unknown Member"
-        # Fetch submission ID if exists for target link
-        c.execute("SELECT id FROM vip_submissions WHERE user_id = %s ORDER BY created_at DESC LIMIT 1", (user_id,))
-        sub_row = c.fetchone()
-        target = url_for('admin_vip_review', sub_id=sub_row[0]) if sub_row else url_for('admin_dashboard') + "?section=finance"
+        target = url_for('admin_vip_review', sub_id=submission_id) if submission_id else url_for('admin_dashboard') + "?section=finance"
         add_admin_notification(user_id, 'Concierge Active', f"Member {m_name} is currently in the payment concierge for {plan_name}.", target)
 
     conn.close()
@@ -2682,7 +2684,7 @@ def vip_verification(plan_id):
                            plan_name=plan_name,
                            chats=chats, 
                            welcome_msg=welcome_msg, 
-                           submission_id=user_id,
+                           submission_id=submission_id,
                            crypto_wallets=crypto_wallets,
                            settings=settings)
 
@@ -2974,6 +2976,9 @@ def vip_chat_send(member_id):
 
         conn.commit()
         conn.close()
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.headers.get('Accept') == 'application/json' or request.args.get('ajax') == '1':
+        return jsonify({"status": "success"})
 
     if is_admin:
         # Redirect back to the page the admin was on (Vault or Review)
@@ -3939,12 +3944,10 @@ def member_ticket_thread(ticket_id):
     if request.method == 'POST':
         reply_message = request.form.get('reply_message')
         if reply_message:
-            # Phase 4: create a new ticket row instead of mutating the original message.
-            # Appending to message destroyed conversation structure and was unparseable.
             c.execute(
-                "INSERT INTO tickets (user_id, category, message, status) "
-                "SELECT user_id, category, %s, 'Open' FROM tickets WHERE id = %s AND user_id = %s",
-                (f"[Member Reply] {reply_message}", ticket_id, session['member_id'])
+                "INSERT INTO tickets (user_id, category, message, status, parent_id) "
+                "SELECT user_id, category, %s, 'Open', %s FROM tickets WHERE id = %s AND user_id = %s",
+                (f"[Member Reply] {reply_message}", ticket_id, ticket_id, session['member_id'])
             )
             conn.commit()
             
@@ -3953,35 +3956,109 @@ def member_ticket_thread(ticket_id):
             flash('Reply sent successfully to admin.')
         return redirect(url_for('member_ticket_thread', ticket_id=ticket_id))
         
-    c.execute("""
-        SELECT t.id, t.category, t.message, t.status, t.admin_reply, a.file_path, a.uploaded_by_admin, t.created_at
-        FROM tickets t 
-        LEFT JOIN attachments a ON t.id = a.ticket_id 
-        WHERE t.id = %s AND t.user_id = %s 
-        ORDER BY t.created_at DESC
-    """, (ticket_id, session['member_id']))
+def get_threaded_history(member_id, single_ticket_id=None):
+    conn, db_type = get_db_connection()
+    c = get_cursor(conn, db_type)
+    
+    if single_ticket_id:
+        c.execute("""
+            SELECT t.id, t.category, t.message, t.status, t.admin_reply, a.file_path, a.uploaded_by_admin, t.created_at, t.parent_id
+            FROM tickets t 
+            LEFT JOIN attachments a ON t.id = a.ticket_id 
+            WHERE t.user_id = %s AND (t.id = %s OR t.parent_id = %s)
+            ORDER BY t.created_at ASC
+        """, (member_id, single_ticket_id, single_ticket_id))
+    else:
+        c.execute("""
+            SELECT t.id, t.category, t.message, t.status, t.admin_reply, a.file_path, a.uploaded_by_admin, t.created_at, t.parent_id
+            FROM tickets t 
+            LEFT JOIN attachments a ON t.id = a.ticket_id 
+            WHERE t.user_id = %s 
+            ORDER BY t.created_at ASC
+        """, (member_id,))
+        
     rows = c.fetchall()
     conn.close()
     
-    history = {}
+    tickets_dict = {}
+    child_replies = []
+    
     for row in rows:
         t_id = row[0]
-        if t_id not in history:
-            history[t_id] = {
-                'id': row[0],
-                'category': row[1],
-                'message': row[2],
-                'status': row[3],
-                'admin_reply': row[4],
-                'admin_attachments': [],
-                'user_attachments': [],
-                'created_at': row[7]
-            }
-        if row[5]:
-            if row[6]: history[t_id]['admin_attachments'].append(row[5])
-            else: history[t_id]['user_attachments'].append(row[5])
+        parent_id = row[8]
+        raw_msg = row[2] or ""
+        
+        clean_msg = raw_msg
+        if clean_msg.startswith("[Member Reply] "):
+            clean_msg = clean_msg[len("[Member Reply] "):]
             
-    return render_template('member_history.html', history=list(history.values()), single_thread=True, ticket_id=ticket_id)
+        msg_parts = []
+        if "--- User Reply ---" in clean_msg:
+            parts = clean_msg.split("--- User Reply ---")
+            for p in parts:
+                p_str = p.strip()
+                if p_str:
+                    msg_parts.append({
+                        'sender': 'Member',
+                        'text': p_str,
+                        'created_at': row[7]
+                    })
+        else:
+            msg_parts.append({
+                'sender': 'Member',
+                'text': clean_msg,
+                'created_at': row[7]
+            })
+            
+        if row[4]:
+            msg_parts.append({
+                'sender': 'Concierge',
+                'text': row[4],
+                'created_at': row[7]
+            })
+            
+        if not parent_id and raw_msg.startswith("[Member Reply]"):
+            potential_parents = [tid for tid, t in tickets_dict.items() if t['category'] == row[1] and tid < t_id]
+            if potential_parents:
+                parent_id = potential_parents[-1]
+                
+        if parent_id:
+            child_replies.append({
+                'id': t_id,
+                'parent_id': parent_id,
+                'messages': msg_parts,
+                'user_attachments': [row[5]] if (row[5] and not row[6]) else [],
+                'admin_attachments': [row[5]] if (row[5] and row[6]) else []
+            })
+        else:
+            if t_id not in tickets_dict:
+                tickets_dict[t_id] = {
+                    'id': t_id,
+                    'category': row[1],
+                    'status': row[3],
+                    'created_at': row[7],
+                    'thread': msg_parts,
+                    'user_attachments': [],
+                    'admin_attachments': []
+                }
+            if row[5]:
+                if row[6]: tickets_dict[t_id]['admin_attachments'].append(row[5])
+                else: tickets_dict[t_id]['user_attachments'].append(row[5])
+                
+    for child in child_replies:
+        p_id = child['parent_id']
+        if p_id in tickets_dict:
+            tickets_dict[p_id]['thread'].extend(child['messages'])
+            tickets_dict[p_id]['user_attachments'].extend(child['user_attachments'])
+            tickets_dict[p_id]['admin_attachments'].extend(child['admin_attachments'])
+            tickets_dict[p_id]['status'] = child.get('status', tickets_dict[p_id]['status'])
+            
+    sorted_history = sorted(tickets_dict.values(), key=lambda x: x['created_at'], reverse=True)
+    return sorted_history
+
+    # Now define member_ticket_thread using the helper
+    history = get_threaded_history(session['member_id'], single_ticket_id=ticket_id)
+    return render_template('member_history.html', history=history, single_thread=True, ticket_id=ticket_id)
 
 @app.route('/history', methods=['GET', 'POST'])
 def member_history():
@@ -4014,37 +4091,8 @@ def member_history():
         flash('Reply sent successfully')
         return redirect(url_for('member_history'))
 
-    conn, db_type = get_db_connection()
-    c = get_cursor(conn, db_type)
-    c.execute("""
-        SELECT t.id, t.category, t.message, t.status, t.admin_reply, a.file_path, a.uploaded_by_admin, t.created_at
-        FROM tickets t 
-        LEFT JOIN attachments a ON t.id = a.ticket_id 
-        WHERE t.user_id = %s 
-        ORDER BY t.created_at DESC
-    """, (session['member_id'],))
-    rows = c.fetchall()
-    conn.close()
-    
-    history = {}
-    for row in rows:
-        t_id = row[0]
-        if t_id not in history:
-            history[t_id] = {
-                'id': row[0],
-                'category': row[1],
-                'message': row[2],
-                'status': row[3],
-                'admin_reply': row[4],
-                'admin_attachments': [],
-                'user_attachments': [],
-                'created_at': row[7]
-            }
-        if row[5]:
-            if row[6]: history[t_id]['admin_attachments'].append(row[5])
-            else: history[t_id]['user_attachments'].append(row[5])
-            
-    return render_template('member_history.html', history=list(history.values()))
+    history = get_threaded_history(session['member_id'])
+    return render_template('member_history.html', history=history)
 
 @app.route('/admin/vault/<int:member_id>', methods=['GET', 'POST'])
 def admin_user_vault(member_id):
@@ -4698,16 +4746,34 @@ def api_chat_messages(room_id):
 
     channel_id = request.args.get('channel', 'main')
     last_id = request.args.get('last_id', 0, type=int)
+    is_admin = session.get('is_admin') == True
     
-    c.execute("""
-        SELECT cm.id, m.fullname, cm.message_text, cm.created_at, cm.is_pinned, cm.reply_to_id,
-        (SELECT fullname FROM members m2 JOIN chatroom_messages cm2 ON m2.id = cm2.sender_id WHERE cm2.id = cm.reply_to_id) as reply_sender,
-        (SELECT message_text FROM chatroom_messages cm3 WHERE cm3.id = cm.reply_to_id) as reply_text
-        FROM chatroom_messages cm
-        JOIN members m ON cm.sender_id = m.id
-        WHERE cm.room_id = %s AND cm.channel_id = %s AND cm.id > %s 
-        ORDER BY cm.id ASC
-    """, (room_id, channel_id, last_id))
+    if is_admin:
+        c.execute("""
+            SELECT cm.id, m.fullname, cm.message_text, cm.created_at, cm.is_pinned, cm.reply_to_id,
+            (SELECT fullname FROM members m2 JOIN chatroom_messages cm2 ON m2.id = cm2.sender_id WHERE cm2.id = cm.reply_to_id) as reply_sender,
+            (SELECT message_text FROM chatroom_messages cm3 WHERE cm3.id = cm.reply_to_id) as reply_text
+            FROM chatroom_messages cm
+            JOIN members m ON cm.sender_id = m.id
+            WHERE cm.room_id = %s AND cm.channel_id = %s AND cm.id > %s 
+            ORDER BY cm.id ASC
+        """, (room_id, channel_id, last_id))
+    else:
+        c.execute("""
+            SELECT cm.id, m.fullname, cm.message_text, cm.created_at, cm.is_pinned, cm.reply_to_id,
+            (SELECT fullname FROM members m2 JOIN chatroom_messages cm2 ON m2.id = cm2.sender_id WHERE cm2.id = cm.reply_to_id) as reply_sender,
+            (SELECT message_text FROM chatroom_messages cm3 WHERE cm3.id = cm.reply_to_id) as reply_text
+            FROM chatroom_messages cm
+            JOIN members m ON cm.sender_id = m.id
+            WHERE cm.room_id = %s AND cm.channel_id = %s AND cm.id > %s 
+            AND (cm.channel_id = 'announcements' OR EXISTS (
+                SELECT 1 FROM vip_periods vp 
+                WHERE vp.user_id = %s 
+                AND cm.created_at >= vp.start_time 
+                AND (vp.end_time IS NULL OR cm.created_at <= vp.end_time)
+            ))
+            ORDER BY cm.id ASC
+        """, (room_id, channel_id, last_id, current_uid))
     rows = c.fetchall()
     
     # Canonical Emoji mapping to ensure color rendering (Force variation selector)
