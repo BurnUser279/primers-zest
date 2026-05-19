@@ -44,26 +44,46 @@ else:
 def save_uploaded_file(file, folder=None, custom_filename=None):
     """
     Saves an uploaded file. If Cloudinary is configured, uploads directly to Cloudinary.
-    Otherwise, saves to the local filesystem (fallback).
+    Otherwise, saves to the local filesystem (fallback) with a fully randomized name to
+    prevent leakage of original filenames/details.
     """
     if not file or file.filename == '':
         return None
         
-    filename = custom_filename or secure_filename(file.filename)
-    if custom_filename is None:
-        filename = f"{int(time.time())}_{uuid.uuid4().hex[:8]}_{filename}"
+    # Extract file extension from the original filename safely
+    _, ext = os.path.splitext(file.filename)
+    ext = ext.lower()
+    if not ext and custom_filename:
+        _, ext = os.path.splitext(custom_filename)
+        ext = ext.lower()
+    if not ext:
+        ext = '.bin' # Safe fallback
+
+    # Generate a unique randomized ID (wipes original file traces)
+    unique_id = f"{int(time.time())}_{uuid.uuid4().hex[:12]}"
+    
+    # Check if a custom prefix/pattern is requested (like star_ or slide_ or chat_)
+    prefix = ""
+    if custom_filename:
+        for p in ['star_', 'slide_', 'chat_']:
+            if custom_filename.startswith(p):
+                parts = custom_filename.split('_')
+                if len(parts) > 1:
+                    prefix = "_".join(parts[:-1]) + "_"
+                break
+                
+    filename = f"{prefix}{unique_id}{ext}"
         
     if HAS_CLOUDINARY:
         try:
-            # Extract public ID (filename without extension) to preserve original filename in Cloudinary URL
-            name_without_ext = os.path.splitext(filename)[0] if filename else None
-            # Upload directly to Cloudinary with automatic resource type detection (image/video/raw)
+            # Generate a secure public ID using the randomized filename (without extension)
+            public_id, _ = os.path.splitext(filename)
             upload_result = cloudinary.uploader.upload(
                 file, 
+                public_id=public_id,
                 resource_type="auto", 
                 folder="primers_zest",
-                public_id=name_without_ext,
-                use_filename=True,
+                use_filename=False,
                 unique_filename=False
             )
             return upload_result.get('secure_url')
@@ -77,6 +97,7 @@ def save_uploaded_file(file, folder=None, custom_filename=None):
     file.seek(0) # Ensure we are at the start of the stream
     file.save(file_path)
     return file_path.replace('\\', '/')
+
 
 # Email Notification Utility
 def send_email_notification(recipient_email, subject, body, user_id=None):
