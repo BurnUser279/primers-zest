@@ -243,8 +243,27 @@
         background: linear-gradient(145deg, #ffffff, #f8f9fa);
     }
     .plan-exclusive .plan-accent { color: #1a1a1a; }
-    .plan-exclusive .btn-select { background: #1a1a1a; border-color: #1a1a1a; }
+    .plan-exclusive .btn-select { background: #1a1a1a; border-color: #1a1a1a; color: #fff; }
     .plan-exclusive .plan-tier-badge { background: #1a1a1a; }
+
+    /* Dark Mode Overrides for Platinum/Exclusive Tier */
+    .vip-theme .plan-exclusive {
+        background: linear-gradient(145deg, #0d0d0d, #161616) !important;
+        border-color: rgba(212, 175, 55, 0.4) !important;
+        color: var(--text-main) !important;
+    }
+    .vip-theme .plan-exclusive .plan-accent {
+        color: #ffca28 !important;
+    }
+    .vip-theme .plan-exclusive .btn-select {
+        background: var(--primary) !important;
+        border-color: var(--primary) !important;
+        color: #000 !important;
+    }
+    .vip-theme .plan-exclusive .plan-tier-badge {
+        background: var(--primary) !important;
+        color: #000 !important;
+    }
 </style>
 {% endblock %}
 

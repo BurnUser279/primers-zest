@@ -387,7 +387,7 @@
                         <div class="card-dates">
                             <div style="{% if card.image_path %}opacity: 0.6;{% endif %}">
                                 <div class="label-small" style="font-size: 0.4rem;">Since</div>
-                                <div style="font-size: 0.65rem; font-weight: 700;">{{ member['vip_since'].strftime('%Y') if member and member['vip_since'] else '2024' }}</div>
+                                <div style="font-size: 0.65rem; font-weight: 700;">{{ member['vip_since'].strftime('%Y') if (member and member['vip_since'] and member['vip_since'].strftime) else (member['vip_since'][:4] if member and member['vip_since'] else '2024') }}</div>
                             </div>
                             <div style="{% if card.image_path %}opacity: 0.6;{% endif %}">
                                 <div class="label-small" style="font-size: 0.4rem;">Valid Thru</div>
