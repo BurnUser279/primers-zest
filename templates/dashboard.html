@@ -242,23 +242,75 @@
         z-index: 3;
     }
 
+    /* Broadcast Messages Styling (Naughty, Spicy & Large) */
+    .slide-info-text {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.85rem;
+        font-weight: 800;
+        line-height: 1.4;
+        letter-spacing: 0.5px;
+        background: linear-gradient(135deg, #ff007f 10%, #ff5500 50%, #ffd700 90%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: inline-block;
+        animation: pulseGlow 3s infinite ease-in-out;
+        font-style: italic;
+    }
+    @keyframes pulseGlow {
+        0%, 100% {
+            filter: drop-shadow(0 0 3px rgba(255, 0, 127, 0.4)) drop-shadow(0 0 1px rgba(255, 119, 0, 0.3));
+        }
+        50% {
+            filter: drop-shadow(0 0 14px rgba(255, 0, 127, 0.8)) drop-shadow(0 0 4px rgba(255, 119, 0, 0.6));
+        }
+    }
+
     /* Tiered Pricing Styles */
     .plan-card {
         position: relative;
         text-align: center;
         background: var(--bg-card);
-        padding: 40px 30px;
-        border-radius: 20px;
+        padding: 45px 30px;
+        border-radius: 24px;
         border: 1px solid var(--border-color);
         transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        overflow: hidden;
+    }
+
+    /* Shimmer light sweep animation */
+    .plan-card::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+            45deg,
+            transparent 45%,
+            rgba(255, 255, 255, 0.15) 50%,
+            transparent 55%
+        );
+        transform: rotate(45deg);
+        transition: all 0.6s ease;
+        opacity: 0;
+        pointer-events: none;
+    }
+    .plan-card:hover::after {
+        animation: shimmerSweep 1.5s ease-in-out infinite;
+        opacity: 1;
+    }
+    @keyframes shimmerSweep {
+        0% { transform: translate(-100%, -100%) rotate(45deg); }
+        100% { transform: translate(100%, 100%) rotate(45deg); }
     }
 
     .plan-card:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+        transform: translateY(-12px) scale(1.02);
+        box-shadow: var(--shadow-lg);
     }
 
     .plan-tier-badge {
@@ -271,118 +323,144 @@
         font-size: 0.7rem;
         font-weight: 800;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 1.5px;
         color: white;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        z-index: 5;
     }
 
-    /* Bronze Tier */
-    .plan-bronze { border: 1.5px solid #cd7f3244; }
-    .plan-bronze .plan-accent { color: #cd7f32; }
-    .plan-bronze .btn-select { background: #cd7f32; border-color: #cd7f32; }
-
-    /* Silver Tier */
-    .plan-silver { border: 2px solid #94a3b844; }
-    .plan-silver .plan-accent { color: #64748b; }
-    .plan-silver .btn-select { background: #64748b; border-color: #64748b; }
-
-    /* Gold Tier */
-    .plan-gold { 
-        border: 3px solid var(--primary); 
-        transform: scale(1.02);
-        box-shadow: 0 10px 30px rgba(184, 134, 11, 0.1);
+    /* ── Bronze Tier (Cheaper Plan in Full Color) ── */
+    .plan-bronze {
+        background: linear-gradient(135deg, #fdf6f0 0%, #fae8d8 100%);
+        border: 2px solid #cd7f32;
     }
-    .plan-gold .plan-accent { color: var(--primary); }
-    .plan-gold .btn-select { background: var(--primary); border-color: var(--primary); }
-    .plan-gold .plan-tier-badge { background: var(--primary); }
-
-    /* Platinum/Exclusive Tier */
-    .plan-exclusive { 
-        border: 3px solid #1a1a1a; 
-        background: linear-gradient(145deg, #ffffff, #f8f9fa);
-    }
-    .plan-exclusive .plan-accent { color: #1a1a1a; }
-    .plan-exclusive .btn-select { background: #1a1a1a; border-color: #1a1a1a; color: #fff; }
-    .plan-exclusive .plan-tier-badge { background: #1a1a1a; }
-
-    /* ── Dark Mode Overrides for Plan Tiers ── */
     .vip-theme .plan-bronze {
-        border-color: rgba(249, 115, 22, 0.35) !important;
+        background: linear-gradient(135deg, #2b1810 0%, #3e2217 100%) !important;
+        border-color: #d97706 !important;
     }
-    .vip-theme .plan-bronze .plan-accent {
+    .plan-bronze .plan-accent {
         color: #ff7c3b !important;
-        text-shadow: 0 0 10px rgba(249, 115, 22, 0.3) !important;
+        text-shadow: 0 0 10px rgba(249, 115, 22, 0.4);
     }
-    .vip-theme .plan-bronze .btn-select {
-        background: #f97316 !important;
-        border-color: #f97316 !important;
-        color: #ffffff !important;
+    .plan-bronze .btn-select {
+        background: #f97316;
+        border-color: #f97316;
+        color: #fff;
     }
-    .vip-theme .plan-bronze .btn-select:hover {
-        background: #ea580c !important;
-        border-color: #ea580c !important;
+    .plan-bronze .btn-select:hover {
+        background: #ea580c;
+        border-color: #ea580c;
     }
 
+    /* ── Silver Tier (Cheaper Plan in Full Color) ── */
+    .plan-silver {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        border: 2px solid #94a3b8;
+    }
     .vip-theme .plan-silver {
-        border-color: rgba(148, 163, 184, 0.35) !important;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+        border-color: #cbd5e1 !important;
+    }
+    .plan-silver .plan-accent {
+        color: #64748b !important;
+        text-shadow: 0 0 10px rgba(148, 163, 184, 0.3);
     }
     .vip-theme .plan-silver .plan-accent {
         color: #cbd5e1 !important;
-        text-shadow: 0 0 10px rgba(148, 163, 184, 0.2) !important;
+        text-shadow: 0 0 12px rgba(203, 213, 225, 0.4) !important;
     }
-    .vip-theme .plan-silver .btn-select {
-        background: #64748b !important;
-        border-color: #64748b !important;
-        color: #ffffff !important;
+    .plan-silver .btn-select {
+        background: #64748b;
+        border-color: #64748b;
+        color: #fff;
     }
-    .vip-theme .plan-silver .btn-select:hover {
-        background: #475569 !important;
-        border-color: #475569 !important;
+    .plan-silver .btn-select:hover {
+        background: #475569;
+        border-color: #475569;
     }
 
-    .vip-theme .plan-gold {
-        border-color: rgba(255, 202, 40, 0.4) !important;
+    /* ── Gold Tier (Expensive Plan: Black Metallic with Golden Edge Glow) ── */
+    .plan-gold {
+        background: linear-gradient(135deg, #09090b 0%, #151518 50%, #0d0d0f 100%) !important;
+        border: 3.5px solid #d4af37 !important;
+        transform: scale(1.04);
+        box-shadow: 0 15px 35px rgba(212, 175, 55, 0.25), inset 0 0 20px rgba(255, 255, 255, 0.02) !important;
     }
-    .vip-theme .plan-gold .plan-accent {
-        color: #ffca28 !important;
-        text-shadow: 0 0 10px rgba(255, 202, 40, 0.3) !important;
+    .plan-gold:hover {
+        transform: translateY(-12px) scale(1.06);
     }
-    .vip-theme .plan-gold .btn-select {
+    .plan-gold *, .plan-gold p {
+        color: #f1f5f9 !important;
+    }
+    .plan-gold h3 {
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        color: #0c0c0d !important;
+        -webkit-text-fill-color: #0c0c0d !important;
+        -webkit-text-stroke: 1px #ffda44 !important;
+        filter: drop-shadow(0 0 6px rgba(255, 218, 68, 0.5));
+    }
+    .plan-gold .plan-accent {
+        font-family: 'Outfit', sans-serif;
+        color: #0c0c0d !important;
+        -webkit-text-fill-color: #0c0c0d !important;
+        -webkit-text-stroke: 1.5px #ffca28 !important;
+        filter: drop-shadow(0 0 10px rgba(255, 202, 40, 0.7));
+    }
+    .plan-gold .btn-select {
         background: #ffca28 !important;
         border-color: #ffca28 !important;
         color: #000000 !important;
+        font-weight: 800 !important;
     }
-    .vip-theme .plan-gold .btn-select:hover {
+    .plan-gold .btn-select:hover {
         background: #ffb300 !important;
         border-color: #ffb300 !important;
     }
-    .vip-theme .plan-gold .plan-tier-badge {
+    .plan-gold .plan-tier-badge {
         background: #ffca28 !important;
         color: #000000 !important;
+        font-weight: 800 !important;
     }
 
-    .vip-theme .plan-exclusive {
-        background: linear-gradient(145deg, #09090b, #18181b) !important;
-        border-color: rgba(192, 132, 252, 0.4) !important;
-        color: var(--text-main) !important;
+    /* ── Platinum/Exclusive Tier (Expensive Plan: Black Metallic with Amethyst/Gold Glow) ── */
+    .plan-exclusive {
+        background: linear-gradient(135deg, #040405 0%, #0f0f12 50%, #070708 100%) !important;
+        border: 3.5px solid #c084fc !important;
+        box-shadow: 0 15px 35px rgba(168, 85, 247, 0.25), inset 0 0 20px rgba(255, 255, 255, 0.02) !important;
     }
-    .vip-theme .plan-exclusive .plan-accent {
-        color: #c084fc !important;
-        text-shadow: 0 0 12px rgba(168, 85, 247, 0.4) !important;
+    .plan-exclusive *, .plan-exclusive p {
+        color: #f1f5f9 !important;
     }
-    .vip-theme .plan-exclusive .btn-select {
+    .plan-exclusive h3 {
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        color: #0c0c0d !important;
+        -webkit-text-fill-color: #0c0c0d !important;
+        -webkit-text-stroke: 1px #c084fc !important;
+        filter: drop-shadow(0 0 8px rgba(192, 132, 252, 0.6));
+    }
+    .plan-exclusive .plan-accent {
+        font-family: 'Outfit', sans-serif;
+        color: #0c0c0d !important;
+        -webkit-text-fill-color: #0c0c0d !important;
+        -webkit-text-stroke: 1.5px #c084fc !important;
+        filter: drop-shadow(0 0 12px rgba(192, 132, 252, 0.8));
+    }
+    .plan-exclusive .btn-select {
         background: #c084fc !important;
         border-color: #c084fc !important;
         color: #000000 !important;
         font-weight: 800 !important;
     }
-    .vip-theme .plan-exclusive .btn-select:hover {
+    .plan-exclusive .btn-select:hover {
         background: #a855f7 !important;
         border-color: #a855f7 !important;
     }
-    .vip-theme .plan-exclusive .plan-tier-badge {
+    .plan-exclusive .plan-tier-badge {
         background: #c084fc !important;
         color: #000000 !important;
+        font-weight: 800 !important;
     }
 </style>
 {% endblock %}
@@ -412,7 +490,7 @@
                 <img src="{{ slide['image_path']|media_url }}" class="slide-image" alt="Announcements">
             </a>
             <div class="slide-caption">
-                <p style="font-weight: 700; font-size: 1.1rem; color: var(--text-main);">{{ slide['info_text'] }}</p>
+                <p class="slide-info-text">{{ slide['info_text'] }}</p>
             </div>
         </div>
         {% endfor %}
