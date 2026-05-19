@@ -269,19 +269,31 @@
     .plan-card {
         position: relative;
         text-align: center;
-        background: var(--bg-card);
+        /* Unified black metallic finish inside all plans */
+        background: linear-gradient(135deg, #09090b 0%, #151518 50%, #0d0d0f 100%) !important;
         padding: 45px 30px;
         border-radius: 24px;
-        border: 1px solid var(--border-color);
         transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        overflow: hidden;
+        /* Do NOT set overflow: hidden so badges show completely! */
     }
 
-    /* Shimmer light sweep animation */
-    .plan-card::after {
+    .plan-card *, .plan-card p {
+        color: #f1f5f9 !important;
+    }
+
+    /* Shimmer light sweep animation overlay */
+    .shimmer-overlay {
+        position: absolute;
+        inset: 0;
+        border-radius: 24px;
+        overflow: hidden;
+        z-index: 1;
+        pointer-events: none;
+    }
+    .shimmer-overlay::after {
         content: '';
         position: absolute;
         top: -50%;
@@ -297,9 +309,8 @@
         transform: rotate(45deg);
         transition: all 0.6s ease;
         opacity: 0;
-        pointer-events: none;
     }
-    .plan-card:hover::after {
+    .plan-card:hover .shimmer-overlay::after {
         animation: shimmerSweep 1.5s ease-in-out infinite;
         opacity: 1;
     }
@@ -310,7 +321,6 @@
 
     .plan-card:hover {
         transform: translateY(-12px) scale(1.02);
-        box-shadow: var(--shadow-lg);
     }
 
     .plan-tier-badge {
@@ -321,76 +331,95 @@
         padding: 6px 16px;
         border-radius: 20px;
         font-size: 0.7rem;
-        font-weight: 800;
+        font-weight: 900;
         text-transform: uppercase;
         letter-spacing: 1.5px;
-        color: white;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        color: #000000 !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         z-index: 5;
     }
 
-    /* ── Bronze Tier (Cheaper Plan in Full Color) ── */
+    /* ── Bronze Tier (Monthly / Bronze) ── */
     .plan-bronze {
-        background: linear-gradient(135deg, #fdf6f0 0%, #fae8d8 100%);
-        border: 2px solid #cd7f32;
+        border: 1px solid rgba(249, 115, 22, 0.4) !important;
+        box-shadow: 0 10px 30px rgba(249, 115, 22, 0.15), inset 0 0 20px rgba(255, 255, 255, 0.02) !important;
     }
-    .vip-theme .plan-bronze {
-        background: linear-gradient(135deg, #2b1810 0%, #3e2217 100%) !important;
-        border-color: #d97706 !important;
+    .plan-bronze:hover {
+        box-shadow: 0 15px 35px rgba(249, 115, 22, 0.35), inset 0 0 20px rgba(255, 255, 255, 0.02) !important;
+    }
+    .plan-bronze h3 {
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        color: #0c0c0d !important;
+        -webkit-text-fill-color: #0c0c0d !important;
+        -webkit-text-stroke: 1px #ff7c3b !important;
+        filter: drop-shadow(0 0 6px rgba(249, 115, 22, 0.5));
     }
     .plan-bronze .plan-accent {
-        color: #ff7c3b !important;
-        text-shadow: 0 0 10px rgba(249, 115, 22, 0.4);
+        font-family: 'Outfit', sans-serif;
+        color: #0c0c0d !important;
+        -webkit-text-fill-color: #0c0c0d !important;
+        -webkit-text-stroke: 1.5px #ff7c3b !important;
+        filter: drop-shadow(0 0 10px rgba(249, 115, 22, 0.7));
     }
     .plan-bronze .btn-select {
-        background: #f97316;
-        border-color: #f97316;
-        color: #fff;
+        background: #f97316 !important;
+        border-color: #f97316 !important;
+        color: #000000 !important;
+        font-weight: 800 !important;
     }
     .plan-bronze .btn-select:hover {
-        background: #ea580c;
-        border-color: #ea580c;
+        background: #ea580c !important;
+        border-color: #ea580c !important;
+    }
+    .plan-bronze .plan-tier-badge {
+        background: #f97316 !important;
     }
 
-    /* ── Silver Tier (Cheaper Plan in Full Color) ── */
-    .plan-silver {
-        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-        border: 2px solid #94a3b8;
+    /* ── Platinum/Exclusive Tier (Quarterly / Purple) ── */
+    .plan-exclusive {
+        border: 1px solid rgba(192, 132, 252, 0.4) !important;
+        box-shadow: 0 10px 30px rgba(168, 85, 247, 0.15), inset 0 0 20px rgba(255, 255, 255, 0.02) !important;
     }
-    .vip-theme .plan-silver {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
-        border-color: #cbd5e1 !important;
+    .plan-exclusive:hover {
+        box-shadow: 0 15px 35px rgba(168, 85, 247, 0.35), inset 0 0 20px rgba(255, 255, 255, 0.02) !important;
     }
-    .plan-silver .plan-accent {
-        color: #64748b !important;
-        text-shadow: 0 0 10px rgba(148, 163, 184, 0.3);
+    .plan-exclusive h3 {
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        color: #0c0c0d !important;
+        -webkit-text-fill-color: #0c0c0d !important;
+        -webkit-text-stroke: 1px #c084fc !important;
+        filter: drop-shadow(0 0 6px rgba(192, 132, 252, 0.5));
     }
-    .vip-theme .plan-silver .plan-accent {
-        color: #cbd5e1 !important;
-        text-shadow: 0 0 12px rgba(203, 213, 225, 0.4) !important;
+    .plan-exclusive .plan-accent {
+        font-family: 'Outfit', sans-serif;
+        color: #0c0c0d !important;
+        -webkit-text-fill-color: #0c0c0d !important;
+        -webkit-text-stroke: 1.5px #c084fc !important;
+        filter: drop-shadow(0 0 10px rgba(192, 132, 252, 0.7));
     }
-    .plan-silver .btn-select {
-        background: #64748b;
-        border-color: #64748b;
-        color: #fff;
+    .plan-exclusive .btn-select {
+        background: #c084fc !important;
+        border-color: #c084fc !important;
+        color: #000000 !important;
+        font-weight: 800 !important;
     }
-    .plan-silver .btn-select:hover {
-        background: #475569;
-        border-color: #475569;
+    .plan-exclusive .btn-select:hover {
+        background: #a855f7 !important;
+        border-color: #a855f7 !important;
+    }
+    .plan-exclusive .plan-tier-badge {
+        background: #c084fc !important;
     }
 
-    /* ── Gold Tier (Expensive Plan: Black Metallic with Golden Edge Glow) ── */
+    /* ── Gold Tier (Annual & Lifetime / Gold) ── */
     .plan-gold {
-        background: linear-gradient(135deg, #09090b 0%, #151518 50%, #0d0d0f 100%) !important;
-        border: 3.5px solid #d4af37 !important;
-        transform: scale(1.04);
-        box-shadow: 0 15px 35px rgba(212, 175, 55, 0.25), inset 0 0 20px rgba(255, 255, 255, 0.02) !important;
+        border: 1px solid rgba(212, 175, 55, 0.4) !important;
+        box-shadow: 0 10px 30px rgba(212, 175, 55, 0.15), inset 0 0 20px rgba(255, 255, 255, 0.02) !important;
     }
     .plan-gold:hover {
-        transform: translateY(-12px) scale(1.06);
-    }
-    .plan-gold *, .plan-gold p {
-        color: #f1f5f9 !important;
+        box-shadow: 0 15px 35px rgba(212, 175, 55, 0.35), inset 0 0 20px rgba(255, 255, 255, 0.02) !important;
     }
     .plan-gold h3 {
         font-weight: 800;
@@ -419,48 +448,6 @@
     }
     .plan-gold .plan-tier-badge {
         background: #ffca28 !important;
-        color: #000000 !important;
-        font-weight: 800 !important;
-    }
-
-    /* ── Platinum/Exclusive Tier (Expensive Plan: Black Metallic with Amethyst/Gold Glow) ── */
-    .plan-exclusive {
-        background: linear-gradient(135deg, #040405 0%, #0f0f12 50%, #070708 100%) !important;
-        border: 3.5px solid #c084fc !important;
-        box-shadow: 0 15px 35px rgba(168, 85, 247, 0.25), inset 0 0 20px rgba(255, 255, 255, 0.02) !important;
-    }
-    .plan-exclusive *, .plan-exclusive p {
-        color: #f1f5f9 !important;
-    }
-    .plan-exclusive h3 {
-        font-weight: 800;
-        letter-spacing: 0.5px;
-        color: #0c0c0d !important;
-        -webkit-text-fill-color: #0c0c0d !important;
-        -webkit-text-stroke: 1px #c084fc !important;
-        filter: drop-shadow(0 0 8px rgba(192, 132, 252, 0.6));
-    }
-    .plan-exclusive .plan-accent {
-        font-family: 'Outfit', sans-serif;
-        color: #0c0c0d !important;
-        -webkit-text-fill-color: #0c0c0d !important;
-        -webkit-text-stroke: 1.5px #c084fc !important;
-        filter: drop-shadow(0 0 12px rgba(192, 132, 252, 0.8));
-    }
-    .plan-exclusive .btn-select {
-        background: #c084fc !important;
-        border-color: #c084fc !important;
-        color: #000000 !important;
-        font-weight: 800 !important;
-    }
-    .plan-exclusive .btn-select:hover {
-        background: #a855f7 !important;
-        border-color: #a855f7 !important;
-    }
-    .plan-exclusive .plan-tier-badge {
-        background: #c084fc !important;
-        color: #000000 !important;
-        font-weight: 800 !important;
     }
 </style>
 {% endblock %}
@@ -664,16 +651,26 @@
         {% for plan in plans %}
         {% set p_name = plan['plan_name'].lower() %}
         {% set tier_class = 'plan-bronze' %}
-        {% if 'silver' in p_name %}{% set tier_class = 'plan-silver' %}
-        {% elif 'gold' in p_name or 'executive' in p_name %}{% set tier_class = 'plan-gold' %}
-        {% elif 'platinum' in p_name or 'elite' in p_name or plan['price'] > 500 %}{% set tier_class = 'plan-exclusive' %}
+        {% if 'monthly' in p_name or 'bronze' in p_name %}
+            {% set tier_class = 'plan-bronze' %}
+        {% elif 'quarterly' in p_name or 'silver' in p_name or 'exclusive' in p_name or 'platinum' in p_name or plan['price'] == 2700 %}
+            {% set tier_class = 'plan-exclusive' %}
+        {% elif 'annual' in p_name or 'gold' in p_name or 'lifetime' in p_name or plan['price'] >= 5000 %}
+            {% set tier_class = 'plan-gold' %}
         {% endif %}
 
         <div class="plan-card {{ tier_class }}">
-            {% if tier_class == 'plan-gold' %}
-            <div class="plan-tier-badge">Most Popular</div>
-            {% elif tier_class == 'plan-exclusive' %}
-            <div class="plan-tier-badge">Ultra Premium</div>
+            <!-- Shimmer Overlay for Sweep Reflection -->
+            <div class="shimmer-overlay"></div>
+
+            {% if 'monthly' in p_name %}
+            <div class="plan-tier-badge badge-bronze">Bronze VIP</div>
+            {% elif 'quarterly' in p_name %}
+            <div class="plan-tier-badge badge-exclusive">Ultra Premium</div>
+            {% elif 'annual' in p_name %}
+            <div class="plan-tier-badge badge-gold">Most Popular</div>
+            {% elif 'lifetime' in p_name %}
+            <div class="plan-tier-badge badge-gold">Founding Member</div>
             {% endif %}
 
             <div>
@@ -690,7 +687,7 @@
                 </p>
             </div>
             
-            <a href="/vip_verification/{{ plan['id'] }}" class="btn btn-select" style="width: 100%; padding: 15px; font-weight: 700; border-radius: 12px; color: white; text-decoration: none; transition: opacity 0.2s;">
+            <a href="/vip_verification/{{ plan['id'] }}" class="btn btn-select" style="width: 100%; padding: 15px; font-weight: 700; border-radius: 12px; text-decoration: none; transition: opacity 0.2s;">
                 Select {{ plan['plan_name'] }}
             </a>
         </div>
