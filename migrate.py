@@ -98,6 +98,17 @@ def run_migrations():
             )
         """)
 
+        # 2b. star_media
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS star_media (
+                id SERIAL PRIMARY KEY,
+                star_id INTEGER REFERENCES stars(id) ON DELETE CASCADE,
+                file_path TEXT NOT NULL,
+                media_type VARCHAR(20) DEFAULT 'image',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
         # 3. star_bookings
         c.execute("""
             CREATE TABLE IF NOT EXISTS star_bookings (

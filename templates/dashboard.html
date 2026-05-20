@@ -506,12 +506,12 @@
     <div class="announcement-card" id="executiveSlideshow">
         {% for slide in slides %}
         <div class="slide" style="display: {% if loop.first %}block{% else %}none{% endif %};" data-index="{{ loop.index0 }}">
-            <a href="/stars" class="slide-link">
+            <div class="slide-link">
                 <!-- Blurred Mirror Background -->
                 <div class="slide-bg-blur" style="background-image: url('{{ slide['image_path']|media_url }}');"></div>
                 <!-- Clean Foreground Image -->
                 <img src="{{ slide['image_path']|media_url }}" class="slide-image" alt="Announcements">
-            </a>
+            </div>
             <div class="slide-caption">
                 <p class="slide-info-text">{{ slide['info_text'] }}</p>
             </div>
