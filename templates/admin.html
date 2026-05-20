@@ -399,7 +399,7 @@
                             <div style="font-weight: 700;">{{ booking['member_name'] }}</div>
                             <div style="font-size: 0.75rem; color: var(--text-muted);">@{{ booking['username'] }}</div>
                         </td>
-                        <td data-label="Talent" style="font-weight: 700; color: var(--primary);">{{ booking['star_name'] }}</td>
+                        <td data-label="Talent" style="font-weight: 700; color: var(--primary);">{{ booking['star_name'] if booking['star_name'] else 'Special Request' }}</td>
                         <td data-label="Status">
                             <form action="/admin/bookings/status/{{ booking['id'] }}" method="POST" style="display: flex; gap: 5px; align-items: center; justify-content: flex-end;">
                                 <select name="status" class="admin-input" style="padding: 5px; font-size: 0.75rem; width: auto;" onchange="this.form.submit()">

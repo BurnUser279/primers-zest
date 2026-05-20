@@ -2093,7 +2093,7 @@ def admin_dashboard():
     c.execute("""
         SELECT sb.*, s.name as star_name, m.fullname as member_name, m.username, c.room_name
         FROM star_bookings sb
-        JOIN stars s ON sb.star_id = s.id
+        LEFT JOIN stars s ON sb.star_id = s.id
         JOIN members m ON sb.member_id = m.id
         JOIN chatrooms c ON sb.chatroom_id = c.id
         ORDER BY sb.created_at DESC
@@ -4666,7 +4666,7 @@ def stars_roster():
         c.execute("""
             SELECT sb.*, s.name as star_name, s.image_path 
             FROM star_bookings sb 
-            JOIN stars s ON sb.star_id = s.id 
+            LEFT JOIN stars s ON sb.star_id = s.id 
             WHERE sb.member_id = %s
             ORDER BY sb.created_at DESC
         """, (session['member_id'],))
@@ -4731,6 +4731,50 @@ def request_star(star_id):
         return "Star not found."
         
     return render_template('book_star_form.html', star=star, occasions=occasions)
+
+@app.route('/book_a_star/special_request', methods=['POST'])
+def request_special_star():
+    if 'member_id' not in session:
+        return redirect(url_for('member_login'))
+        
+    category = request.form.get('special_category')
+    if category == 'Other':
+        category = request.form.get('other_category', 'Special Category')
+        
+    celebrity_name = request.form.get('celebrity_name')
+    date_needed = request.form.get('date_needed')
+    duration = request.form.get('duration')
+    budget = request.form.get('budget')
+    description = request.form.get('description', '')
+    
+    details = f"SPECIAL REQUEST\nCategory: {category}\nName: {celebrity_name}\nDate: {date_needed}\nDuration: {duration}\nBudget: {budget}\nDescription: {description}"
+    
+    member_id = session['member_id']
+    room_name = f"SpecialStar_{member_id}_{int(time.time())}"
+    
+    conn, db_type = get_db_connection()
+    c = get_cursor(conn, db_type)
+    
+    if db_type == 'postgres':
+        c.execute("INSERT INTO chatrooms (room_name) VALUES (%s) RETURNING id", (room_name,))
+        room_id = c.fetchone()[0]
+    else:
+        c.execute("INSERT INTO chatrooms (room_name) VALUES (%s)", (room_name,))
+        room_id = c.cursor.lastrowid
+        
+    # We use star_id = NULL for special requests.
+    c.execute("""
+        INSERT INTO star_bookings (member_id, star_id, request_details, chatroom_id, status) 
+        VALUES (%s, NULL, %s, %s, 'Pending')
+    """, (member_id, details, room_id))
+    
+    add_admin_notification(member_id, 'Special Star Booking', f"{session.get('member_fullname')} requested a special celebrity: {celebrity_name}.", url_for('star_booking_chat', room_id=room_id))
+    
+    conn.commit()
+    conn.close()
+    flash("Your special request has been submitted to the admin.", "success")
+    return redirect(url_for('star_booking_chat', room_id=room_id))
+
 
 @app.route('/admin/bookings/arrival_time/<int:booking_id>', methods=['POST'])
 def admin_update_arrival_time(booking_id):
@@ -5022,7 +5066,7 @@ def star_booking_chat(room_id):
                     # Notify Member if Admin replied
                     if is_admin:
                         try:
-                            c.execute("SELECT m.email, m.fullname, s.name as star_name FROM members m JOIN star_bookings sb ON m.id = sb.member_id JOIN stars s ON sb.star_id = s.id WHERE sb.chatroom_id = %s LIMIT 1", (room_id,))
+                            c.execute("SELECT m.email, m.fullname, s.name as star_name FROM members m JOIN star_bookings sb ON m.id = sb.member_id LEFT JOIN stars s ON sb.star_id = s.id WHERE sb.chatroom_id = %s LIMIT 1", (room_id,))
                             member_row = c.fetchone()
                             if member_row:
                                 m_email = member_row[0]
