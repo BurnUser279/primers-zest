@@ -4656,9 +4656,9 @@ def stars_roster():
     # Enrich stars with media carousels
     stars = []
     for s in stars_raw:
-        star_dict = dict(s) if db_type == 'sqlite' else s
+        star_dict = dict(s)  # Always convert to plain dict so we can add 'media' key
         c.execute("SELECT file_path, media_type FROM star_media WHERE star_id = %s ORDER BY created_at ASC", (star_dict['id'],))
-        star_dict['media'] = [dict(m) if db_type == 'sqlite' else m for m in c.fetchall()]
+        star_dict['media'] = [dict(m) for m in c.fetchall()]
         stars.append(star_dict)
 
     my_bookings = []
