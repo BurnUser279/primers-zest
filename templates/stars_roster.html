@@ -4,6 +4,7 @@
 
 {% block extra_head %}
 <style>
+    /* ─── Star Cards ─── */
     .roster-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -62,14 +63,11 @@
     }
     .star-card:hover .carousel-nav { opacity: 1; }
     .nav-btn {
-        width: 36px;
-        height: 36px;
+        width: 36px; height: 36px;
         border-radius: 50%;
         background: rgba(0,0,0,0.6);
         color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        display: flex; align-items: center; justify-content: center;
         cursor: pointer;
         pointer-events: auto;
         border: 1px solid rgba(255,255,255,0.1);
@@ -87,8 +85,7 @@
         z-index: 10;
     }
     .dot {
-        width: 6px;
-        height: 6px;
+        width: 6px; height: 6px;
         border-radius: 50%;
         background: rgba(255,255,255,0.3);
         transition: 0.3s;
@@ -102,7 +99,7 @@
     .star-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 20px; }
     .star-price { font-weight: 800; font-size: 1.2rem; color: var(--text-main); }
 
-    /* Booking List */
+    /* ─── Booking List ─── */
     .booking-card {
         background: var(--bg-card);
         border-radius: 16px;
@@ -114,15 +111,111 @@
         gap: 20px;
     }
     .booking-status {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 0.7rem;
-        font-weight: 800;
-        text-transform: uppercase;
+        padding: 6px 12px; border-radius: 20px;
+        font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
     }
-    .status-pending { background: rgba(255, 193, 7, 0.1); color: #ffc107; }
+    .status-pending  { background: rgba(255, 193, 7, 0.1); color: #ffc107; }
     .status-accepted { background: rgba(40, 167, 69, 0.1); color: #28a745; }
-    .status-delivered { background: rgba(0, 123, 255, 0.1); color: #007bff; }
+    .status-delivered{ background: rgba(0, 123, 255, 0.1); color: #007bff; }
+
+    /* ─── Premium Form Inputs ─── */
+    .star-form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .star-form-field label {
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--text-muted);
+    }
+    .star-form-input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 14px 18px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.04);
+        color: var(--text-main);
+        font-family: inherit;
+        font-size: 0.95rem;
+        transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+        outline: none;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    .star-form-input::placeholder { color: rgba(255,255,255,0.25); }
+    .star-form-input:focus {
+        border-color: rgba(212,175,55,0.6);
+        background: rgba(212,175,55,0.04);
+        box-shadow: 0 0 0 3px rgba(212,175,55,0.12);
+    }
+    select.star-form-input {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 14px center;
+        padding-right: 40px;
+        cursor: pointer;
+    }
+    select.star-form-input option { background: #1a1a1a; color: #fff; }
+    textarea.star-form-input {
+        resize: vertical;
+        min-height: 130px;
+        line-height: 1.6;
+    }
+
+    /* ─── Section Panels ─── */
+    .star-section-panel {
+        background: var(--bg-card);
+        border-radius: 20px;
+        padding: 35px;
+        margin-bottom: 50px;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(212,175,55,0.25);
+    }
+    .star-section-panel::before {
+        content: '';
+        position: absolute;
+        top: -60px; right: -60px;
+        width: 180px; height: 180px;
+        background: var(--primary);
+        opacity: 0.07;
+        border-radius: 50%;
+        filter: blur(40px);
+    }
+
+    /* ─── File upload pill ─── */
+    .upload-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 20px;
+        border-radius: 50px;
+        border: 1px dashed rgba(212,175,55,0.35);
+        background: rgba(212,175,55,0.04);
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        transition: all 0.25s;
+        white-space: nowrap;
+    }
+    .upload-pill:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: rgba(212,175,55,0.08);
+    }
+    .upload-pill svg { flex-shrink: 0; }
+    #customFileLabel { font-size: 0.8rem; color: var(--text-muted); margin-left: 6px; }
+
+    /* ─── Animations ─── */
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .slide-in { animation: slideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 </style>
 {% endblock %}
 
@@ -133,130 +226,139 @@
         <p style="color: var(--text-muted); font-size: 1.1rem;">{{ writeup }}</p>
     </div>
 
+    <!-- ─── My Active Requests ─── -->
     {% set has_special_pending = namespace(value=false) %}
     {% if my_bookings %}
     <div style="margin-bottom: 50px;">
         <h2 style="font-size: 1.2rem; margin-bottom: 20px;">My Active Requests</h2>
         <div class="booking-list">
-             {% for b in my_bookings %}
-             {% if b['star_name'] == 'Special Celebrity Request' and b['status'] == 'Pending' %}
-                 {% set has_special_pending.value = true %}
-             {% endif %}
-             <div class="booking-card">
-                 {% if b['image_path'] %}
-                 <img src="{{ b['image_path']|media_url }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
-                 {% else %}
-                 <div style="width: 50px; height: 50px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; color: #000; font-weight: 800; font-size: 1.2rem;">★</div>
-                 {% endif %}
-                 <div style="flex: 1;">
-                     <div style="font-weight: 700;">{{ b['star_name'] if b['star_name'] else 'Special Celebrity Request' }}</div>
-                     <div style="font-size: 0.8rem; color: var(--text-muted);">{{ b['created_at'] }}</div>
-                 </div>
-                 <span class="booking-status status-{{ b['status']|lower }}">{{ b['status'] }}</span>
-                 <a href="/star_booking_chat/{{ b['chatroom_id'] }}" class="btn btn-primary btn-sm">Enter Chat</a>
-             </div>
-             {% endfor %}
-         </div>
-     </div>
-     {% endif %}
-     
-     <!-- Special Celebrity Request Section -->
-     <div style="background: var(--bg-card); border: 1px solid var(--primary); border-radius: 16px; padding: 30px; margin-bottom: 50px; position: relative; overflow: hidden;">
-         <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: var(--primary); opacity: 0.1; border-radius: 50%; filter: blur(30px);"></div>
-         
-         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
-             <div style="flex: 1; min-width: 300px;">
-                 <h2 style="font-size: 1.6rem; margin-bottom: 10px; color: var(--primary);">Specials: Request a Global Star</h2>
-                 <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 0;">
-                     Aside from our curated local stars and models, you can request <strong>any global celebrity</strong>. Whether it is an A-list actor, sports legend, touring musician, or stage performer, our executive concierge will leverage our network to make it happen.
-                 </p>
-             </div>
-             
-             <div>
-                 {% if has_special_pending.value %}
-                 <div style="background: rgba(212, 175, 55, 0.1); border: 1px solid var(--primary); padding: 15px 25px; border-radius: 12px;">
-                     <strong style="color: var(--primary); display: block; margin-bottom: 5px;">Request Pending</strong>
-                     <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">The admin is making enquiries about your former request. Please check your chat.</p>
-                 </div>
-                 {% else %}
-                 <button onclick="document.getElementById('specialRequestForm').style.display='block'; this.style.display='none';" class="btn btn-primary" style="padding: 12px 30px; font-weight: 800; letter-spacing: 0.5px;">Submit Special Request</button>
-                 {% endif %}
-             </div>
-         </div>
-         
-         <!-- The Form -->
-         <div id="specialRequestForm" style="display: none; margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 30px; animation: fadeIn 0.4s ease;">
-             <form action="/book_a_star/special_request" method="POST">
-                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
-                     <div>
-                         <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px;">Celebrity Category</label>
-                         <select name="special_category" class="admin-input" onchange="document.getElementById('otherCategoryDiv').style.display = (this.value === 'Other') ? 'block' : 'none';" required>
-                             <option value="" disabled selected>Select category...</option>
-                             <option value="Actor / Actress">Actor / Actress</option>
-                             <option value="Sports Legend / Athlete">Sports Legend / Athlete</option>
-                             <option value="Musician / Singer">Musician / Singer</option>
-                             <option value="Songwriter / Producer">Songwriter / Producer</option>
-                             <option value="Stage Performer / Comedian">Stage Performer / Comedian</option>
-                             <option value="Reality TV / Influencer">Reality TV / Influencer</option>
-                             <option value="Other">Other (Specify below)</option>
-                         </select>
-                     </div>
-                     <div id="otherCategoryDiv" style="display: none;">
-                         <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px;">Specify Category</label>
-                         <input type="text" name="other_category" class="admin-input" placeholder="e.g. Celebrity Chef">
-                     </div>
-                     <div>
-                         <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px;">Name of Star(s)</label>
-                         <input type="text" name="celebrity_name" class="admin-input" placeholder="e.g. Gordon Ramsay" required>
-                     </div>
-                     <div>
-                         <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px;">Date Needed</label>
-                         <input type="text" name="date_needed" class="admin-input" placeholder="e.g. Dec 25th or Next Weekend" required>
-                     </div>
-                     <div>
-                         <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px;">Duration</label>
-                         <input type="text" name="duration" class="admin-input" placeholder="e.g. 4 hours, Full Day" required>
-                     </div>
-                     <div>
-                         <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px;">Estimated Budget ($)</label>
-                         <input type="text" name="budget" class="admin-input" placeholder="e.g. $50k - $100k" required>
-                     </div>
-                 </div>
-                 
-                 <div style="margin-bottom: 20px;">
-                     <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px;">Additional Description / Custom Request</label>
-                     <textarea name="description" class="admin-input" rows="3" placeholder="Provide any specific details, special requirements, or custom event instructions here..."></textarea>
-                 </div>
-                 
-                 <div style="text-align: right;">
-                     <button type="button" class="btn" style="background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); margin-right: 10px;" onclick="document.getElementById('specialRequestForm').style.display='none'; this.closest('.container').querySelector('.btn-primary').style.display='inline-block';">Cancel</button>
-                     <button type="submit" class="btn btn-primary" style="padding: 10px 25px;">Send Request to Admin</button>
-                 </div>
-             </form>
-         </div>
-     </div>
- 
-     <h2 style="font-size: 1.2rem; margin-bottom: 25px;">Available Roster</h2>
-     <div class="roster-grid">
-         {% for star in stars %}
-         <div class="star-card" id="star-{{ star.id }}">
-             <div class="star-img-wrapper">
-                 <div class="media-carousel" id="carousel-{{ star.id }}">
-                     {% if star.media %}
-                         {% for item in star.media %}
-                         <div class="carousel-item">
-                             {% if item.media_type == 'video' %}
-                             <video src="{{ item.file_path|media_url }}" class="star-media-content" muted loop playsinline onmouseover="this.play()" onmouseout="this.pause()"></video>
-                             {% else %}
-                             <img src="{{ item.file_path|media_url }}" class="star-media-content" alt="{{ star.name }}">
-                             {% endif %}
-                         </div>
-                         {% endfor %}
-                     {% else %}
-                         <div class="carousel-item">
-                             <img src="{{ star.image_path|media_url }}" class="star-media-content" alt="{{ star.name }}">
-                         </div>
-                     {% endif %}
+            {% for b in my_bookings %}
+            {% if b['star_name'] == 'Special Celebrity Request' and b['status'] == 'Pending' %}
+                {% set has_special_pending.value = true %}
+            {% endif %}
+            <div class="booking-card">
+                {% if b['image_path'] %}
+                <img src="{{ b['image_path']|media_url }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                {% else %}
+                <div style="width: 50px; height: 50px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; color: #000; font-weight: 800; font-size: 1.2rem;">★</div>
+                {% endif %}
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight: 700;">{{ b['star_name'] if b['star_name'] else 'Special Celebrity Request' }}</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">{{ b['created_at'] }}</div>
+                </div>
+                <span class="booking-status status-{{ b['status']|lower }}">{{ b['status'] }}</span>
+                <a href="/star_booking_chat/{{ b['chatroom_id'] }}" class="btn btn-primary btn-sm">Enter Chat</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ─── Specials: Request a Global Star ─── -->
+    <div class="star-section-panel">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px; margin-bottom: 0;">
+            <div style="flex: 1; min-width: 260px;">
+                <div style="display: inline-block; background: rgba(212,175,55,0.1); border: 1px solid rgba(212,175,55,0.3); color: var(--primary); font-size: 0.72rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 14px; border-radius: 50px; margin-bottom: 14px;">✦ Exclusive Concierge</div>
+                <h2 style="font-size: 1.6rem; margin-bottom: 10px; color: var(--primary);">Specials: Request a Global Star</h2>
+                <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin: 0;">
+                    Aside from our curated local stars and models, you can request <strong>any global celebrity</strong>. Whether it is an A-list actor, sports legend, touring musician, or stage performer, our executive concierge will leverage our network to make it happen.
+                </p>
+            </div>
+            <div style="flex-shrink: 0;">
+                {% if has_special_pending.value %}
+                <div style="background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.3); padding: 18px 24px; border-radius: 14px; max-width: 300px;">
+                    <strong style="color: var(--primary); display: block; margin-bottom: 6px;">⏳ Request Pending</strong>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0; line-height: 1.5;">The admin is making enquiries about your former request. Please check your chat.</p>
+                </div>
+                {% else %}
+                <button id="openSpecialBtn" onclick="togglePanel('specialRequestForm', 'openSpecialBtn')" class="btn btn-primary" style="padding: 14px 30px; font-weight: 800; letter-spacing: 0.5px; border-radius: 50px;">
+                    Submit Special Request
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- The Form -->
+        <div id="specialRequestForm" style="display: none; margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 30px;">
+            <form action="/book_a_star/special_request" method="POST">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 22px; margin-bottom: 22px;">
+
+                    <div class="star-form-field">
+                        <label>Celebrity Category</label>
+                        <select name="special_category" class="star-form-input" onchange="document.getElementById('otherCategoryDiv').style.display = (this.value === 'Other') ? 'block' : 'none';" required>
+                            <option value="" disabled selected>Select category...</option>
+                            <option value="Actor / Actress">Actor / Actress</option>
+                            <option value="Sports Legend / Athlete">Sports Legend / Athlete</option>
+                            <option value="Musician / Singer">Musician / Singer</option>
+                            <option value="Songwriter / Producer">Songwriter / Producer</option>
+                            <option value="Stage Performer / Comedian">Stage Performer / Comedian</option>
+                            <option value="Reality TV / Influencer">Reality TV / Influencer</option>
+                            <option value="Other">Other (Specify below)</option>
+                        </select>
+                    </div>
+
+                    <div class="star-form-field" id="otherCategoryDiv" style="display: none;">
+                        <label>Specify Category</label>
+                        <input type="text" name="other_category" class="star-form-input" placeholder="e.g. Celebrity Chef">
+                    </div>
+
+                    <div class="star-form-field">
+                        <label>Name of Star(s)</label>
+                        <input type="text" name="celebrity_name" class="star-form-input" placeholder="e.g. Gordon Ramsay" required>
+                    </div>
+
+                    <div class="star-form-field">
+                        <label>Date Needed</label>
+                        <input type="text" name="date_needed" class="star-form-input" placeholder="e.g. Dec 25th or Next Weekend" required>
+                    </div>
+
+                    <div class="star-form-field">
+                        <label>Duration</label>
+                        <input type="text" name="duration" class="star-form-input" placeholder="e.g. 4 hours, Full Day" required>
+                    </div>
+
+                    <div class="star-form-field">
+                        <label>Estimated Budget ($)</label>
+                        <input type="text" name="budget" class="star-form-input" placeholder="e.g. $50k – $100k" required>
+                    </div>
+
+                </div>
+
+                <div class="star-form-field" style="margin-bottom: 25px;">
+                    <label>Additional Description / Custom Request</label>
+                    <textarea name="description" class="star-form-input" placeholder="Provide any specific details, special requirements, or event instructions..."></textarea>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap;">
+                    <button type="button" class="btn" style="background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 50px; padding: 12px 25px;" onclick="togglePanel('specialRequestForm', 'openSpecialBtn')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="padding: 12px 28px; border-radius: 50px; font-weight: 800;">Send Request to Admin</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ─── Available Roster ─── -->
+    <h2 style="font-size: 1.2rem; margin-bottom: 25px;">Available Roster</h2>
+    <div class="roster-grid">
+        {% for star in stars %}
+        <div class="star-card" id="star-{{ star.id }}">
+            <div class="star-img-wrapper">
+                <div class="media-carousel" id="carousel-{{ star.id }}">
+                    {% if star.media %}
+                        {% for item in star.media %}
+                        <div class="carousel-item">
+                            {% if item.media_type == 'video' %}
+                            <video src="{{ item.file_path|media_url }}" class="star-media-content" muted loop playsinline onmouseover="this.play()" onmouseout="this.pause()"></video>
+                            {% else %}
+                            <img src="{{ item.file_path|media_url }}" class="star-media-content" alt="{{ star.name }}">
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="carousel-item">
+                            <img src="{{ star.image_path|media_url }}" class="star-media-content" alt="{{ star.name }}">
+                        </div>
+                    {% endif %}
                 </div>
 
                 {% if star.media and star.media|length > 1 %}
@@ -299,26 +401,97 @@
         </div>
         {% endfor %}
     </div>
+
+    <!-- ─── Custom Request Section ─── -->
+    <div class="star-section-panel" style="border-color: rgba(255,255,255,0.08);">
+        <div style="position: absolute; bottom: -40px; left: -40px; width: 140px; height: 140px; background: var(--primary); opacity: 0.05; border-radius: 50%; filter: blur(35px);"></div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px;">
+            <div style="flex: 1; min-width: 260px;">
+                <p style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-muted); margin-bottom: 10px;">Still looking?</p>
+                <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">Not finding what you want?</h2>
+                <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin: 0;">
+                    Describe exactly what you have in mind — someone specific, a vibe, an occasion. Attach a reference photo or clip if it helps. Our concierge team will get back to you privately.
+                </p>
+            </div>
+            <div style="flex-shrink: 0;">
+                <button id="openCustomBtn" onclick="togglePanel('customRequestForm', 'openCustomBtn')" class="btn" style="padding: 14px 28px; font-weight: 800; border-radius: 50px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03); color: var(--text-main); letter-spacing: 0.5px; transition: all 0.25s;" onmouseover="this.style.borderColor='var(--primary)';this.style.color='var(--primary)'" onmouseout="this.style.borderColor='var(--border-color)';this.style.color='var(--text-main)'">
+                    Tell Us What You Want →
+                </button>
+            </div>
+        </div>
+
+        <!-- Custom Request Form -->
+        <div id="customRequestForm" style="display: none; margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 30px;">
+            <form action="/book_a_star/special_request" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="special_category" value="Custom Request">
+                <input type="hidden" name="celebrity_name" value="Custom Request">
+                <input type="hidden" name="date_needed" value="TBD">
+                <input type="hidden" name="duration" value="TBD">
+                <input type="hidden" name="budget" value="TBD">
+
+                <div class="star-form-field" style="margin-bottom: 22px;">
+                    <label>Describe what you're looking for</label>
+                    <textarea name="description" class="star-form-input" style="min-height: 160px;" placeholder="e.g. 'I want someone like Burna Boy, energetic, great with crowds — for an outdoor birthday bash in Lagos, late December...' — the more detail, the better." required></textarea>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 25px;">
+                    <input type="file" name="custom_reference" id="customReferenceInput" multiple accept="image/*,video/*" style="display: none;" onchange="updateCustomFileLabel(this)">
+                    <label for="customReferenceInput" class="upload-pill">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                        Attach a reference photo / clip
+                        <span style="font-size: 0.72rem; opacity: 0.6;">(optional)</span>
+                    </label>
+                    <span id="customFileLabel" style="font-size: 0.82rem; color: var(--text-muted); font-style: italic;">No file selected</span>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap;">
+                    <button type="button" class="btn" style="background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 50px; padding: 12px 25px;" onclick="togglePanel('customRequestForm', 'openCustomBtn')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="padding: 12px 28px; border-radius: 50px; font-weight: 800;">Send to Concierge</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </div>
 
 <script>
+    /* ─── Carousel ─── */
     const carouselStates = {};
-
     function moveCarousel(starId, direction) {
         if (!carouselStates[starId]) carouselStates[starId] = 0;
-        
         const carousel = document.getElementById('carousel-' + starId);
-        const dots = document.getElementById('dots-' + starId).querySelectorAll('.dot');
+        const dotsEl   = document.getElementById('dots-' + starId);
+        const dots      = dotsEl ? dotsEl.querySelectorAll('.dot') : [];
         const itemCount = carousel.children.length;
-        
         carouselStates[starId] = (carouselStates[starId] + direction + itemCount) % itemCount;
-        
-        const offset = carouselStates[starId] * -100;
-        carousel.style.transform = `translateX(${offset}%)`;
-        
-        dots.forEach((dot, index) => {
-            dot.classList.toggle('active', index === carouselStates[starId]);
-        });
+        carousel.style.transform = `translateX(${carouselStates[starId] * -100}%)`;
+        dots.forEach((dot, i) => dot.classList.toggle('active', i === carouselStates[starId]));
+    }
+
+    /* ─── Toggle collapsible panels ─── */
+    function togglePanel(formId, btnId) {
+        const form = document.getElementById(formId);
+        const btn  = document.getElementById(btnId);
+        const isHidden = form.style.display === 'none';
+        form.style.display = isHidden ? 'block' : 'none';
+        if (isHidden) {
+            form.classList.remove('slide-in');
+            void form.offsetWidth; // reflow
+            form.classList.add('slide-in');
+        }
+        if (btn) btn.style.display = isHidden ? 'none' : 'inline-flex';
+    }
+
+    /* ─── Custom file label ─── */
+    function updateCustomFileLabel(input) {
+        const label = document.getElementById('customFileLabel');
+        if (input.files.length === 0) {
+            label.textContent = 'No file selected';
+        } else if (input.files.length === 1) {
+            label.textContent = input.files[0].name;
+        } else {
+            label.textContent = `${input.files.length} files selected`;
+        }
     }
 </script>
 {% endblock %}
