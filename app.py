@@ -5022,7 +5022,8 @@ def star_booking_chat(room_id):
     if not is_admin:
         c.execute("SELECT room_name FROM chatrooms WHERE id = %s", (room_id,))
         room_row = c.fetchone()
-        if not room_row or not room_row[0].startswith(f"StarBooking_{member_id}"):
+        member_prefixes = (f"StarBooking_{member_id}", f"SpecialStar_{member_id}")
+        if not room_row or not room_row[0].startswith(member_prefixes):
             conn.close()
             flash("Unauthorized access to private booking.")
             return redirect(url_for('member_dashboard'))
