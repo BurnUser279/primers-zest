@@ -376,44 +376,44 @@
         background: #f97316 !important;
     }
 
-    /* ── Platinum/Exclusive Tier (Quarterly / Purple) ── */
+    /* ── Silver/Exclusive Tier (Quarterly / Silver Grey) ── */
     .plan-exclusive {
-        border: 1px solid rgba(192, 132, 252, 0.4) !important;
-        box-shadow: 0 10px 30px rgba(168, 85, 247, 0.15), inset 0 0 20px rgba(255, 255, 255, 0.02) !important;
+        border: 1px solid rgba(148, 163, 184, 0.45) !important;
+        box-shadow: 0 10px 30px rgba(148, 163, 184, 0.15), inset 0 0 20px rgba(255, 255, 255, 0.02) !important;
     }
     .plan-exclusive:hover {
-        box-shadow: 0 15px 35px rgba(168, 85, 247, 0.35), inset 0 0 20px rgba(255, 255, 255, 0.02) !important;
+        box-shadow: 0 15px 35px rgba(148, 163, 184, 0.35), inset 0 0 20px rgba(255, 255, 255, 0.02) !important;
     }
     .plan-exclusive h3 {
         font-weight: 800;
         letter-spacing: 0.5px;
         color: #0c0c0d !important;
         -webkit-text-fill-color: #0c0c0d !important;
-        -webkit-text-stroke: 1px #c084fc !important;
-        filter: drop-shadow(0 0 6px rgba(192, 132, 252, 0.5));
+        -webkit-text-stroke: 1px #cbd5e1 !important;
+        filter: drop-shadow(0 0 6px rgba(148, 163, 184, 0.5));
     }
     .plan-exclusive .plan-accent {
         font-family: 'Outfit', sans-serif;
         color: #0c0c0d !important;
         -webkit-text-fill-color: #0c0c0d !important;
-        -webkit-text-stroke: 1.5px #c084fc !important;
-        filter: drop-shadow(0 0 10px rgba(192, 132, 252, 0.7));
+        -webkit-text-stroke: 1.5px #cbd5e1 !important;
+        filter: drop-shadow(0 0 10px rgba(148, 163, 184, 0.7));
     }
     .plan-exclusive .btn-select {
-        background: #c084fc !important;
-        border-color: #c084fc !important;
+        background: #94a3b8 !important;
+        border-color: #94a3b8 !important;
         color: #000000 !important;
         font-weight: 800 !important;
     }
     .plan-exclusive .btn-select:hover {
-        background: #a855f7 !important;
-        border-color: #a855f7 !important;
+        background: #64748b !important;
+        border-color: #64748b !important;
     }
     .plan-exclusive .plan-tier-badge {
-        background: #c084fc !important;
+        background: #94a3b8 !important;
     }
 
-    /* ── Gold Tier (Annual & Lifetime / Gold) ── */
+    /* ── Gold Tier (Annual / Gold) ── */
     .plan-gold {
         border: 1px solid rgba(212, 175, 55, 0.4) !important;
         box-shadow: 0 10px 30px rgba(212, 175, 55, 0.15), inset 0 0 20px rgba(255, 255, 255, 0.02) !important;
@@ -448,6 +448,42 @@
     }
     .plan-gold .plan-tier-badge {
         background: #ffca28 !important;
+    }
+
+    /* ── Lifetime Tier (Gold & Deep Purple Hybrid) ── */
+    .plan-lifetime {
+        border: 1px solid rgba(212, 175, 55, 0.4) !important;
+        box-shadow: 0 10px 30px rgba(212, 175, 55, 0.18), 0 10px 30px rgba(168, 85, 247, 0.18), inset 0 0 20px rgba(255, 255, 255, 0.02) !important;
+    }
+    .plan-lifetime:hover {
+        box-shadow: 0 15px 35px rgba(212, 175, 55, 0.35), 0 15px 35px rgba(168, 85, 247, 0.35), inset 0 0 20px rgba(255, 255, 255, 0.02) !important;
+    }
+    .plan-lifetime h3 {
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        color: #0c0c0d !important;
+        -webkit-text-fill-color: #0c0c0d !important;
+        -webkit-text-stroke: 1px #ffda44 !important;
+        filter: drop-shadow(0 0 6px rgba(255, 218, 68, 0.5)) drop-shadow(0 0 6px rgba(168, 85, 247, 0.5));
+    }
+    .plan-lifetime .plan-accent {
+        font-family: 'Outfit', sans-serif;
+        color: #0c0c0d !important;
+        -webkit-text-fill-color: #0c0c0d !important;
+        -webkit-text-stroke: 1.5px #ffca28 !important;
+        filter: drop-shadow(0 0 8px rgba(255, 202, 40, 0.6)) drop-shadow(0 0 12px rgba(168, 85, 247, 0.8));
+    }
+    .plan-lifetime .btn-select {
+        background: linear-gradient(135deg, #ffca28 0%, #c084fc 100%) !important;
+        border: none !important;
+        color: #000000 !important;
+        font-weight: 800 !important;
+    }
+    .plan-lifetime .btn-select:hover {
+        opacity: 0.9 !important;
+    }
+    .plan-lifetime .plan-tier-badge {
+        background: linear-gradient(135deg, #ffca28 0%, #c084fc 100%) !important;
     }
 </style>
 {% endblock %}
@@ -657,12 +693,12 @@
             {% set badge_text = 'Bronze VIP' %}
         {% elif 'silver' in p_name or 'quarterly' in p_name or plan['price'] == 150 or plan['price'] == 2700 %}
             {% set tier_class = 'plan-exclusive' %}
-            {% set badge_text = 'Ultra Premium' %}
+            {% set badge_text = 'Most Popular' %}
         {% elif 'gold' in p_name or 'annual' in p_name or plan['price'] == 500 or plan['price'] == 5999 %}
             {% set tier_class = 'plan-gold' %}
-            {% set badge_text = 'Most Popular' %}
+            {% set badge_text = 'VIP Choice' %}
         {% else %}
-            {% set tier_class = 'plan-gold' %}
+            {% set tier_class = 'plan-lifetime' %}
             {% set badge_text = 'Founding Member' %}
         {% endif %}
 
@@ -671,7 +707,7 @@
             <div class="shimmer-overlay"></div>
 
             {% if badge_text %}
-            <div class="plan-tier-badge badge-{{ 'bronze' if tier_class == 'plan-bronze' else ('exclusive' if tier_class == 'plan-exclusive' else 'gold') }}">
+            <div class="plan-tier-badge badge-{{ 'bronze' if tier_class == 'plan-bronze' else ('exclusive' if tier_class == 'plan-exclusive' else ('lifetime' if tier_class == 'plan-lifetime' else 'gold')) }}">
                 {{ badge_text }}
             </div>
             {% endif %}
