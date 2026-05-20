@@ -107,12 +107,21 @@
     .file-badge {
         background: var(--bg-card);
         border: 1px solid var(--border-color);
-        padding: 4px 10px;
+        padding: 6px 12px;
         border-radius: 20px;
-        font-size: 0.7rem;
+        font-size: 0.8rem;
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 6px;
+        max-width: 100%;
+        overflow: hidden;
+        box-sizing: border-box;
+    }
+    .file-badge-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
     }
 
     /* Payment Method UI */
@@ -380,8 +389,8 @@
             const badge = document.createElement('div');
             badge.className = 'file-badge';
             badge.innerHTML = `
-                <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.414a4 4 0 00-5.656-5.656l-6.415 6.414a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                ${file.name}
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink: 0;"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.414a4 4 0 00-5.656-5.656l-6.415 6.414a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                <span class="file-badge-text">${file.name}</span>
             `;
             list.appendChild(badge);
         });

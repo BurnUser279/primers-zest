@@ -139,7 +139,7 @@
         <h2 style="font-size: 1.2rem; margin-bottom: 20px;">My Active Requests</h2>
         <div class="booking-list">
              {% for b in my_bookings %}
-             {% if not b['star_name'] and b['status'] == 'Pending' %}
+             {% if b['star_name'] == 'Special Celebrity Request' and b['status'] == 'Pending' %}
                  {% set has_special_pending.value = true %}
              {% endif %}
              <div class="booking-card">

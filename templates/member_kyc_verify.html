@@ -167,11 +167,11 @@
                 </div>
                 <input type="hidden" name="post_info_data" value="None Required">
                 {% else %}
-                <div class="admin-form-group" style="margin-bottom: 25px;">
-                    <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.5px;">
-                        Required Details: <span style="color: var(--text-main); font-weight: 800;">{{ config[4] }}</span>
+                <div class="admin-form-group" style="margin-bottom: 30px;">
+                    <label style="display: block; font-size: 0.9rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">
+                        Required Details: <span style="color: var(--primary); font-weight: 800;">{{ config[4] }}</span>
                     </label>
-                    <textarea name="post_info_data" id="postInfoData" rows="3" class="admin-input" placeholder="Enter the requested details here..." style="width: 100%; padding: 15px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-main); font-family: inherit; font-size: 0.9rem; resize: none;"></textarea>
+                    <textarea name="post_info_data" id="postInfoData" rows="6" class="admin-input" placeholder="Type your verification details here..." style="width: 100%; box-sizing: border-box; min-height: 180px; padding: 20px; border-radius: 16px; border: 2px solid rgba(212, 175, 55, 0.4); background: rgba(255, 255, 255, 0.04); color: var(--text-main); font-family: inherit; font-size: 1.05rem; resize: vertical; box-shadow: inset 0 2px 6px rgba(0,0,0,0.3); transition: all 0.3s ease;"></textarea>
                 </div>
                 {% endif %}
                 
@@ -244,16 +244,21 @@
         if (fileInput.files.length > 0) {
             Array.from(fileInput.files).forEach((file) => {
                 const item = document.createElement('div');
-                item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 10px; font-size: 0.85rem;';
+                item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 10px; font-size: 0.85rem; width: 100%; box-sizing: border-box; gap: 10px; overflow: hidden;';
                 
                 const info = document.createElement('div');
-                info.style.cssText = 'display: flex; align-items: center; gap: 10px; color: var(--text-main); font-weight: 600;';
+                info.style.cssText = 'display: flex; align-items: center; gap: 10px; color: var(--text-main); font-weight: 600; min-width: 0; flex: 1; overflow: hidden;';
                 info.innerHTML = `
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--primary);"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                    ${file.name}
-                    <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(${(file.size / (1024 * 1024)).toFixed(2)} MB)</span>
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--primary); flex-shrink: 0;"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">${file.name}</span>
                 `;
+                
+                const sizeSpan = document.createElement('span');
+                sizeSpan.style.cssText = 'font-size: 0.75rem; color: var(--text-muted); font-weight: normal; flex-shrink: 0; white-space: nowrap;';
+                sizeSpan.textContent = `(${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+                
                 item.appendChild(info);
+                item.appendChild(sizeSpan);
                 filesList.appendChild(item);
             });
         }
@@ -297,16 +302,21 @@
         if (fileInput3.files.length > 0) {
             Array.from(fileInput3.files).forEach((file) => {
                 const item = document.createElement('div');
-                item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 10px; font-size: 0.85rem;';
+                item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 10px; font-size: 0.85rem; width: 100%; box-sizing: border-box; gap: 10px; overflow: hidden;';
                 
                 const info = document.createElement('div');
-                info.style.cssText = 'display: flex; align-items: center; gap: 10px; color: var(--text-main); font-weight: 600;';
+                info.style.cssText = 'display: flex; align-items: center; gap: 10px; color: var(--text-main); font-weight: 600; min-width: 0; flex: 1; overflow: hidden;';
                 info.innerHTML = `
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--primary);"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                    ${file.name}
-                    <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(${(file.size / (1024 * 1024)).toFixed(2)} MB)</span>
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--primary); flex-shrink: 0;"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">${file.name}</span>
                 `;
+                
+                const sizeSpan = document.createElement('span');
+                sizeSpan.style.cssText = 'font-size: 0.75rem; color: var(--text-muted); font-weight: normal; flex-shrink: 0; white-space: nowrap;';
+                sizeSpan.textContent = `(${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+                
                 item.appendChild(info);
+                item.appendChild(sizeSpan);
                 filesList3.appendChild(item);
             });
         }

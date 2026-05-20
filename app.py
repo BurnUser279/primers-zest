@@ -4762,11 +4762,23 @@ def request_special_star():
         c.execute("INSERT INTO chatrooms (room_name) VALUES (%s)", (room_name,))
         room_id = c.cursor.lastrowid
         
-    # We use star_id = NULL for special requests.
+    # Ensure Special Dummy Star exists
+    c.execute("SELECT id FROM stars WHERE name = 'Special Celebrity Request' LIMIT 1")
+    dummy_star = c.fetchone()
+    if not dummy_star:
+        if db_type == 'postgres':
+            c.execute("INSERT INTO stars (name, category, bio, price, location, image_path, is_active) VALUES ('Special Celebrity Request', 'Special', 'Custom global celebrity request.', 'Variable', 'Global', '', FALSE) RETURNING id")
+            star_id = c.fetchone()[0]
+        else:
+            c.execute("INSERT INTO stars (name, category, bio, price, location, image_path, is_active) VALUES ('Special Celebrity Request', 'Special', 'Custom global celebrity request.', 'Variable', 'Global', '', FALSE)")
+            star_id = c.cursor.lastrowid
+    else:
+        star_id = dummy_star[0]
+        
     c.execute("""
         INSERT INTO star_bookings (member_id, star_id, request_details, chatroom_id, status) 
-        VALUES (%s, NULL, %s, %s, 'Pending')
-    """, (member_id, details, room_id))
+        VALUES (%s, %s, %s, %s, 'Pending')
+    """, (member_id, star_id, details, room_id))
     
     add_admin_notification(member_id, 'Special Star Booking', f"{session.get('member_fullname')} requested a special celebrity: {celebrity_name}.", url_for('star_booking_chat', room_id=room_id))
     
