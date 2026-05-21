@@ -1550,8 +1550,8 @@ def member_dashboard():
     c.execute("SELECT plan_name, price, features, id FROM subscription_plans ORDER BY id")
     plans = c.fetchall()
     
-    # Fetch active slideshows
-    c.execute("SELECT image_path, info_text FROM club_slideshows WHERE is_active = TRUE ORDER BY created_at DESC")
+    # Fetch active slideshows — use IS NOT FALSE to include rows where is_active is NULL
+    c.execute("SELECT image_path, info_text FROM club_slideshows WHERE is_active IS NOT FALSE ORDER BY created_at DESC")
     slides = c.fetchall()
     
     conn.close()
@@ -2266,46 +2266,65 @@ def admin_edit_star(star_id):
     if not session.get('is_admin'):
         return redirect(url_for('admin_login'))
         
-    name = request.form.get('name')
-    category = request.form.get('category')
-    bio = request.form.get('bio')
-    price = request.form.get('price')
-    location = request.form.get('location')
+    name = request.form.get('name', '').strip()
+    category = request.form.get('category', '').strip()
+    bio = request.form.get('bio', '').strip()
+    location = request.form.get('location', '').strip()
+    replace_media = request.form.get('replace_media') == '1'
+    
+    # Safely parse price — default to 0 if blank/invalid
+    try:
+        price = float(request.form.get('price', 0) or 0)
+    except (ValueError, TypeError):
+        price = 0.0
+    
     new_media = request.files.getlist('star_media')
     
     conn, db_type = get_db_connection()
     c = get_cursor(conn, db_type)
     
-    c.execute("UPDATE stars SET name=%s, category=%s, bio=%s, price=%s, location=%s WHERE id=%s",
-              (name, category, bio, price, location, star_id))
+    try:
+        c.execute("UPDATE stars SET name=%s, category=%s, bio=%s, price=%s, location=%s WHERE id=%s",
+                  (name, category, bio, price, location, star_id))
+        
+        # Optionally wipe existing media before adding new uploads
+        if replace_media:
+            c.execute("DELETE FROM star_media WHERE star_id = %s", (star_id,))
+            c.execute("UPDATE stars SET image_path = NULL WHERE id = %s", (star_id,))
+            count_existing = 0
+        else:
+            c.execute("SELECT COUNT(*) FROM star_media WHERE star_id = %s", (star_id,))
+            res_count = c.fetchone()
+            count_existing = res_count[0] if res_count else 0
+        
+        for i, media in enumerate(new_media):
+            if count_existing >= 10:
+                break
+            if media and media.filename != '':
+                filename = secure_filename(media.filename)
+                filename = f"star_{star_id}_update_{int(time.time())}_{i}_{filename}"
+                db_path = save_uploaded_file(media, custom_filename=filename)
+                if db_path:
+                    m_type = 'video' if filename.lower().endswith(('.mp4', '.mov', '.avi')) else 'image'
+                    c.execute("INSERT INTO star_media (star_id, file_path, media_type) VALUES (%s, %s, %s)", 
+                              (star_id, db_path, m_type))
+                    count_existing += 1
+                    
+                    # Update primary image if none is set yet
+                    c.execute("SELECT image_path FROM stars WHERE id = %s", (star_id,))
+                    row = c.fetchone()
+                    if not row or not row[0]:
+                        c.execute("UPDATE stars SET image_path = %s WHERE id = %s", (db_path, star_id))
+        
+        conn.commit()
+        flash("Talent details and media updated successfully.", "success")
+    except Exception as e:
+        conn.rollback()
+        print(f"[admin_edit_star] Error updating star {star_id}: {e}")
+        flash(f"Update failed: an internal error occurred. Please try again.", "error")
+    finally:
+        conn.close()
     
-    # Add new media if provided
-    count_existing = 0
-    c.execute("SELECT COUNT(*) FROM star_media WHERE star_id = %s", (star_id,))
-    res_count = c.fetchone()
-    count_existing = res_count[0] if res_count else 0
-    
-    for i, media in enumerate(new_media):
-        if count_existing >= 10: break
-        if media and media.filename != '':
-            filename = secure_filename(media.filename)
-            filename = f"star_{star_id}_update_{int(time.time())}_{i}_{filename}"
-            db_path = save_uploaded_file(media, custom_filename=filename)
-            if db_path:
-                m_type = 'video' if filename.lower().endswith(('.mp4', '.mov', '.avi')) else 'image'
-                c.execute("INSERT INTO star_media (star_id, file_path, media_type) VALUES (%s, %s, %s)", 
-                          (star_id, db_path, m_type))
-                count_existing += 1
-                
-                # If no primary image exists, update it
-                c.execute("SELECT image_path FROM stars WHERE id = %s", (star_id,))
-                row = c.fetchone()
-                if not row or not row[0]:
-                    c.execute("UPDATE stars SET image_path = %s WHERE id = %s", (db_path, star_id))
-                  
-    conn.commit()
-    conn.close()
-    flash("Talent details and media updated.")
     return redirect(url_for('admin_dashboard', section='stars-roster'))
 
 @app.route('/admin/stars/delete/<int:star_id>', methods=['POST'])
@@ -2574,21 +2593,34 @@ def admin_add_slideshow():
         return redirect(url_for('admin_login'))
         
     image = request.files.get('image')
-    info_text = request.form.get('info_text')
+    info_text = request.form.get('info_text', '').strip()
     
-    if image and image.filename != '':
+    if not image or image.filename == '':
+        flash("Please select an image file to upload.", "error")
+        return redirect(url_for('admin_dashboard', section='slideshows'))
+    
+    conn, db_type = get_db_connection()
+    c = get_cursor(conn, db_type)
+    try:
         filename = secure_filename(image.filename)
         filename = f"slide_{int(time.time())}_{filename}"
         db_path = save_uploaded_file(image, custom_filename=filename)
         
-        conn, db_type = get_db_connection()
-        c = get_cursor(conn, db_type)
-        c.execute("INSERT INTO club_slideshows (image_path, info_text) VALUES (%s, %s)", (db_path, info_text))
+        if not db_path:
+            raise ValueError("File could not be saved — upload returned no path.")
+        
+        c.execute("INSERT INTO club_slideshows (image_path, info_text, is_active) VALUES (%s, %s, TRUE)",
+                  (db_path, info_text))
         conn.commit()
+        flash("Broadcast slide added successfully.", "success")
+    except Exception as e:
+        conn.rollback()
+        print(f"[admin_add_slideshow] Error: {e}")
+        flash(f"Upload failed: {e}", "error")
+    finally:
         conn.close()
-        flash("Slideshow entry added successfully.")
     
-    return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('admin_dashboard', section='slideshows'))
 
 @app.route('/admin/slides/delete/<int:slide_id>', methods=['POST'])
 def admin_delete_slide(slide_id):
@@ -2613,21 +2645,31 @@ def admin_edit_slide(slide_id):
     c = get_cursor(conn, db_type)
     
     if request.method == 'POST':
-        info_text = request.form.get('info_text')
+        info_text = request.form.get('info_text', '').strip()
         image = request.files.get('image')
         
-        if image and image.filename != '':
-            filename = secure_filename(image.filename)
-            filename = f"slide_{int(time.time())}_{filename}"
-            db_path = save_uploaded_file(image, custom_filename=filename)
-            c.execute("UPDATE club_slideshows SET image_path = %s, info_text = %s WHERE id = %s", (db_path, info_text, slide_id))
-        else:
-            c.execute("UPDATE club_slideshows SET info_text = %s WHERE id = %s", (info_text, slide_id))
-            
-        conn.commit()
-        conn.close()
-        flash("Slideshow entry updated.")
-        return redirect(url_for('admin_dashboard'))
+        try:
+            if image and image.filename != '':
+                filename = secure_filename(image.filename)
+                filename = f"slide_{int(time.time())}_{filename}"
+                db_path = save_uploaded_file(image, custom_filename=filename)
+                if not db_path:
+                    raise ValueError("File could not be saved — upload returned no path.")
+                c.execute("UPDATE club_slideshows SET image_path = %s, info_text = %s, is_active = TRUE WHERE id = %s",
+                          (db_path, info_text, slide_id))
+            else:
+                c.execute("UPDATE club_slideshows SET info_text = %s, is_active = TRUE WHERE id = %s",
+                          (info_text, slide_id))
+                
+            conn.commit()
+            flash("Broadcast slide updated.", "success")
+        except Exception as e:
+            conn.rollback()
+            print(f"[admin_edit_slide] Error: {e}")
+            flash(f"Update failed: {e}", "error")
+        finally:
+            conn.close()
+        return redirect(url_for('admin_dashboard', section='slideshows'))
     
     c.execute("SELECT * FROM club_slideshows WHERE id = %s", (slide_id,))
     slide = c.fetchone()

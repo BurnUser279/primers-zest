@@ -518,7 +518,7 @@
                     </tr>
                     <!-- Edit Star Row -->
                     <tr id="star-edit-{{ star['id'] }}" style="display: none; background: rgba(255,255,255,0.02);">
-                        <td colspan="5">
+                        <td colspan="6">
                             <form action="/admin/stars/edit/{{ star['id'] }}" method="POST" enctype="multipart/form-data" style="padding: 20px;">
                                 <div class="talent-form-grid">
                                     <div class="admin-form-group">
@@ -545,6 +545,12 @@
                                 <div class="talent-form-footer">
                                     <div class="admin-form-group">
                                         <label style="margin-bottom: 8px; display: block;">Add More Media (Photos/Videos)</label>
+                                        <div style="margin-bottom: 10px;">
+                                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">
+                                                <input type="checkbox" name="replace_media" value="1" style="accent-color: var(--primary);">
+                                                Replace existing media (clears all current files)
+                                            </label>
+                                        </div>
                                         <div class="custom-file-wrapper">
                                             <label class="file-cta">
                                                 <input type="file" name="star_media" accept="image/*,video/*" multiple class="file-input-hidden" onchange="updateFileName(this)">
