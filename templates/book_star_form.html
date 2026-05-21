@@ -77,12 +77,8 @@
             <form action="/book_a_star/request/{{ star['id'] }}" method="POST">
                 <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     <div class="form-group">
-                        <label>Occasion</label>
-                        <select name="occasion" required>
-                            {% for occ in occasions %}
-                            <option value="{{ occ }}">{{ occ }}</option>
-                            {% endfor %}
-                        </select>
+                        <label>Occasion (Optional)</label>
+                        <input type="text" name="occasion" placeholder="e.g. Birthday, Corporate Event, Anniversary...">
                     </div>
                     <div class="form-group">
                         <label>For Whom? (Optional)</label>
@@ -93,15 +89,15 @@
                 <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     <div class="form-group">
                         <label>Booking Timeframe (Duration)</label>
-                        <select name="timeframe" required>
+                        <select name="timeframe" id="timeframe-select" required>
+                            <option value="12 hours">12 hours</option>
                             <option value="24 hours">24 hours</option>
                             <option value="48 hours">48 hours</option>
                             <option value="72 hours">72 hours</option>
                             <option value="1 week">1 week</option>
-                            <option value="1 month">1 month</option>
-                            <option value="3 months">3 months</option>
-                            <option value="6 months">6 months</option>
+                            <option value="Other">Other</option>
                         </select>
+                        <input type="text" name="other_timeframe" id="other-timeframe-input" placeholder="Please specify your duration" style="display: none; margin-top: 10px; width: 100%; background: rgba(0,0,0,0.02); border: 1px solid var(--border-color); padding: 15px; border-radius: 12px; color: var(--text-main); font-family: inherit;">
                     </div>
                     <div class="form-group">
                         <label>Desired Start Time</label>
@@ -134,4 +130,22 @@
         </div>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const timeframeSelect = document.getElementById('timeframe-select');
+    const otherTimeframeInput = document.getElementById('other-timeframe-input');
+    
+    if (timeframeSelect && otherTimeframeInput) {
+        timeframeSelect.addEventListener('change', function() {
+            if (this.value === 'Other') {
+                otherTimeframeInput.style.display = 'block';
+                otherTimeframeInput.required = true;
+            } else {
+                otherTimeframeInput.style.display = 'none';
+                otherTimeframeInput.required = false;
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

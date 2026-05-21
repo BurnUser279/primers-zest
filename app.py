@@ -108,16 +108,9 @@ def save_uploaded_file(file, folder=None, custom_filename=None):
     file.save(file_path)
     return file_path.replace('\\', '/')
 
+import threading
 
-# Email Notification Utility
-def send_email_notification(recipient_email, subject, body, user_id=None):
-    sender_email = os.environ.get('MAIL_USERNAME')
-    sender_password = os.environ.get('MAIL_PASSWORD')
-    
-    if not sender_email or not sender_password:
-        print("Email configuration missing (MAIL_USERNAME/MAIL_PASSWORD).")
-        return False
-
+def _send_email_async(recipient_email, subject, body, sender_email, sender_password):
     msg = MIMEMultipart()
     msg['From'] = sender_email
     msg['To'] = recipient_email
@@ -132,9 +125,22 @@ def send_email_notification(recipient_email, subject, body, user_id=None):
         server.quit()
     except Exception as smtp_err:
         print(f"SMTP Delivery Error: {smtp_err}")
+
+# Email Notification Utility
+def send_email_notification(recipient_email, subject, body, user_id=None):
+    sender_email = os.environ.get('MAIL_USERNAME')
+    sender_password = os.environ.get('MAIL_PASSWORD')
+    
+    if not sender_email or not sender_password:
+        print("Email configuration missing (MAIL_USERNAME/MAIL_PASSWORD).")
         return False
 
-    # Audit Logging
+    # Start the email dispatch in a background thread to prevent UI freezing
+    thread = threading.Thread(target=_send_email_async, args=(recipient_email, subject, body, sender_email, sender_password))
+    thread.daemon = True
+    thread.start()
+
+    # Audit Logging synchronously in main thread
     if user_id:
         try:
             conn, db_type = get_db_connection()
@@ -143,7 +149,7 @@ def send_email_notification(recipient_email, subject, body, user_id=None):
             conn.commit()
         except Exception as log_err:
             print(f"Log Error: {log_err}")
-
+            
     return True
 
 def get_templated_email(event_type, name, admin_text=None):
@@ -896,10 +902,12 @@ def init_db():
 
     if db_type == 'postgres':
         c.execute("ALTER TABLE member_notifications ADD COLUMN IF NOT EXISTS target_url TEXT;")
+        c.execute("ALTER TABLE admin_notifications ADD COLUMN IF NOT EXISTS target_url TEXT;")
         c.execute("ALTER TABLE member_notifications ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE;")
         c.execute("ALTER TABLE admin_notifications ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE;")
     else:
         add_sqlite_col('member_notifications', 'target_url TEXT')
+        add_sqlite_col('admin_notifications', 'target_url TEXT')
         add_sqlite_col('member_notifications', 'is_read BOOLEAN DEFAULT FALSE')
         add_sqlite_col('admin_notifications', 'is_read BOOLEAN DEFAULT FALSE')
 
@@ -3312,13 +3320,13 @@ def admin_donation_reply(donation_id):
         if t_row:
             subj = t_row[0].replace('{{name}}', m_row[1])
             body = t_row[1].replace('{{name}}', m_row[1])
-#            send_email_notification(m_row[0], subj, body, user_id=m_row[2])
+            send_email_notification(m_row[0], subj, body, user_id=m_row[2])
         else:
             # Fallback to legacy
             subj, body = get_templated_email('Subscription_Success', m_row[1])
             if subj:
                 pass
-#                send_email_notification(m_row[0], subj, body, user_id=m_row[2])
+                send_email_notification(m_row[0], subj, body, user_id=m_row[2])
             
     conn.commit()
     conn.close()
@@ -3360,7 +3368,7 @@ def admin_reply_member(member_id):
                 subj, body = get_templated_email('Admin_Reply', m_row[1], admin_text=admin_reply_text)
                 if subj:
                     pass
-#                    send_email_notification(m_row[0], subj, body, user_id=m_row[2])
+                    send_email_notification(m_row[0], subj, body, user_id=m_row[2])
             
             # Save admin media attachments
             for file in media_files:
@@ -3430,7 +3438,7 @@ def admin_finalize_vip(member_id):
         subj, body = get_templated_email('VIP_Welcome', m_row[1])
         if subj:
             pass
-#            send_email_notification(m_row[0], subj, body, user_id=m_row[2])
+            send_email_notification(m_row[0], subj, body, user_id=m_row[2])
             
     conn.commit()
     conn.close()
@@ -3457,7 +3465,7 @@ def admin_demote_member(member_id):
         subj, body = get_templated_email('VIP_Removal', user_row[1])
         if subj:
             pass
-#            send_email_notification(user_row[0], subj, body, user_id=member_id)
+            send_email_notification(user_row[0], subj, body, user_id=member_id)
             
     conn.commit()
     conn.close()
@@ -3496,7 +3504,7 @@ def admin_manual_vip(member_id):
             subj, body = get_templated_email('VIP_Welcome', safe_name)
             if subj:
                 pass
-#                send_email_notification(m_row['email'], subj, body, user_id=m_row['id'])
+                send_email_notification(m_row['email'], subj, body, user_id=m_row['id'])
         except Exception as e:
             print(f"Error sending VIP Welcome email: {e}")
             
@@ -3540,11 +3548,11 @@ def admin_toggle_vip(user_id):
             try:
                 safe_name = fullname if fullname else "VIP Member"
                 if t:
-#                    send_email_notification(email, t['subject'].replace('{{name}}', safe_name), t['body'].replace('{{name}}', safe_name), user_id=user_id)
+                    send_email_notification(email, t['subject'].replace('{{name}}', safe_name), t['body'].replace('{{name}}', safe_name), user_id=user_id)
                     pass
                 else:
                     subj, body = get_templated_email('VIP_Welcome', safe_name)
-#                    if subj: send_email_notification(email, subj, body, user_id=user_id)
+                    if subj: send_email_notification(email, subj, body, user_id=user_id)
                     pass
             except Exception as e:
                 print(f"Error sending VIP Add email: {e}")
@@ -3558,11 +3566,11 @@ def admin_toggle_vip(user_id):
             try:
                 safe_name = fullname if fullname else "VIP Member"
                 if t:
-#                    send_email_notification(email, t['subject'].replace('{{name}}', safe_name), t['body'].replace('{{name}}', safe_name), user_id=user_id)
+                    send_email_notification(email, t['subject'].replace('{{name}}', safe_name), t['body'].replace('{{name}}', safe_name), user_id=user_id)
                     pass
                 else:
                     subj, body = get_templated_email('VIP_Removal', safe_name)
-#                    if subj: send_email_notification(email, subj, body, user_id=user_id)
+                    if subj: send_email_notification(email, subj, body, user_id=user_id)
                     pass
             except Exception as e:
                 print(f"Error sending VIP Remove email: {e}")
@@ -3628,11 +3636,10 @@ def admin_send_custom_email():
         # Render through manual_email_template.html
         html_body = render_template('manual_email_template.html', name=member_name, custom_message=custom_message)
         
-#        if send_email_notification(recipient_email, custom_subject, html_body, user_id=member_id):
-#            flash(f"Manual dispatch successful to {recipient_email}.")
-#        else:
-#            flash("Dispatch failed. Check SMTP settings.")
-        flash("Email dispatch skipped (Service Offline).")
+        if send_email_notification(recipient_email, custom_subject, html_body, user_id=member_id):
+            flash(f"Manual dispatch successful to {recipient_email}.")
+        else:
+            flash("Dispatch failed. Check SMTP settings.")
     else:
         flash("Member not found.")
     return redirect(url_for('admin_dashboard'))
@@ -4742,8 +4749,14 @@ def request_star(star_id):
     occasions = [o.strip() for o in occasions_str.split(',')]
 
     if request.method == 'POST':
-        occasion = request.form.get('occasion')
+        occasion = request.form.get('occasion', '').strip()
+        if not occasion:
+            occasion = 'N/A'
+            
         timeframe = request.form.get('timeframe')
+        if timeframe == 'Other':
+            timeframe = request.form.get('other_timeframe', 'Other').strip()
+            
         start_time = request.form.get('start_time')
         address = request.form.get('address')
         recipient = request.form.get('recipient', 'N/A')
@@ -5140,7 +5153,7 @@ def star_booking_chat(room_id):
                                 s_name = member_row[2]
                                 subj = f"New Message: Your booking for {s_name}"
                                 body = f"Hello {m_name},<br><br>An administrator has replied to your booking request for <strong>{s_name}</strong>. Please check your dashboard for the latest update.<br><br><a href='{url_for('star_booking_chat', room_id=room_id, _external=True)}'>View Message</a>"
-#                                send_email_notification(m_email, subj, body)
+                                send_email_notification(m_email, subj, body)
                         except Exception as e:
                             print(f"Chat Notification Error: {e}")
 
