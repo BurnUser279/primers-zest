@@ -5228,6 +5228,26 @@ def privacy_policy():
 def cookie_policy():
     return render_template('cookies.html')
 
+@app.route('/about')
+def about_us():
+    return render_template('about.html')
+
+@app.route('/refunds')
+def refund_policy():
+    return render_template('refunds.html')
+
+@app.route('/renewal-terms')
+def renewal_terms():
+    return render_template('renewal_terms.html')
+
+@app.route('/anti-trafficking')
+def anti_trafficking():
+    return render_template('anti_trafficking.html')
+
+@app.route('/complaints')
+def complaints():
+    return render_template('complaints.html')
+
 # Initialize DB within app context for safety - ensure it only runs once per process
 _db_initialized = False
 
