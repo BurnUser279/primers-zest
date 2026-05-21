@@ -37,9 +37,15 @@ if os.environ.get('CLOUDINARY_URL') or (os.environ.get('CLOUDINARY_CLOUD_NAME') 
             secure=True
         )
     HAS_CLOUDINARY = True
-    print("Cloudinary Media Storage Active.")
+    print("✅ Cloudinary Media Storage Active — uploads will persist across deploys.")
 else:
-    print("Local Filesystem Media Storage Active.")
+    print("=" * 70)
+    print("⚠️  WARNING: Cloudinary is NOT configured.")
+    print("    All uploaded media (images, documents) will be stored on the")
+    print("    local filesystem and WILL BE PERMANENTLY DELETED on every")
+    print("    Render deploy or service restart.")
+    print("    Set CLOUDINARY_URL in Render's Environment Variables to fix this.")
+    print("=" * 70)
 
 def save_uploaded_file(file, folder=None, custom_filename=None):
     """
