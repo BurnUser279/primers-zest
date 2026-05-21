@@ -700,7 +700,10 @@
                         <a href="/dashboard" class="only-mobile" style="display: block; text-align: left; text-decoration: none; padding: 10px; color: var(--text-main); font-size: 0.85rem; font-weight: 600;">Main Dashboard</a>
                         {% if is_admin == True %}
                         <div style="border-top: 1px solid var(--border-color); margin: 5px 0;"></div>
-                        <button onclick="window.location.href='/admin'" style="width: 100%; text-align: left; background: none; border: none; padding: 10px; color: var(--primary); cursor: pointer; font-size: 0.85rem; font-weight: 600;">Admin Dashboard</button>
+                        <button onclick="toggleGroupChatLock({{ room_id }})" style="width: 100%; text-align: left; background: none; border: none; padding: 10px; color: {% if is_locked %}#ff6b6b{% else %}var(--primary){% endif %}; cursor: pointer; font-size: 0.85rem; font-weight: 600;">
+                            {% if is_locked %}Unlock Group Chat{% else %}Lock Group Chat{% endif %}
+                        </button>
+                        <button onclick="window.location.href='/admin'" style="width: 100%; text-align: left; background: none; border: none; padding: 10px; color: var(--text-main); cursor: pointer; font-size: 0.85rem; font-weight: 600;">Admin Dashboard</button>
                         {% endif %}
                     </div>
                 </div>
@@ -833,36 +836,43 @@
 
         <footer class="chat-footer">
             {% if can_write %}
-            <form id="chatForm" action="{% if is_star_booking %}/star_booking_chat/{{ room_id }}{% else %}/vip_lounge{% endif %}" method="POST" enctype="multipart/form-data">
-                <input type="hidden" name="channel_id" value="{{ channel_id or 'main' }}">
-                <input type="hidden" name="reply_to_id" id="replyToId" value="">
-                
-                <div class="reply-bar" id="replyBar">
-                    <div style="flex: 1;">
-                        <div style="font-weight: 700; color: var(--primary); font-size: 0.75rem;">Replying to <span id="replySenderName"></span></div>
-                        <div id="replyTextPreview" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.8; max-width: 300px;"></div>
-                    </div>
-                    <button type="button" onclick="cancelReply()" style="background: none; border: none; color: var(--text-muted); cursor: pointer;">
-                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
+                {% if is_locked and not is_admin %}
+                <div class="teaser-box" style="background: linear-gradient(135deg, rgba(212,175,55,0.1) 0%, rgba(0,0,0,0.4) 100%); border: 1px solid var(--primary); padding: 25px; border-radius: 16px; text-align: center; box-shadow: var(--shadow-md); backdrop-filter: blur(10px);">
+                    <div style="color: #ff6b6b; font-weight: 800; font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 10px;"><i class="fas fa-lock"></i> CHATROOM LOCKED</div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin:0;">The chatroom is locked by the admin and only the news and insights page are available.</p>
                 </div>
-
-                <div class="input-area" style="display: flex; align-items: center; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 5px;">
-                    <button type="button" class="voice-msg-btn" id="voiceBtn" onclick="toggleVoiceRecord()">
-                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"></path><path d="M19 10v2a7 7 0 01-14 0v-2m7 11v-3m-3 3h6"></path></svg>
-                    </button>
-                    <textarea name="message_text" placeholder="Type a message in #{{ channel_id }}..." id="chatInput" class="chat-input" rows="1"></textarea>
-                    <div style="display: flex; align-items: center; gap: 10px; padding-right: 10px;">
-                        <label for="attachments" style="cursor: pointer; color: var(--text-muted);" title="Attach files">
-                            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                        </label>
-                        <input type="file" name="attachments" id="attachments" multiple accept="image/*,video/*,.pdf" style="display: none;" onchange="updateAttachmentCount(this)">
-                        <button type="submit" class="btn btn-primary" id="sendBtn" style="flex-shrink: 0; font-weight: 800;">
-                            <span>Send</span>
+                {% else %}
+                <form id="chatForm" action="{% if is_star_booking %}/star_booking_chat/{{ room_id }}{% else %}/vip_lounge{% endif %}" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="channel_id" value="{{ channel_id or 'main' }}">
+                    <input type="hidden" name="reply_to_id" id="replyToId" value="">
+                    
+                    <div class="reply-bar" id="replyBar">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 700; color: var(--primary); font-size: 0.75rem;">Replying to <span id="replySenderName"></span></div>
+                            <div id="replyTextPreview" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.8; max-width: 300px;"></div>
+                        </div>
+                        <button type="button" onclick="cancelReply()" style="background: none; border: none; color: var(--text-muted); cursor: pointer;">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
                         </button>
                     </div>
-                </div>
-            </form>
+
+                    <div class="input-area" style="display: flex; align-items: center; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 5px;">
+                        <button type="button" class="voice-msg-btn" id="voiceBtn" onclick="toggleVoiceRecord()">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"></path><path d="M19 10v2a7 7 0 01-14 0v-2m7 11v-3m-3 3h6"></path></svg>
+                        </button>
+                        <textarea name="message_text" placeholder="Type a message in #{{ channel_id }}..." id="chatInput" class="chat-input" rows="1"></textarea>
+                        <div style="display: flex; align-items: center; gap: 10px; padding-right: 10px;">
+                            <label for="attachments" style="cursor: pointer; color: var(--text-muted);" title="Attach files">
+                                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                            </label>
+                            <input type="file" name="attachments" id="attachments" multiple accept="image/*,video/*,.pdf" style="display: none;" onchange="updateAttachmentCount(this)">
+                            <button type="submit" class="btn btn-primary" id="sendBtn" style="flex-shrink: 0; font-weight: 800;">
+                                <span>Send</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                {% endif %}
             {% else %}
             <div class="teaser-box" style="background: linear-gradient(135deg, rgba(212,175,55,0.1) 0%, rgba(0,0,0,0.4) 100%); border: 1px solid var(--primary); padding: 25px; border-radius: 16px; text-align: center; box-shadow: var(--shadow-md); backdrop-filter: blur(10px);">
                 <div style="color: var(--primary); font-weight: 800; font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 10px;">EXECUTIVE ACCESS REQUIRED</div>
@@ -1260,6 +1270,18 @@
         event.stopPropagation();
         const dropdown = document.getElementById('quickActionsDropdown');
         dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+    }
+    function toggleGroupChatLock(roomId) {
+        if (!confirm("Are you sure you want to toggle the lock status of this chatroom?")) return;
+        fetch('/admin/toggle_chat_lock/' + roomId, {
+            method: 'POST'
+        }).then(res => res.json()).then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || "Failed to toggle chat lock.");
+            }
+        });
     }
 
     function votePoll(pollId, idx) {

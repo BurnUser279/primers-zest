@@ -790,10 +790,12 @@ def init_db():
         c.execute("ALTER TABLE chatroom_messages ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT FALSE;")
         c.execute("ALTER TABLE chatroom_messages ADD COLUMN IF NOT EXISTS channel_id VARCHAR(50) DEFAULT 'main';")
         c.execute("ALTER TABLE chatroom_messages ADD COLUMN IF NOT EXISTS reply_to_id INTEGER;")
+        c.execute("ALTER TABLE chatrooms ADD COLUMN IF NOT EXISTS is_locked BOOLEAN DEFAULT FALSE;")
     else:
         add_sqlite_col('chatroom_messages', 'is_pinned BOOLEAN DEFAULT FALSE')
         add_sqlite_col('chatroom_messages', 'channel_id VARCHAR(50) DEFAULT "main"')
         add_sqlite_col('chatroom_messages', 'reply_to_id INTEGER')
+        add_sqlite_col('chatrooms', 'is_locked BOOLEAN DEFAULT FALSE')
 
     c.execute(f'''CREATE TABLE IF NOT EXISTS chatroom_members
                  (id {pk_type},
@@ -4352,8 +4354,10 @@ def vip_lounge():
                 c.execute("SELECT fullname, membership_tier, vip_since FROM members WHERE id = %s", (member_id,))
                 member_data = c.fetchone()
 
-    c.execute("SELECT id FROM chatrooms WHERE room_name = 'VIP Lounge' LIMIT 1")
-    room_id = c.fetchone()[0]
+    c.execute("SELECT id, is_locked FROM chatrooms WHERE room_name = 'VIP Lounge' LIMIT 1")
+    room_row = c.fetchone()
+    room_id = room_row[0] if room_row else 1
+    is_locked = bool(room_row[1]) if room_row and len(room_row) > 1 and room_row[1] is not None else False
 
     if request.method == 'POST':
         selected_sender_id = member_id
@@ -4512,6 +4516,7 @@ def vip_lounge():
                            is_admin=is_admin, 
                            channel_id=channel_id,
                            room_id=room_id,
+                           is_locked=is_locked,
                            can_write=can_write,
                            slides=slides,
                            fullname=member_data[0] if member_data else 'Official Admin')
@@ -5373,6 +5378,29 @@ def admin_close_poll_action(poll_id):
     conn.commit()
     conn.close()
     return jsonify({'success': True})
+
+@app.route('/admin/toggle_chat_lock/<int:room_id>', methods=['POST'])
+def admin_toggle_chat_lock_action(room_id):
+    if not session.get('is_admin'):
+        return jsonify({'error': 'Unauthorized'}), 403
+    conn, db_type = get_db_connection()
+    c = get_cursor(conn, db_type)
+    
+    # Toggle the boolean state
+    # SQLite uses 0/1, Postgres uses FALSE/TRUE. NOT column works for both if cast properly.
+    if db_type == 'postgres':
+        c.execute("UPDATE chatrooms SET is_locked = NOT is_locked WHERE id = %s RETURNING is_locked", (room_id,))
+        new_state = c.fetchone()[0]
+    else:
+        # SQLite
+        c.execute("SELECT is_locked FROM chatrooms WHERE id = %s", (room_id,))
+        current_state = c.fetchone()[0]
+        new_state = not current_state
+        c.execute("UPDATE chatrooms SET is_locked = %s WHERE id = %s", (new_state, room_id))
+        
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True, 'is_locked': new_state})
 
 # --- Membership Card Features ---
 @app.route('/membership_cards')
