@@ -905,10 +905,15 @@ def init_db():
 
     c.execute(f'''CREATE TABLE IF NOT EXISTS club_slideshows
                  (id {pk_type},
-                  image_path VARCHAR(255) NOT NULL,
+                  image_path TEXT NOT NULL,
                   info_text TEXT,
                   is_active BOOLEAN DEFAULT TRUE,
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    # Widen image_path on existing production DBs where it may be VARCHAR(255)
+    # Cloudinary URLs can exceed 255 chars — TEXT has no length limit
+    if db_type == 'postgres':
+        c.execute("ALTER TABLE club_slideshows ALTER COLUMN image_path TYPE TEXT;")
 
     c.execute(f'''CREATE TABLE IF NOT EXISTS site_settings
                  (id {pk_type},
