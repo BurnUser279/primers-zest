@@ -89,6 +89,7 @@
         flex-direction: column;
         padding: 0;
         position: relative;
+        min-height: 0;
     }
 
     .pinned-bar {
@@ -128,7 +129,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        z-index: 10;
+        z-index: 105;
     }
 
     .search-wrapper {
@@ -692,6 +693,7 @@
                         <span class="hide-mobile">Quick Actions</span>
                         <span class="only-mobile">Actions</span>
                     </button>
+                    <div id="qa-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); z-index: 1999;" onclick="toggleQuickActions(event)"></div>
                     <div id="quickActionsDropdown" style="display: none; position: absolute; top: 100%; right: 0; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; margin-top: 10px; width: 180px; z-index: 2000; box-shadow: var(--shadow-md); padding: 10px;">
                         {% if not is_admin %}
                         <button onclick="summonAdmin()" style="width: 100%; text-align: left; background: none; border: none; padding: 10px; color: var(--text-main); cursor: pointer; font-size: 0.85rem; font-weight: 600;">Summon Admin</button>
@@ -1267,9 +1269,12 @@
 
     // Summon Admin
     function toggleQuickActions(event) {
-        event.stopPropagation();
+        if (event) event.stopPropagation();
         const dropdown = document.getElementById('quickActionsDropdown');
-        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+        const overlay = document.getElementById('qa-overlay');
+        const isOpening = dropdown.style.display !== 'block';
+        dropdown.style.display = isOpening ? 'block' : 'none';
+        if (overlay) overlay.style.display = isOpening ? 'block' : 'none';
     }
     function toggleGroupChatLock(roomId) {
         if (!confirm("Are you sure you want to toggle the lock status of this chatroom?")) return;
