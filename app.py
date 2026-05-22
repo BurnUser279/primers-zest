@@ -98,15 +98,10 @@ def save_uploaded_file(file, folder=None, custom_filename=None):
             )
             return upload_result.get('secure_url')
         except Exception as e:
-            print(f"Cloudinary Upload Failed, falling back to local: {e}")
+            raise Exception(f"Cloudinary Upload Failed: {str(e)}")
             
-    # Fallback/Local storage
-    target_folder = folder or 'static/uploads'
-    os.makedirs(target_folder, exist_ok=True)
-    file_path = os.path.join(target_folder, filename)
-    file.seek(0) # Ensure we are at the start of the stream
-    file.save(file_path)
-    return file_path.replace('\\', '/')
+    # No fallback allowed
+    raise Exception("Cloudinary Upload Failed: CLOUDINARY_URL is not configured.")
 
 import threading
 
@@ -3377,11 +3372,11 @@ def admin_reply_member(member_id):
                 if file and file.filename != '':
                     filename = secure_filename(file.filename)
                     filename = f"admin_reply_t{ticket_id}_m{member_id}_{filename}"
-                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                    media_path = f"/static/uploads/{filename}"
+                    media_path = save_uploaded_file(file, custom_filename=filename)
                     
-                    c.execute("INSERT INTO attachments (ticket_id, file_path, uploaded_by_admin) VALUES (%s, %s, TRUE)",
-                              (ticket_id, media_path))
+                    if media_path:
+                        c.execute("INSERT INTO attachments (ticket_id, file_path, uploaded_by_admin) VALUES (%s, %s, TRUE)",
+                                  (ticket_id, media_path))
                               
         conn.commit()
         conn.close()
