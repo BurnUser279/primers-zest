@@ -89,19 +89,21 @@ def save_uploaded_file(file, folder=None, custom_filename=None):
             # Generate a secure public ID using the randomized filename (without extension)
             public_id, _ = os.path.splitext(filename)
             upload_result = cloudinary.uploader.upload(
-                file, 
+                file,
                 public_id=public_id,
-                resource_type="auto", 
+                resource_type="auto",
                 folder="primers_zest",
                 use_filename=False,
                 unique_filename=False
             )
             return upload_result.get('secure_url')
         except Exception as e:
-            raise Exception(f"Cloudinary Upload Failed: {str(e)}")
-            
-    # No fallback allowed
-    raise Exception("Cloudinary Upload Failed: CLOUDINARY_URL is not configured.")
+            print(f"Cloudinary Upload Failed: {e}")
+            return None
+
+    # No local fallback — Cloudinary not configured
+    print("Cloudinary Upload Skipped: CLOUDINARY_URL is not configured.")
+    return None
 
 import threading
 
