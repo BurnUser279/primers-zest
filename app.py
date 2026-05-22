@@ -1742,6 +1742,15 @@ def member_kyc_verify():
         c.execute("UPDATE members SET kyc_status = 'Pending' WHERE id = %s", (user_id,))
         conn.commit()
         conn.close()
+        
+        # --- Notify Admin of KYC Submission ---
+        add_admin_notification(
+            user_id,
+            'KYC Submitted',
+            f"Member ID {user_id} ({session.get('member_fullname', 'Unknown')}) has submitted a KYC application for review.",
+            '/admin#kyc'
+        )
+        
         flash("Your KYC application has been successfully submitted and is under review.", "success")
         return redirect(url_for('member_profile'))
         
