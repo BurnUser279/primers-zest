@@ -121,21 +121,41 @@ def _send_email_async(recipient_email, subject, body, sender_email, sender_passw
     except Exception as smtp_err:
         print(f"SMTP Delivery Error: {smtp_err}")
 
-# Email Notification Utility
+# Email Notification Utility — Resend HTTP API
 def send_email_notification(recipient_email, subject, body, user_id=None):
-    sender_email = os.environ.get('MAIL_USERNAME')
-    sender_password = os.environ.get('MAIL_PASSWORD')
-    
-    if not sender_email or not sender_password:
-        print("Email configuration missing (MAIL_USERNAME/MAIL_PASSWORD).")
+    resend_api_key = os.environ.get('RESEND_API_KEY')
+    sender = os.environ.get('MAIL_DEFAULT_SENDER', 'onboarding@resend.dev')
+
+    if not resend_api_key:
+        print("Email configuration missing (RESEND_API_KEY).")
         return False
 
-    # Start the email dispatch in a background thread to prevent UI freezing
-    thread = threading.Thread(target=_send_email_async, args=(recipient_email, subject, body, sender_email, sender_password))
+    def _send():
+        try:
+            response = requests.post(
+                'https://api.resend.com/emails',
+                headers={
+                    'Authorization': f'Bearer {resend_api_key}',
+                    'Content-Type': 'application/json'
+                },
+                json={
+                    'from': sender,
+                    'to': recipient_email,
+                    'subject': subject,
+                    'html': body
+                },
+                timeout=10
+            )
+            if response.status_code not in (200, 201):
+                print(f"Resend API Error: {response.status_code} — {response.text}")
+        except Exception as e:
+            print(f"Resend Delivery Error: {e}")
+
+    thread = threading.Thread(target=_send)
     thread.daemon = True
     thread.start()
 
-    # Audit Logging synchronously in main thread
+    # Audit log synchronously
     if user_id:
         try:
             conn, db_type = get_db_connection()
@@ -144,7 +164,7 @@ def send_email_notification(recipient_email, subject, body, user_id=None):
             conn.commit()
         except Exception as log_err:
             print(f"Log Error: {log_err}")
-            
+
     return True
 
 def get_templated_email(event_type, name, admin_text=None):
@@ -3331,7 +3351,6 @@ def admin_donation_reply(donation_id):
             # Fallback to legacy
             subj, body = get_templated_email('Subscription_Success', m_row[1])
             if subj:
-                pass
                 send_email_notification(m_row[0], subj, body, user_id=m_row[2])
             
     conn.commit()
@@ -3373,7 +3392,6 @@ def admin_reply_member(member_id):
             if m_row:
                 subj, body = get_templated_email('Admin_Reply', m_row[1], admin_text=admin_reply_text)
                 if subj:
-                    pass
                     send_email_notification(m_row[0], subj, body, user_id=m_row[2])
             
             # Save admin media attachments
@@ -3443,7 +3461,6 @@ def admin_finalize_vip(member_id):
     if m_row:
         subj, body = get_templated_email('VIP_Welcome', m_row[1])
         if subj:
-            pass
             send_email_notification(m_row[0], subj, body, user_id=m_row[2])
             
     conn.commit()
@@ -3470,7 +3487,6 @@ def admin_demote_member(member_id):
     if user_row:
         subj, body = get_templated_email('VIP_Removal', user_row[1])
         if subj:
-            pass
             send_email_notification(user_row[0], subj, body, user_id=member_id)
             
     conn.commit()
@@ -3509,7 +3525,6 @@ def admin_manual_vip(member_id):
             safe_name = m_row['fullname'] if m_row['fullname'] else "VIP Member"
             subj, body = get_templated_email('VIP_Welcome', safe_name)
             if subj:
-                pass
                 send_email_notification(m_row['email'], subj, body, user_id=m_row['id'])
         except Exception as e:
             print(f"Error sending VIP Welcome email: {e}")
@@ -3555,11 +3570,9 @@ def admin_toggle_vip(user_id):
                 safe_name = fullname if fullname else "VIP Member"
                 if t:
                     send_email_notification(email, t['subject'].replace('{{name}}', safe_name), t['body'].replace('{{name}}', safe_name), user_id=user_id)
-                    pass
                 else:
                     subj, body = get_templated_email('VIP_Welcome', safe_name)
                     if subj: send_email_notification(email, subj, body, user_id=user_id)
-                    pass
             except Exception as e:
                 print(f"Error sending VIP Add email: {e}")
         else:
@@ -3573,11 +3586,9 @@ def admin_toggle_vip(user_id):
                 safe_name = fullname if fullname else "VIP Member"
                 if t:
                     send_email_notification(email, t['subject'].replace('{{name}}', safe_name), t['body'].replace('{{name}}', safe_name), user_id=user_id)
-                    pass
                 else:
                     subj, body = get_templated_email('VIP_Removal', safe_name)
                     if subj: send_email_notification(email, subj, body, user_id=user_id)
-                    pass
             except Exception as e:
                 print(f"Error sending VIP Remove email: {e}")
 
