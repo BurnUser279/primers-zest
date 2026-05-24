@@ -895,7 +895,7 @@
     <div class="injection-content">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h3 id="modalTitle" style="color: var(--primary); font-size: 1.4rem; margin: 0; font-weight: 800;">Boost Engagement</h3>
-            <button onclick="closeInjectionModal()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.5rem;">&times;</button>
+            <button type="button" onclick="closeInjectionModal()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.5rem;">&times;</button>
         </div>
         <p id="modalDescription" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px; line-height: 1.4;"></p>
         
@@ -911,7 +911,7 @@
         </div>
         
         <button id="confirmInjectionBtn" class="confirm-btn">Confirm Injection</button>
-        <button onclick="closeInjectionModal()" style="background: none; border: none; color: #ff6b6b; cursor: pointer; font-size: 0.85rem; margin-top: 15px; font-weight: 600;">Discard & Close</button>
+        <button type="button" onclick="closeInjectionModal()" style="background: none; border: none; color: #ff6b6b; cursor: pointer; font-size: 0.85rem; margin-top: 15px; font-weight: 600;">Discard & Close</button>
     </div>
 </div>
 {% endif %}
@@ -1371,12 +1371,22 @@
             formData.append('reaction_type', selectedEmoji);
         }
         formData.append('count', count);
-        fetch(url, { method: 'POST', body: formData }).then(r => {
-            if (r.ok) {
-                document.getElementById('injectionModal').style.display = 'none';
+        fetch(url, { method: 'POST', body: formData }).then(res => {
+            if(res.ok) {
+                closeInjectionModal();
                 pollMessages();
+            } else {
+                alert("Injection failed");
+                closeInjectionModal();
             }
+        }).catch(e => {
+            alert("Error injecting");
+            closeInjectionModal();
         });
+    }
+
+    function closeInjectionModal() {
+        document.getElementById('injectionModal').style.display = 'none';
     }
 
     window.addEventListener('click', () => {

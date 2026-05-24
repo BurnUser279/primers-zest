@@ -2513,7 +2513,7 @@ def admin_inject_votes():
     conn, db_type = get_db_connection()
     c = get_cursor(conn, db_type)
     for _ in range(count):
-        c.execute("INSERT INTO lounge_poll_votes (poll_id, option_index, member_id, is_injected) VALUES (%s, %s, 0, 1)", (poll_id, option_index))
+        c.execute("INSERT INTO lounge_poll_votes (poll_id, option_index, member_id, is_injected) VALUES (%s, %s, 0, %s)", (poll_id, option_index, True))
     conn.commit()
     conn.close()
     
@@ -2527,12 +2527,13 @@ def admin_close_poll(poll_id):
     
     conn, db_type = get_db_connection()
     c = get_cursor(conn, db_type)
-    c.execute("UPDATE lounge_polls SET is_closed = 1 WHERE id = %s", (poll_id,))
+    c.execute("DELETE FROM lounge_polls WHERE id = %s", (poll_id,))
+    c.execute("DELETE FROM lounge_poll_votes WHERE poll_id = %s", (poll_id,))
     conn.commit()
     conn.close()
     
-    log_admin_action('close_poll', target_type='poll', target_id=poll_id)
-    flash("Poll closed.")
+    log_admin_action('delete_poll', target_type='poll', target_id=poll_id)
+    flash("Poll removed.")
     return redirect(request.referrer or url_for('admin_dashboard'))
 
 @app.route('/api/lounge/vote', methods=['POST'])
@@ -3797,6 +3798,36 @@ def admin_disable_user(user_id):
         add_admin_notification(user_id, 'Account Disability', f"Account for member ID {user_id} has been disabled.", url_for('admin_user_profile', user_id=user_id))
         
         flash("User account disabled.")
+    else:
+        flash("Invalid admin password.")
+    return redirect(url_for('admin_user_profile', user_id=user_id))
+
+@app.route('/admin/user/<int:user_id>/reset_password', methods=['POST'])
+def admin_reset_password(user_id):
+    if not session.get('is_admin'): return redirect(url_for('admin_login'))
+    admin_password = request.form.get('admin_password')
+    
+    conn, db_type = get_db_connection()
+    c = get_cursor(conn, db_type)
+    c.execute("SELECT password_hash FROM members WHERE username = 'AdminMaster'")
+    admin_row = c.fetchone()
+    conn.close()
+    
+    if admin_row and check_password_hash(admin_row[0], admin_password):
+        import string
+        import random
+        # Generate random 10 character temporary password
+        temp_password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+        temp_password_hash = generate_password_hash(temp_password)
+        
+        conn, db_type = get_db_connection()
+        c = get_cursor(conn, db_type)
+        c.execute("UPDATE members SET password_hash = %s WHERE id = %s", (temp_password_hash, user_id))
+        conn.commit()
+        conn.close()
+        
+        # We flash it clearly so the admin can copy it and give it to the user.
+        flash(f"Password reset successful! The new temporary password is: {temp_password} . Please copy this securely.")
     else:
         flash("Invalid admin password.")
     return redirect(url_for('admin_user_profile', user_id=user_id))

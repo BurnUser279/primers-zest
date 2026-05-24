@@ -317,6 +317,19 @@
             </div>
 
             <div style="background: #fff; padding: 25px; border-radius: 15px; border: 1px solid #fee2e2;">
+                <h4 style="margin-top: 0; font-size: 0.9rem;">Reset Password</h4>
+                <p style="font-size: 0.8rem; color: #7f1d1d; margin-bottom: 15px;">
+                    Generate a random temporary password for this member.
+                </p>
+                <form action="/admin/user/{{ member['id'] }}/reset_password" method="POST" onsubmit="confirmAction(event, 'reset_password')">
+                    <input type="password" name="admin_password" placeholder="Admin Password" required class="admin-input" style="margin-bottom: 10px;">
+                    <button type="submit" class="btn btn-secondary" style="width: 100%; border: none; background: #ea580c;">
+                        Reset Password
+                    </button>
+                </form>
+            </div>
+
+            <div style="background: #fff; padding: 25px; border-radius: 15px; border: 1px solid #fee2e2;">
                 <h4 style="margin-top: 0; font-size: 0.9rem; color: #dc2626;">Purge Account</h4>
                 <p style="font-size: 0.8rem; color: #7f1d1d; margin-bottom: 15px;">Permanently delete all member data. This cannot be undone.</p>
                 <form action="/admin/user/{{ member['id'] }}/delete" method="POST" onsubmit="confirmAction(event, 'delete')">
@@ -353,6 +366,9 @@
         } else if (type === 'enable') {
             title = 'Confirm Activation';
             msg = 'Are you sure you want to reactivate this member account?';
+        } else if (type === 'reset_password') {
+            title = 'Confirm Password Reset';
+            msg = 'Are you sure you want to overwrite this member\'s current password with a new temporary one?';
         } else {
             title = 'Confirm Suspension';
             msg = 'Are you sure you want to disable this member account?';
