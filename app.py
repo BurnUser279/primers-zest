@@ -3803,7 +3803,7 @@ def admin_disable_user(user_id):
     return redirect(url_for('admin_user_profile', user_id=user_id))
 
 @app.route('/admin/user/<int:user_id>/reset_password', methods=['POST'])
-def admin_reset_password(user_id):
+def admin_force_reset_password(user_id):
     if not session.get('is_admin'): return redirect(url_for('admin_login'))
     admin_password = request.form.get('admin_password')
     
