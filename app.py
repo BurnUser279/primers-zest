@@ -244,6 +244,11 @@ def init_membership_cards():
                 image_path TEXT NOT NULL
             )
         """)
+        try:
+            c.execute("ALTER TABLE membership_cards ADD COLUMN is_hidden BOOLEAN DEFAULT FALSE")
+        except Exception:
+            pass # column exists
+            
         c.execute("SELECT COUNT(*) FROM membership_cards")
         cards = [
             ('Bronze Card', 100.00, 'Standard access to community features, Basic support, Regular member status', '/static/uploads/bronze_membership_card.png'),
@@ -5459,7 +5464,7 @@ def membership_cards_view():
     c = get_cursor(conn, db_type)
     c.execute("SELECT * FROM members WHERE id = %s", (session['member_id'],))
     member = c.fetchone()
-    c.execute("SELECT * FROM membership_cards ORDER BY price ASC")
+    c.execute("SELECT * FROM membership_cards WHERE is_hidden IS NOT TRUE ORDER BY price ASC")
     cards = c.fetchall()
     conn.close()
     return render_template('membership_cards.html', cards=cards, member=member)
@@ -5474,6 +5479,26 @@ def admin_membership_cards():
     cards = c.fetchall()
     conn.close()
     return render_template('admin_membership_cards.html', cards=cards)
+
+@app.route('/admin/toggle_card_visibility/<int:card_id>', methods=['POST'])
+def admin_toggle_card_visibility(card_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+    
+    conn, db_type = get_db_connection()
+    c = get_cursor(conn, db_type)
+    
+    c.execute("SELECT is_hidden FROM membership_cards WHERE id = %s", (card_id,))
+    row = c.fetchone()
+    if row:
+        current_status = bool(row[0])
+        new_status = not current_status
+        c.execute("UPDATE membership_cards SET is_hidden = %s WHERE id = %s", (new_status, card_id))
+        conn.commit()
+        flash("Card visibility updated.")
+    
+    conn.close()
+    return redirect(url_for('admin_membership_cards'))
 
 @app.route('/admin/edit_membership_card/<int:card_id>', methods=['GET', 'POST'])
 def admin_edit_membership_card(card_id):

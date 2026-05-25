@@ -32,11 +32,23 @@
                     <td>
                         <img src="{{ card.image_path }}?v=1.2" style="width: 100px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-color);">
                     </td>
-                    <td style="font-weight: 700;">{{ card.tier_name }}</td>
+                    <td style="font-weight: 700;">
+                        {{ card.tier_name }}
+                        {% if card.is_hidden %}
+                            <span style="margin-left: 5px; font-size: 0.65rem; background: #fee2e2; color: #dc2626; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; font-weight: 800;">Hidden</span>
+                        {% endif %}
+                    </td>
                     <td style="color: var(--primary); font-weight: 700;">${{ "%.2f"|format(card.price) }}</td>
                     <td style="font-size: 0.85rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ card.features }}</td>
                     <td>
-                        <a href="/admin/edit_membership_card/{{ card.id }}" class="btn btn-primary btn-sm">Edit Details</a>
+                        <div style="display: flex; gap: 8px;">
+                            <a href="/admin/edit_membership_card/{{ card.id }}" class="btn btn-primary btn-sm">Edit Details</a>
+                            <form action="/admin/toggle_card_visibility/{{ card.id }}" method="POST" style="margin: 0;">
+                                <button type="submit" class="btn btn-secondary btn-sm" style="{% if card.is_hidden %}background: #10b981; color: white; border: none;{% endif %}">
+                                    {% if card.is_hidden %}Unhide{% else %}Hide{% endif %}
+                                </button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
