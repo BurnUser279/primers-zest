@@ -729,6 +729,14 @@ def init_db():
                  (id {pk_type},
                   support_email TEXT)''')
 
+    c.execute(f'''CREATE TABLE IF NOT EXISTS withdrawals
+                 (id {pk_type},
+                  member_id INTEGER REFERENCES members(id),
+                  amount DECIMAL(10, 2) NOT NULL,
+                  payment_details TEXT NOT NULL,
+                  status VARCHAR(50) DEFAULT 'Pending',
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
     c.execute(f'''CREATE TABLE IF NOT EXISTS email_templates
                  (id {pk_type},
                   event_type TEXT NOT NULL UNIQUE,
@@ -1609,6 +1617,31 @@ def member_dashboard():
                            vip_user_proof=user_proof, 
                            plans=plans, 
                            slides=slides)
+
+@app.route('/request_withdrawal', methods=['POST'])
+def request_withdrawal():
+    if 'member_id' not in session:
+        return redirect(url_for('member_login'))
+        
+    amount = request.form.get('amount')
+    payment_details = request.form.get('payment_details')
+    
+    conn, db_type = get_db_connection()
+    c = get_cursor(conn, db_type)
+    
+    c.execute("INSERT INTO withdrawals (member_id, amount, payment_details) VALUES (%s, %s, %s)",
+              (session['member_id'], amount, payment_details))
+    conn.commit()
+    conn.close()
+    
+    # Notify Admin
+    fullname = session.get('member_fullname', 'A member')
+    add_admin_notification(session['member_id'], 'Withdrawal Request', 
+                           f"{fullname} requested a withdrawal of ${amount}", 
+                           url_for('admin_withdrawals'))
+                           
+    flash("Your withdrawal request has been submitted successfully.")
+    return redirect(url_for('member_dashboard'))
 
 @app.route('/request_payment_details', methods=['POST'])
 def request_payment_details():
@@ -3436,6 +3469,48 @@ def admin_reply_member(member_id):
     conn.close()
 
     return render_template('admin_reply.html', member_id=member_id, ticket_text=ticket_text, attachments=attachments)
+
+@app.route('/admin/withdrawals', methods=['GET'])
+def admin_withdrawals():
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+        
+    conn, db_type = get_db_connection()
+    c = get_cursor(conn, db_type)
+    
+    c.execute("""
+        SELECT w.id, m.fullname, m.email, w.amount, w.payment_details, w.status, w.created_at, w.member_id 
+        FROM withdrawals w
+        JOIN members m ON w.member_id = m.id
+        ORDER BY w.created_at DESC
+    """)
+    withdrawals = c.fetchall()
+    conn.close()
+    
+    return render_template('admin_withdrawals.html', withdrawals=withdrawals)
+
+@app.route('/admin/withdrawals/<int:withdrawal_id>/update_status', methods=['POST'])
+def admin_update_withdrawal(withdrawal_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_login'))
+        
+    new_status = request.form.get('status')
+    
+    conn, db_type = get_db_connection()
+    c = get_cursor(conn, db_type)
+    c.execute("UPDATE withdrawals SET status = %s WHERE id = %s", (new_status, withdrawal_id))
+    
+    c.execute("SELECT member_id, amount FROM withdrawals WHERE id = %s", (withdrawal_id,))
+    w_row = c.fetchone()
+    if w_row:
+        member_id, amount = w_row[0], w_row[1]
+        add_member_notification(member_id, "Withdrawal Update", f"Your withdrawal request of ${amount} is now {new_status}.", url_for('member_dashboard'))
+        
+    conn.commit()
+    conn.close()
+    
+    flash("Withdrawal status updated successfully.")
+    return redirect(url_for('admin_withdrawals'))
 
 @app.route('/admin/send_instructions/<int:member_id>', methods=['POST'])
 def admin_send_instructions(member_id):

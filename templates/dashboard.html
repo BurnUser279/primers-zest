@@ -624,9 +624,12 @@
             <div class="stat-label">Membership Status</div>
             <div class="stat-value" style="color: var(--primary);">{{ membership_tier }}</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-label">Total Contributions</div>
-            <div class="stat-value">${{ "%.2f"|format(donations|sum(attribute='amount')) if donations else "0.00" }}</div>
+        <div class="stat-card" style="display: flex; flex-direction: column; justify-content: center;">
+            <div>
+                <div class="stat-label">Total Contributions</div>
+                <div class="stat-value">${{ "%.2f"|format(donations|sum(attribute='amount')) if donations else "0.00" }}</div>
+            </div>
+            <button onclick="document.getElementById('withdrawModal').style.display='flex'" class="btn btn-primary btn-sm" style="margin-top: 15px; width: fit-content; background: linear-gradient(135deg, #10b981, #059669); border: none;">Request Withdrawal</button>
         </div>
         <div class="stat-card">
             <div class="stat-label">Active Requests</div>
@@ -752,4 +755,28 @@
         }, 5000);
     }
 </script>
+
+<!-- Withdrawal Modal -->
+<div id="withdrawModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+    <div style="background: var(--bg-card); width: 100%; max-width: 500px; border-radius: 20px; border: 1px solid var(--border-color); padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative;">
+        <button onclick="document.getElementById('withdrawModal').style.display='none'" style="position: absolute; top: 20px; right: 20px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.5rem;">&times;</button>
+        <h2 style="font-size: 1.5rem; margin-bottom: 10px;">Request Withdrawal</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 25px;">Please enter the amount you wish to withdraw and the payment details (Bank Transfer, Crypto Wallet, PayPal, etc.) the admin should dispatch the funds to.</p>
+        
+        <form action="/request_withdrawal" method="POST">
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase;">Amount ($)</label>
+                <input type="number" step="0.01" name="amount" required style="width: 100%; background: var(--bg-body); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; color: var(--text-main); font-size: 1rem;" placeholder="e.g. 5000.00">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 25px;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase;">Payment / Dispatch Details</label>
+                <textarea name="payment_details" required rows="4" style="width: 100%; background: var(--bg-body); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; color: var(--text-main); font-size: 0.9rem; resize: vertical;" placeholder="Include full account details, bank name, routing, or exact crypto wallet address and network..."></textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 15px; font-weight: 800; border-radius: 12px; background: linear-gradient(135deg, #10b981, #059669); border: none;">Submit Withdrawal Request</button>
+        </form>
+    </div>
+</div>
+
 {% endblock %}

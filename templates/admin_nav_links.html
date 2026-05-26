@@ -38,6 +38,9 @@
 <a href="/admin#section-finance" class="nav-item" style="position: relative; border: 1px solid var(--border-color); margin-top: 10px;">
     Financial Audit
 </a>
+<a href="/admin/withdrawals" class="nav-item {% if '/admin/withdrawals' in request.path %}active{% endif %}" style="position: relative; border: 1px solid var(--border-color);">
+    Withdrawal Requests
+</a>
 <a href="/admin#section-payment-settings" class="nav-item">
     Payment Config
     {% if vip_submissions %}
