@@ -2482,7 +2482,7 @@ def admin_mark_all_read():
 def admin_inject_reactions():
     if not session.get('is_admin'): return redirect(url_for('admin_login'))
     
-    msg_id = request.form.get('message_id')
+    msg_id = int(request.form.get('message_id'))
     reaction_type = request.form.get('reaction_type')
     count = int(request.form.get('count', 1))
     
@@ -2544,14 +2544,16 @@ def admin_delete_poll(poll_id):
 def admin_inject_votes():
     if not session.get('is_admin'): return redirect(url_for('admin_login'))
     
-    poll_id = request.form.get('poll_id')
+    poll_id = int(request.form.get('poll_id'))
     option_index = int(request.form.get('option_index'))
     count = int(request.form.get('count', 1))
     
     conn, db_type = get_db_connection()
     c = get_cursor(conn, db_type)
-    for _ in range(count):
-        c.execute("INSERT INTO lounge_poll_votes (poll_id, option_index, member_id, is_injected) VALUES (%s, %s, 0, %s)", (poll_id, option_index, True))
+    
+    votes_to_inject = [(poll_id, option_index, True)] * count
+    c.executemany("INSERT INTO lounge_poll_votes (poll_id, option_index, member_id, is_injected) VALUES (%s, %s, 0, %s)", votes_to_inject)
+    
     conn.commit()
     conn.close()
     
@@ -2565,8 +2567,8 @@ def admin_close_poll(poll_id):
     
     conn, db_type = get_db_connection()
     c = get_cursor(conn, db_type)
-    c.execute("DELETE FROM lounge_polls WHERE id = %s", (poll_id,))
     c.execute("DELETE FROM lounge_poll_votes WHERE poll_id = %s", (poll_id,))
+    c.execute("DELETE FROM lounge_polls WHERE id = %s", (poll_id,))
     conn.commit()
     conn.close()
     
