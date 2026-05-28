@@ -749,18 +749,6 @@
 
 </div>
 
-<script>
-    // Basic Slideshow Logic
-    let currentSlide = 0;
-    const slides = document.querySelectorAll('.slide');
-    if (slides.length > 1) {
-        setInterval(() => {
-            slides[currentSlide].style.display = 'none';
-            currentSlide = (currentSlide + 1) % slides.length;
-            slides[currentSlide].style.display = 'block';
-        }, 5000);
-    }
-</script>
 
 <!-- Withdrawal Modal -->
 <div id="withdrawModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
