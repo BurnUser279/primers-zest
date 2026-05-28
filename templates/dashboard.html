@@ -535,7 +535,7 @@
         {% endif %}
         
         <!-- Navigation Dots -->
-        <div style="position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10;">
+        <div class="slide-dots-container">
             {% for slide in slides %}
             <div class="slide-dot {% if loop.first %}active{% endif %}" data-index="{{ loop.index0 }}" style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.4); cursor: pointer; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>
             {% endfor %}
@@ -543,6 +543,20 @@
     </div>
 
     <style>
+        .slide-dots-container {
+            position: absolute;
+            top: 470px; /* 30px above bottom of the 500px image */
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+        @media (max-width: 768px) {
+            .slide-dots-container {
+                top: 270px; /* 30px above bottom of the 300px mobile image */
+            }
+        }
         .slide-dot.active { background: var(--primary) !important; width: 24px !important; border-radius: 10px !important; }
         .slide { animation: fadeIn 0.8s ease; }
     </style>
