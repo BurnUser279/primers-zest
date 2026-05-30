@@ -1053,15 +1053,60 @@
         .partner-logos {
             display: flex;
             align-items: center;
-            gap: 30px;
-            opacity: 0.6;
+            gap: 15px;
+            opacity: 0.5;
         }
 
         .partner-logo {
             font-weight: 800;
-            font-size: 0.85rem;
+            font-size: 0.65rem;
             letter-spacing: -0.5px;
-            color: var(--text-main);
+            color: var(--text-muted);
+        }
+
+        /* Stats Section */
+        .global-stats-container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 40px auto 50px;
+            max-width: 900px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .stat-icon {
+            color: #ff6b6b;
+            opacity: 0.9;
+            display: flex;
+        }
+        .stat-icon svg { width: 40px; height: 40px; }
+        .stat-data { text-align: left; }
+        .stat-data h3 {
+            font-size: 2.2rem;
+            color: #fff;
+            margin: 0;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -1px;
+        }
+        .stat-data p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin: 5px 0 0;
+            text-transform: lowercase;
+        }
+        @media (max-width: 768px) {
+            .global-stats-container { flex-direction: column; align-items: flex-start; margin: 20px auto 40px; }
+            .stat-item { width: 100%; justify-content: flex-start; }
+            .stat-data h3 { font-size: 1.8rem; }
         }
 
         @media (max-width: 768px) {
@@ -1282,6 +1327,37 @@
                         <div class="trust-info">
                             <h4>Resilience</h4>
                             <p>Digital Operational Resilience Act Compliant</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Global Stats -->
+                <div class="global-stats-container">
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <div class="stat-data">
+                            <h3 class="stat-number">210</h3>
+                            <p>supported countries</p>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <div class="stat-data">
+                            <h3 class="stat-number" id="liveOnlineCount">2,143</h3>
+                            <p>currently online</p>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <div class="stat-data">
+                            <h3 class="stat-number">3,540</h3>
+                            <p>users</p>
                         </div>
                     </div>
                 </div>
@@ -1517,5 +1593,15 @@
         setInterval(pollAdminStats, 10000); // 10 second loop
     </script>
     {% endif %}
+    <script>
+        // Fluctuate Online Users
+        setInterval(() => {
+            const el = document.getElementById('liveOnlineCount');
+            if (el) {
+                const randomOnline = Math.floor(Math.random() * (2180 - 2130 + 1)) + 2130;
+                el.innerText = randomOnline.toLocaleString();
+            }
+        }, 5000);
+    </script>
 </body>
 </html>
