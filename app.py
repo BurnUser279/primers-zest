@@ -310,6 +310,25 @@ def init_membership_cards():
     except Exception as e:
         print(f"Cards Init Error: {e}")
 
+def init_club_slideshows():
+    try:
+        conn, db_type = get_db_connection()
+        c = get_cursor(conn, db_type)
+        slides = [
+            ('/static/uploads/promo_ship.png', "Primer's Zest Exclusive 7-Day VIP Voyage"),
+            ('/static/uploads/promo_gala.png', "Annual High Society Gala & Masquerade"),
+            ('/static/uploads/promo_jet.png', "Elite Executive Travel & Networking"),
+            ('/static/uploads/promo_lounge.png', "The Pinnacle of Power: Executive Lounge")
+        ]
+        for img, text in slides:
+            c.execute("SELECT id FROM club_slideshows WHERE image_path = %s", (img,))
+            if not c.fetchone():
+                c.execute("INSERT INTO club_slideshows (image_path, info_text, is_active) VALUES (%s, %s, TRUE)", (img, text))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Slideshow Init Error: {e}")
+
 
 os.makedirs('static/uploads', exist_ok=True)
 os.makedirs('static/chatroom_uploads', exist_ok=True)
@@ -5495,6 +5514,7 @@ def run_startup_logic():
         try:
             init_db()
             init_membership_cards()
+            init_club_slideshows()
             _db_initialized = True
         except Exception as e:
             print(f"Startup DB Init Error: {e}")
