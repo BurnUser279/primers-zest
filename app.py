@@ -250,8 +250,17 @@ def init_membership_cards():
             else:
                 c.execute("ALTER TABLE membership_cards ADD COLUMN is_hidden BOOLEAN DEFAULT FALSE")
         except Exception:
-            conn.rollback() # column exists or syntax error, rollback so transaction isn't aborted
+            conn.rollback()
             
+        # Clean up any duplicates caused by previous race conditions or script errors
+        c.execute("""
+            DELETE FROM membership_cards 
+            WHERE id NOT IN (
+                SELECT MIN(id) FROM membership_cards GROUP BY tier_name
+            )
+        """)
+        conn.commit()
+
         c.execute("SELECT COUNT(*) FROM membership_cards")
         cards = [
             ('Bronze Card', 100.00, 'Standard access to community features, Basic support, Regular member status', '/static/uploads/bronze_membership_card.png'),
