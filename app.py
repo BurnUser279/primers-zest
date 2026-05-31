@@ -4470,6 +4470,16 @@ def vip_lounge():
     if not is_admin and not member_id:
         return redirect(url_for('member_login'))
     
+    if member_id and not is_admin:
+        conn, db_type = get_db_connection()
+        c = get_cursor(conn, db_type)
+        c.execute("SELECT kyc_status FROM members WHERE id = %s", (member_id,))
+        _kyc_row = c.fetchone()
+        conn.close()
+        if not _kyc_row or _kyc_row[0] not in ('Pending', 'Verified'):
+            flash("This section is available only to verified members. Please complete your KYC verification to unlock access.", "error")
+            return redirect(url_for('verify_identity'))
+    
     conn, db_type = get_db_connection()
     c = get_cursor(conn, db_type)
     
@@ -4841,8 +4851,16 @@ def chat_search():
 
 @app.route('/stars')
 def stars_roster():
+    if 'member_id' not in session:
+        return redirect(url_for('member_login'))
     conn, db_type = get_db_connection()
     c = get_cursor(conn, db_type)
+    c.execute("SELECT kyc_status FROM members WHERE id = %s", (session['member_id'],))
+    _kyc_row = c.fetchone()
+    if not _kyc_row or _kyc_row[0] not in ('Pending', 'Verified'):
+        conn.close()
+        flash("This section is available only to verified members. Please complete your KYC verification to unlock access.", "error")
+        return redirect(url_for('verify_identity'))
     
     c.execute("SELECT setting_value FROM site_settings WHERE setting_key = 'star_booking_writeup'")
     # Phase 3: assign fetchone() to variable first — calling it twice consumed the row leaving None
@@ -4878,7 +4896,16 @@ def stars_roster():
 def request_star(star_id):
     if 'member_id' not in session:
         return redirect(url_for('member_login'))
-        
+    conn, db_type = get_db_connection()
+    c = get_cursor(conn, db_type)
+    c.execute("SELECT kyc_status FROM members WHERE id = %s", (session['member_id'],))
+    _kyc_row = c.fetchone()
+    if not _kyc_row or _kyc_row[0] not in ('Pending', 'Verified'):
+        conn.close()
+        flash("This section is available only to verified members. Please complete your KYC verification to unlock access.", "error")
+        return redirect(url_for('verify_identity'))
+    conn.close()
+    
     conn, db_type = get_db_connection()
     c = get_cursor(conn, db_type)
     
@@ -5438,6 +5465,14 @@ def admin_create_executive_poll():
 
 @app.route('/get_polls')
 def get_polls():
+    if session.get('member_id'):
+        conn, db_type = get_db_connection()
+        c = get_cursor(conn, db_type)
+        c.execute("SELECT kyc_status FROM members WHERE id = %s", (session['member_id'],))
+        _kyc_row = c.fetchone()
+        conn.close()
+        if not _kyc_row or _kyc_row[0] not in ('Pending', 'Verified'):
+            return jsonify({'error': 'verification_required', 'message': 'Available only to verified members.'}), 403
     conn, db_type = get_db_connection()
     c = get_cursor(conn, db_type)
     
@@ -5485,6 +5520,13 @@ def get_polls():
 def vote_poll_action():
     if not session.get('member_id'):
         return jsonify({'error': 'Login required'}), 403
+    conn_chk, db_chk = get_db_connection()
+    c_chk = get_cursor(conn_chk, db_chk)
+    c_chk.execute("SELECT kyc_status FROM members WHERE id = %s", (session['member_id'],))
+    _kyc = c_chk.fetchone()
+    conn_chk.close()
+    if not _kyc or _kyc[0] not in ('Pending', 'Verified'):
+        return jsonify({'error': 'verification_required', 'message': 'Available only to verified members.'}), 403
         
     data = request.get_json()
     poll_id = data.get('poll_id')

@@ -768,15 +768,16 @@
 <!-- KYC Reminder Modal -->
 <div id="kycReminderModal" style="display: flex; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(10px); animation: fadeIn 0.4s ease-out;">
     <div style="background: var(--bg-card); width: 100%; max-width: 450px; border-radius: 24px; border: 1px solid var(--primary); padding: 40px; box-shadow: 0 20px 50px rgba(212, 175, 55, 0.15); position: relative; text-align: center; animation: modalPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
-        <button onclick="document.getElementById('kycReminderModal').style.display='none'" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.05); border: none; color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.2rem; transition: background 0.2s;">&times;</button>
-        
         <div style="width: 70px; height: 70px; background: rgba(212, 175, 55, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--primary);">
             <svg width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
         </div>
         
         <h2 style="font-size: 1.5rem; margin-bottom: 12px; font-weight: 800; color: var(--text-main);">Identity Verification Required</h2>
-        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 30px;">
+        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 10px;">
             To ensure the highest level of security and access all executive features, please complete your KYC identity verification.
+        </p>
+        <p style="color: var(--text-muted); font-size: 0.8rem; line-height: 1.6; margin-bottom: 30px; opacity: 0.7;">
+            Once submitted, your account will be reviewed. You can browse freely while your verification is pending.
         </p>
         
         <a href="/verify_identity" class="btn btn-primary" style="display: inline-block; width: 100%; padding: 16px; font-weight: 800; border-radius: 12px; text-decoration: none; font-size: 1.05rem;">
