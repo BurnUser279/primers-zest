@@ -871,11 +871,20 @@ def init_db():
         c.execute("ALTER TABLE chatroom_messages ADD COLUMN IF NOT EXISTS channel_id VARCHAR(50) DEFAULT 'main';")
         c.execute("ALTER TABLE chatroom_messages ADD COLUMN IF NOT EXISTS reply_to_id INTEGER;")
         c.execute("ALTER TABLE chatrooms ADD COLUMN IF NOT EXISTS is_locked BOOLEAN DEFAULT FALSE;")
+        c.execute("ALTER TABLE tickets ADD COLUMN IF NOT EXISTS parent_id INTEGER;")
+        c.execute("ALTER TABLE tickets ADD COLUMN IF NOT EXISTS admin_media TEXT;")
+        try:
+            c.execute("ALTER TABLE tickets ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'Open';")
+        except Exception:
+            conn.rollback()
     else:
         add_sqlite_col('chatroom_messages', 'is_pinned BOOLEAN DEFAULT FALSE')
         add_sqlite_col('chatroom_messages', 'channel_id VARCHAR(50) DEFAULT "main"')
         add_sqlite_col('chatroom_messages', 'reply_to_id INTEGER')
         add_sqlite_col('chatrooms', 'is_locked BOOLEAN DEFAULT FALSE')
+        add_sqlite_col('tickets', 'parent_id INTEGER')
+        add_sqlite_col('tickets', 'admin_media TEXT')
+        add_sqlite_col('tickets', 'status TEXT DEFAULT "Open"')
 
     c.execute(f'''CREATE TABLE IF NOT EXISTS chatroom_members
                  (id {pk_type},
