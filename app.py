@@ -267,12 +267,26 @@ def init_membership_cards():
                 c.execute("UPDATE membership_cards SET image_path = %s WHERE id = %s", (img, row[0]))
         # Phase 3: Re-apply correct image paths on every startup — no destructive dummy UPDATE.
         # Previously: c.execute("UPDATE membership_cards SET image_path = tier_name") wiped all paths.
-        ts = "v35_3"  # Increment when card designs change
+        ts = "v36_rings"  # Increment when card/ring designs change
         c.execute("UPDATE membership_cards SET image_path = %s WHERE tier_name = 'Bronze Card'", ('/static/uploads/bronze_membership_card.png?v=' + ts,))
         c.execute("UPDATE membership_cards SET image_path = %s WHERE tier_name = 'Silver Card'", ('/static/uploads/silver_membership_card.png?v=' + ts,))
         c.execute("UPDATE membership_cards SET image_path = %s WHERE tier_name = 'Gold Executive Card'", ('/static/uploads/gold_membership_card.png?v=' + ts,))
         c.execute("UPDATE membership_cards SET image_path = %s WHERE tier_name = 'Platinum Card'", ('/static/uploads/platinum_membership_card.png?v=' + ts,))
-        
+
+        # --- Membership Rings ---
+        rings = [
+            ('Bronze Ring', 150.00, 'Brushed bronze band with engraved PZ crest, standard member insignia, premium gift box included', '/static/uploads/ring_bronze.png?v=' + ts),
+            ('Silver Ring', 350.00, 'Polished sterling silver band with deep-engraved PZ crest, priority member insignia, velvet case included', '/static/uploads/ring_silver.png?v=' + ts),
+            ('Gold Executive Ring', 1200.00, 'Solid 18K yellow gold band with raised PZ emboss and millgrain detailing, VIP concierge insignia, luxury presentation box', '/static/uploads/ring_gold.png?v=' + ts),
+            ('Platinum Ring', 4500.00, 'Matte platinum band with diamond-set PZ crest, pavé inlay, pinnacle executive insignia, private courier delivery, certificate of authenticity', '/static/uploads/ring_platinum.png?v=' + ts),
+        ]
+        for tier, price, features, img in rings:
+            c.execute("SELECT id FROM membership_cards WHERE tier_name = %s", (tier,))
+            if not c.fetchone():
+                c.execute("INSERT INTO membership_cards (tier_name, price, features, image_path) VALUES (%s, %s, %s, %s)",
+                          (tier, price, features, img))
+            else:
+                c.execute("UPDATE membership_cards SET image_path = %s WHERE tier_name = %s", (img, tier))
         conn.commit()
         conn.close()
     except Exception as e:
