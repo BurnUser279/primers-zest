@@ -5390,6 +5390,10 @@ def terms_of_service():
 def privacy_policy():
     return render_template('privacy_policy.html')
 
+@app.route('/nda')
+def nda_page():
+    return render_template('nda.html')
+
 @app.route('/cookies')
 def cookie_policy():
     return render_template('cookies.html')

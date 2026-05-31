@@ -394,6 +394,17 @@
                         </label>
                     </div>
 
+                    <div style="margin-bottom: 20px;">
+                        <label class="consent-box" for="consentNda">
+                            <input type="checkbox" id="consentNda" name="consent_nda" required>
+                            <span style="font-size: 0.85rem; line-height: 1.5; color: var(--text-main); text-transform: none; font-weight: 500;">
+                                I have read and agree to the
+                                <a href="javascript:void(0)" onclick="openLegalModal('nda')" style="color: var(--primary); font-weight: 700; text-decoration: none; border-bottom: 1px dashed var(--primary);">Non-Disclosure Agreement (NDA)</a>,
+                                and I understand that all information encountered on the Platform is strictly confidential.
+                            </span>
+                        </label>
+                    </div>
+
                     <div class="info-alert" style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">
                         <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0; line-height: 1.6;">
                             <strong>Note:</strong> Sensitive health and medical preferences for your concierge experience will be collected <strong>after</strong> successful verification via your secure private vault.
@@ -680,7 +691,7 @@
     function openLegalModal(type) {
         const modal = document.getElementById('legalModal');
         const iframe = document.getElementById('legalIframe');
-        iframe.src = type === 'terms' ? '/terms' : '/privacy';
+        iframe.src = type === 'terms' ? '/terms' : (type === 'nda' ? '/nda' : '/privacy');
         modal.style.display = 'flex';
         // Trigger reflow
         void modal.offsetWidth;
