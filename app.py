@@ -5614,7 +5614,7 @@ def admin_toggle_chat_lock_action(room_id):
     conn.close()
     return jsonify({'success': True, 'is_locked': new_state})
 
-# --- Admin: Force-reseed Prestige Vault rings ---
+# --- Admin: Force-reseed Club Insignia rings ---
 @app.route('/admin/reseed_vault')
 def admin_reseed_vault():
     if not session.get('is_admin'):
@@ -5643,7 +5643,7 @@ def admin_reseed_vault():
                 seeded.append(f"UPDATED: {tier}")
         conn.commit()
         conn.close()
-        return "<br>".join(["<b>Prestige Vault Reseed Complete:</b>"] + seeded + ["<br><a href='/admin/membership_cards'>← Back to Vault</a>"])
+        return "<br>".join(["<b>Club Insignia Reseed Complete:</b>"] + seeded + ["<br><a href='/admin/membership_cards'>← Back to Vault</a>"])
     except Exception as e:
         return f"<b>Reseed Error:</b> {e}", 500
 
