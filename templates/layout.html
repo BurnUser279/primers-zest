@@ -1109,6 +1109,66 @@
             .stat-data h3 { font-size: 1.8rem; }
         }
 
+        .global-member-summary {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow-sm);
+        }
+        .summary-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(212, 175, 55, 0.15);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 800;
+            font-family: 'Outfit', sans-serif;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+        .summary-details {
+            flex: 1;
+            min-width: 0;
+        }
+        .summary-name {
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-family: 'Outfit', sans-serif;
+        }
+        .summary-tier {
+            font-size: 0.75rem;
+            color: var(--primary);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .summary-logout {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            transition: var(--transition-fast);
+        }
+        .summary-logout:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.3);
+        }
         @media (max-width: 768px) {
             .footer-bottom { flex-direction: column; text-align: center; gap: 20px; }
             .footer-links { justify-content: center; flex-wrap: wrap; gap: 15px; }
@@ -1278,6 +1338,33 @@
             </header>
 
             <main class="content-area reveal-stagger">
+                {% if request.endpoint not in ['landing', 'member_login', 'admin_login', 'register', 'index'] %}
+                    {% if session.get('member_id') %}
+                    <!-- Global Member Info Summary (Responsive) -->
+                    <div class="global-member-summary">
+                        <div class="summary-avatar">
+                            {{ session.get('member_fullname', '?')[0]|upper }}
+                        </div>
+                        <div class="summary-details">
+                            <div class="summary-name">{{ session.get('member_fullname', 'Member') }}</div>
+                            <div class="summary-tier">{{ session.get('membership_tier', 'Regular') }} Tier</div>
+                        </div>
+                        <a href="/logout" class="summary-logout">Secure Logout</a>
+                    </div>
+                    {% elif session.get('is_admin') %}
+                    <div class="global-member-summary" style="border-color: rgba(239, 68, 68, 0.3);">
+                        <div class="summary-avatar" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">
+                            A
+                        </div>
+                        <div class="summary-details">
+                            <div class="summary-name">Global Admin</div>
+                            <div class="summary-tier" style="color: #ef4444;">System Operator</div>
+                        </div>
+                        <a href="/logout" class="summary-logout" style="color: #ef4444; border-color: rgba(239,68,68,0.3);">Secure Logout</a>
+                    </div>
+                    {% endif %}
+                {% endif %}
+
                 <div id="toast-container"></div>
                 
                 {% block content %}{% endblock %}
