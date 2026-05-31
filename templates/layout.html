@@ -1604,5 +1604,48 @@
             }
         }, 5000);
     </script>
+    {% if session.get('member_id') and not session.get('is_admin') %}
+    <!-- Floating Admin Chat Button -->
+    <a href="/history" class="floating-chat-btn" title="Chat with Admin">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+    </a>
+    <style>
+        .floating-chat-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: var(--primary-gradient, linear-gradient(135deg, #D4AF37 0%, #AA8529 100%));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
+            z-index: 9999;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s;
+            text-decoration: none;
+        }
+        .floating-chat-btn:hover {
+            transform: scale(1.1) translateY(-5px);
+            box-shadow: 0 12px 30px rgba(212, 175, 55, 0.6);
+            color: #000;
+        }
+        .floating-chat-btn svg {
+            width: 30px;
+            height: 30px;
+        }
+        @media (max-width: 768px) {
+            .floating-chat-btn {
+                bottom: 20px;
+                right: 20px;
+                width: 55px;
+                height: 55px;
+            }
+            .floating-chat-btn svg { width: 26px; height: 26px; }
+        }
+    </style>
+    {% endif %}
 </body>
 </html>
