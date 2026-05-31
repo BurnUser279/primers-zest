@@ -545,17 +545,12 @@
     <style>
         .slide-dots-container {
             position: absolute;
-            top: 470px; /* 30px above bottom of the 500px image */
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             gap: 8px;
             z-index: 10;
-        }
-        @media (max-width: 768px) {
-            .slide-dots-container {
-                top: 270px; /* 30px above bottom of the 300px mobile image */
-            }
         }
         .slide-dot.active { background: var(--primary) !important; width: 24px !important; border-radius: 10px !important; }
         .slide { animation: fadeIn 0.8s ease; }
