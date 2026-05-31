@@ -343,6 +343,89 @@
         .physical-card { padding: 15px; }
         .holder-name { font-size: 0.9rem; }
     }
+
+    /* ── Ring Image Carousel ── */
+    .ring-carousel {
+        position: relative;
+        width: 100%;
+        background: #030303;
+        overflow: hidden;
+        user-select: none;
+        touch-action: pan-y;
+        min-height: 270px;
+        display: flex;
+        align-items: center;
+    }
+    .ring-track {
+        display: flex;
+        width: 300%;
+        transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .ring-slide {
+        width: 33.3333%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 28px;
+        min-height: 270px;
+        flex-shrink: 0;
+    }
+    .ring-slide img {
+        max-width: 100%;
+        max-height: 210px;
+        object-fit: contain;
+        filter: drop-shadow(0 10px 30px rgba(0,0,0,0.85));
+        transition: transform 0.3s ease;
+    }
+    .ring-slide img:hover { transform: scale(1.04); }
+    .ring-carousel-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.12);
+        color: rgba(255,255,255,0.7);
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 5;
+        transition: all 0.2s;
+        font-size: 1rem;
+        backdrop-filter: blur(8px);
+    }
+    .ring-carousel-btn:hover {
+        background: rgba(212,175,55,0.2);
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+    .ring-prev { left: 10px; }
+    .ring-next { right: 10px; }
+    .ring-dots {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 6px;
+        z-index: 5;
+    }
+    .ring-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.25);
+        cursor: pointer;
+        transition: all 0.25s;
+    }
+    .ring-dot.active {
+        background: var(--primary);
+        width: 18px;
+        border-radius: 3px;
+    }
 </style>
 {% endblock %}
 
@@ -432,20 +515,34 @@
 <div class="card-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
     {% for card in cards %}
     {% if 'Ring' in card.tier_name %}
+    {% set slug = card.tier_name.split(' ')[0]|lower %}
+    {% set cid = 'rc-' ~ card.id %}
     <div class="membership-card-item">
-        <!-- Ring Image Preview -->
-        <div class="card-preview-container" style="background: #030303; padding: 30px; display: flex; align-items: center; justify-content: center; min-height: 260px;">
-            {% if card.image_path %}
-            <img src="{{ card.image_path }}" alt="{{ card.tier_name }}" style="max-width: 100%; max-height: 220px; object-fit: contain; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.8));">
-            {% else %}
-            <div style="width: 120px; height: 120px; border-radius: 50%; border: 8px solid var(--primary); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 900; color: var(--primary);">PZ</div>
-            {% endif %}
+        <!-- Ring Image Carousel -->
+        <div class="ring-carousel" id="{{ cid }}">
+            <div class="ring-track" id="{{ cid }}-track">
+                <div class="ring-slide">
+                    <img src="/static/uploads/ring_{{ slug }}.png" alt="{{ card.tier_name }} front">
+                </div>
+                <div class="ring-slide">
+                    <img src="/static/uploads/ring_{{ slug }}_2.png" alt="{{ card.tier_name }} side">
+                </div>
+                <div class="ring-slide">
+                    <img src="/static/uploads/ring_{{ slug }}_3.png" alt="{{ card.tier_name }} top">
+                </div>
+            </div>
+            <button class="ring-carousel-btn ring-prev" onclick="ringSlide('{{ cid }}', -1)">&#8249;</button>
+            <button class="ring-carousel-btn ring-next" onclick="ringSlide('{{ cid }}', 1)">&#8250;</button>
+            <div class="ring-dots" id="{{ cid }}-dots">
+                <div class="ring-dot active" onclick="ringGoTo('{{ cid }}', 0)"></div>
+                <div class="ring-dot" onclick="ringGoTo('{{ cid }}', 1)"></div>
+                <div class="ring-dot" onclick="ringGoTo('{{ cid }}', 2)"></div>
+            </div>
         </div>
 
         <div class="card-info">
             <h3 class="card-title">{{ card.tier_name }}</h3>
             <div class="card-price">${{ "%.0f"|format(card.price) }}<span> / one-time</span></div>
-            
             <ul class="feature-list">
                 {% for feature in card.features.split(',') %}
                 <li class="feature-item">
@@ -454,11 +551,51 @@
                 </li>
                 {% endfor %}
             </ul>
-            
             <a href="/membership_card/order/{{ card.id }}" class="btn-order" style="display: block; text-align: center; text-decoration: none;">Order Insignia Ring</a>
         </div>
     </div>
     {% endif %}
     {% endfor %}
 </div>
+
+<script>
+    const _ringState = {};
+
+    function ringGoTo(id, idx) {
+        _ringState[id] = idx;
+        const track = document.getElementById(id + '-track');
+        track.style.transform = 'translateX(-' + (idx * 33.3333) + '%)';
+        document.querySelectorAll('#' + id + '-dots .ring-dot').forEach((d, i) => {
+            d.classList.toggle('active', i === idx);
+        });
+    }
+
+    function ringSlide(id, dir) {
+        const cur = _ringState[id] || 0;
+        const next = Math.max(0, Math.min(2, cur + dir));
+        ringGoTo(id, next);
+    }
+
+    // Touch/swipe support
+    document.querySelectorAll('.ring-carousel').forEach(function(el) {
+        let startX = 0, startY = 0;
+        const id = el.id;
+        el.addEventListener('touchstart', function(e) {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        }, { passive: true });
+        el.addEventListener('touchend', function(e) {
+            const dx = e.changedTouches[0].clientX - startX;
+            const dy = e.changedTouches[0].clientY - startY;
+            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+                ringSlide(id, dx < 0 ? 1 : -1);
+            }
+        }, { passive: true });
+    });
+
+    // Init all carousels
+    document.querySelectorAll('.ring-carousel').forEach(function(el) {
+        _ringState[el.id] = 0;
+    });
+</script>
 {% endblock %}
