@@ -1390,11 +1390,11 @@ def member_login():
             email = request.form.get('email')
             password = request.form.get('password')
             
-            c.execute("SELECT id, fullname, password_hash, is_verified, is_active, is_locked, failed_attempts, membership_tier FROM members WHERE email = %s", (email,))
+            c.execute("SELECT id, fullname, password_hash, is_verified, is_active, is_locked, failed_attempts, membership_tier, kyc_status FROM members WHERE email = %s", (email,))
             member = c.fetchone()
             
             if member:
-                user_id, fullname, hashed_pw, is_verified, is_active, is_locked, failed_attempts, membership_tier = member
+                user_id, fullname, hashed_pw, is_verified, is_active, is_locked, failed_attempts, membership_tier, kyc_status = member
                 
                 if is_locked:
                     # Step 4: Query system settings for support email
@@ -1415,6 +1415,10 @@ def member_login():
                     session['membership_tier'] = membership_tier
                     # Ensure we clear any stale admin session flag
                     session.pop('is_admin', None)
+                    
+                    if kyc_status not in ('Pending', 'Verified'):
+                        session['show_kyc_reminder'] = True
+
                     
                     if int(is_active) == 0:
                         conn.close()
