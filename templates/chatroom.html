@@ -644,28 +644,29 @@
 
 {% block content %}
 <!-- Confidentiality Reminder Banner -->
-<div id="confiBanner" style="position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 9000; max-width: 680px; width: calc(100% - 40px); animation: bannerSlideDown 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;" onclick="dismissConfiBanner()">
-    <div style="background: rgba(10,10,10,0.92); border: 1px solid rgba(212,175,55,0.35); border-radius: 14px; padding: 14px 20px 14px 18px; display: flex; align-items: flex-start; gap: 14px; backdrop-filter: blur(20px); box-shadow: 0 8px 30px rgba(0,0,0,0.4); cursor: pointer;">
-        <div style="flex-shrink: 0; width: 34px; height: 34px; background: rgba(212,175,55,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); margin-top: 1px;">
-            <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+<div id="confiBanner" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; max-width: 600px; width: calc(100% - 40px); animation: bannerPopIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;" onclick="dismissConfiBanner()">
+    <div style="background: rgba(5,5,5,0.95); border: 2px solid var(--primary); border-radius: 16px; padding: 35px 30px; text-align: center; backdrop-filter: blur(25px); box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(212,175,55,0.15); cursor: pointer;">
+        <div style="margin: 0 auto 20px; width: 65px; height: 65px; background: rgba(212,175,55,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary);">
+            <svg width="34" height="34" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
         </div>
-        <div style="flex: 1; min-width: 0;">
-            <div style="font-size: 0.7rem; font-weight: 800; color: var(--primary); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px;">Strict Confidentiality Notice</div>
-            <p style="margin: 0; font-size: 0.82rem; color: rgba(255,255,255,0.75); line-height: 1.6;">
-                All communications within this space are governed by our <strong style="color: rgba(255,255,255,0.95);">Non-Disclosure Agreement</strong>. Sharing, recording, or distributing any content outside this Platform is strictly prohibited. Any member who misuses information does so on their own volition and will be subject to full legal action.
-            </p>
-        </div>
-        <div style="flex-shrink: 0; color: rgba(255,255,255,0.3); font-size: 1.1rem; margin-left: 6px; margin-top: 2px;" title="Dismiss">✕</div>
+        <div style="font-size: 1.4rem; font-weight: 900; color: var(--primary); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 15px; text-shadow: 0 2px 15px rgba(212,175,55,0.4);">Strict Confidentiality Notice</div>
+        <p style="margin: 0 0 15px 0; font-size: 1.1rem; font-weight: 600; color: #ffffff; line-height: 1.6;">
+            All communications within this space are governed by our <strong style="color: var(--primary); font-weight: 800; border-bottom: 1px dashed var(--primary);">Non-Disclosure Agreement</strong>.
+        </p>
+        <p style="margin: 0; font-size: 0.95rem; font-weight: 400; color: rgba(255,255,255,0.7); line-height: 1.6;">
+            Sharing, recording, or distributing any content outside this Platform is strictly prohibited. Any member who misuses information does so on their own volition and will be subject to full legal action.
+        </p>
+        <div style="margin-top: 30px; font-size: 0.75rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 2px;">Click anywhere to dismiss</div>
     </div>
 </div>
 <style>
-    @keyframes bannerSlideDown {
-        from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
-        to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    @keyframes bannerPopIn {
+        from { opacity: 0; transform: translate(-50%, -40%); scale: 0.9; }
+        to   { opacity: 1; transform: translate(-50%, -50%); scale: 1; }
     }
     @keyframes bannerFadeOut {
-        from { opacity: 1; transform: translateX(-50%) translateY(0); }
-        to   { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+        from { opacity: 1; transform: translate(-50%, -50%); scale: 1; }
+        to   { opacity: 0; transform: translate(-50%, -60%); scale: 0.9; }
     }
 </style>
 <script>
