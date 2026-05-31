@@ -1587,6 +1587,11 @@ def admin_settings_update():
     log_admin_action('update_settings', details="Updated global system configuration")
     flash("Global system configuration updated successfully.")
     return redirect(request.referrer or url_for('admin_dashboard'))
+@app.route('/member_handbook')
+def member_handbook():
+    if 'member_id' not in session:
+        return redirect(url_for('member_login'))
+    return render_template('member_handbook.html')
 
 
 @app.route('/dashboard', methods=['GET', 'POST'])

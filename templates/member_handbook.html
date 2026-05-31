@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+
+{% block title %}Verified-Member Handbook - Primer's Zest{% endblock %}
+
+{% block extra_head %}
+<style>
+    .handbook-container {
+        background: var(--bg-card);
+        padding: 40px;
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 40px;
+        min-height: 60vh;
+    }
+</style>
+{% endblock %}
+
+{% block nav_links %}
+    {% include "member_nav_links.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="section-header" style="margin-bottom: 30px;">
+    <div>
+        <h1 style="font-size: 2rem; margin-bottom: 5px;">Verified-Member Handbook</h1>
+        <p style="color: var(--text-muted);">The official protocols, guides, and policies for verified Primer's Zest members.</p>
+    </div>
+</div>
+
+<div class="handbook-container">
+    <div style="text-align: center; color: var(--text-muted); padding: 60px 20px;">
+        <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin-bottom: 15px; opacity: 0.5;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+        <h3 style="font-size: 1.2rem; margin-bottom: 10px;">Handbook Currently Under Revision</h3>
+        <p>The handbook contents will be published here shortly.</p>
+    </div>
+</div>
+{% endblock %}
