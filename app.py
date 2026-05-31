@@ -553,11 +553,27 @@ def get_site_setting(key, default=""):
         c.execute("SELECT setting_value FROM site_settings WHERE setting_key = %s", (key,))
         row = c.fetchone()
         if row:
-            # Handle both Row objects and tuples
             return row[0] if isinstance(row, (tuple, list)) else row['setting_value']
     except Exception as e:
         print(f"Setting Error ({key}): {e}")
     return default
+
+def get_weekly_total_users():
+    """
+    Returns the total user display count that grows by a random amount (11-35)
+    every 7 days since the reference launch date, using a seeded RNG so
+    every user sees the same value within the same week.
+    """
+    import random as _rng
+    BASE_COUNT = 3540
+    REFERENCE_DATE = datetime.datetime(2026, 5, 6, tzinfo=datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.timezone.utc)
+    weeks_elapsed = max(0, (now - REFERENCE_DATE).days // 7)
+    total = BASE_COUNT
+    for w in range(weeks_elapsed):
+        r = _rng.Random(w * 1337 + 42)   # deterministic seed per week
+        total += r.randint(11, 35)
+    return f"{total:,}"
 
 @app.context_processor
 def inject_unread_count():
@@ -584,6 +600,7 @@ def inject_unread_count():
         except:
             ctx['unread_notifications_count'] = 0
             ctx['membership_tier'] = 'Regular'
+        ctx['total_users_count'] = get_weekly_total_users()
         return ctx
     
     if session.get('is_admin'):
@@ -601,6 +618,7 @@ def inject_unread_count():
 
     ctx['unread_notifications_count'] = 0
     ctx['membership_tier'] = None
+    ctx['total_users_count'] = get_weekly_total_users()
     return ctx
 
 @app.before_request
@@ -5595,6 +5613,39 @@ def admin_toggle_chat_lock_action(room_id):
     conn.commit()
     conn.close()
     return jsonify({'success': True, 'is_locked': new_state})
+
+# --- Admin: Force-reseed Prestige Vault rings ---
+@app.route('/admin/reseed_vault')
+def admin_reseed_vault():
+    if not session.get('is_admin'):
+        return redirect(url_for('member_login'))
+    try:
+        conn, db_type = get_db_connection()
+        c = get_cursor(conn, db_type)
+        ts = "v36_rings"
+        rings = [
+            ('Bronze Ring', 150.00, 'Brushed bronze band with engraved PZ crest, standard member insignia, premium gift box included', f'/static/uploads/ring_bronze.png?v={ts}'),
+            ('Silver Ring', 350.00, 'Polished sterling silver band with deep-engraved PZ crest, priority member insignia, velvet case included', f'/static/uploads/ring_silver.png?v={ts}'),
+            ('Gold Executive Ring', 1200.00, 'Solid 18K yellow gold band with raised PZ emboss and millgrain detailing, VIP concierge insignia, luxury presentation box', f'/static/uploads/ring_gold.png?v={ts}'),
+            ('Platinum Ring', 4500.00, 'Matte platinum band with diamond-set PZ crest, pavé inlay, pinnacle executive insignia, private courier delivery, certificate of authenticity', f'/static/uploads/ring_platinum.png?v={ts}'),
+        ]
+        seeded = []
+        for tier, price, features, img in rings:
+            c.execute("SELECT id FROM membership_cards WHERE tier_name = %s", (tier,))
+            row = c.fetchone()
+            if not row:
+                c.execute("INSERT INTO membership_cards (tier_name, price, features, image_path) VALUES (%s, %s, %s, %s)",
+                          (tier, price, features, img))
+                seeded.append(f"INSERTED: {tier}")
+            else:
+                c.execute("UPDATE membership_cards SET image_path = %s, price = %s, features = %s WHERE tier_name = %s",
+                          (img, price, features, tier))
+                seeded.append(f"UPDATED: {tier}")
+        conn.commit()
+        conn.close()
+        return "<br>".join(["<b>Prestige Vault Reseed Complete:</b>"] + seeded + ["<br><a href='/admin/membership_cards'>← Back to Vault</a>"])
+    except Exception as e:
+        return f"<b>Reseed Error:</b> {e}", 500
 
 # --- Membership Card Features ---
 @app.route('/membership_cards')
