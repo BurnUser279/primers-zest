@@ -245,9 +245,12 @@ def init_membership_cards():
             )
         """)
         try:
-            c.execute("ALTER TABLE membership_cards ADD COLUMN is_hidden BOOLEAN DEFAULT FALSE")
+            if db_type == 'postgres':
+                c.execute("ALTER TABLE membership_cards ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN DEFAULT FALSE")
+            else:
+                c.execute("ALTER TABLE membership_cards ADD COLUMN is_hidden BOOLEAN DEFAULT FALSE")
         except Exception:
-            pass # column exists
+            conn.rollback() # column exists or syntax error, rollback so transaction isn't aborted
             
         c.execute("SELECT COUNT(*) FROM membership_cards")
         cards = [
