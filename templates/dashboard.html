@@ -760,8 +760,33 @@
 
 
 {% if session.pop('show_kyc_reminder', None) %}
+<!-- Welcome Heads-Up Modal -->
+<div id="welcomeModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 10001; align-items: center; justify-content: center; backdrop-filter: blur(10px); animation: fadeIn 0.4s ease-out;">
+    <div style="background: var(--bg-card); width: 100%; max-width: 500px; border-radius: 24px; border: 1px solid var(--primary); padding: 40px; box-shadow: 0 20px 50px rgba(212, 175, 55, 0.15); position: relative; display: flex; flex-direction: column;">
+        
+        <h2 style="font-size: 1.6rem; margin-bottom: 15px; font-weight: 800; color: var(--primary); font-family: 'Outfit', sans-serif;">Welcome to Primer's Zest, {{ session.get('member_fullname', 'Member').split()[0] }}.</h2>
+        
+        <div id="welcomeScrollArea" style="max-height: 250px; overflow-y: auto; padding-right: 15px; margin-bottom: 25px; color: var(--text-muted); font-size: 0.95rem; line-height: 1.7; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
+            <p style="margin-bottom: 15px;">
+                We are an invite-only, vetted social club for adults 30+ offering exclusive private events, themed trips, and community projects. Our gatherings range from high-society charity galas and sports fixtures to meticulously curated travel experiences.
+            </p>
+            <p style="margin-bottom: 15px;">
+                To maintain the integrity of our community, <strong>everything we do is privacy-first and verification-based.</strong>
+            </p>
+            <p style="margin-bottom: 0;">
+                Please read through our community guidelines carefully. You will be required to complete your Identity Verification (KYC) on the next screen before accessing full member privileges.
+            </p>
+            <div style="height: 40px;"></div> <!-- Extra space to force scroll trigger nicely -->
+        </div>
+
+        <button id="btnAcknowledgeWelcome" class="btn btn-primary" disabled style="width: 100%; padding: 16px; font-weight: 800; border-radius: 12px; font-size: 1.05rem; opacity: 0.5; cursor: not-allowed; transition: all 0.3s ease;">
+            Scroll to Acknowledge
+        </button>
+    </div>
+</div>
+
 <!-- KYC Reminder Modal -->
-<div id="kycReminderModal" style="display: flex; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(10px); animation: fadeIn 0.4s ease-out;">
+<div id="kycReminderModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(10px); animation: fadeIn 0.4s ease-out;">
     <div style="background: var(--bg-card); width: 100%; max-width: 450px; border-radius: 24px; border: 1px solid var(--primary); padding: 40px; box-shadow: 0 20px 50px rgba(212, 175, 55, 0.15); position: relative; text-align: center; animation: modalPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
         <div style="width: 70px; height: 70px; background: rgba(212, 175, 55, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--primary);">
             <svg width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -780,6 +805,45 @@
         </a>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const memberId = "{{ session.get('member_id') }}";
+    const welcomeKey = 'welcomeShown_' + memberId;
+    const welcomeModal = document.getElementById('welcomeModal');
+    const kycModal = document.getElementById('kycReminderModal');
+    const scrollArea = document.getElementById('welcomeScrollArea');
+    const btnAcknowledge = document.getElementById('btnAcknowledgeWelcome');
+
+    if (!localStorage.getItem(welcomeKey)) {
+        // Show Welcome Modal First
+        welcomeModal.style.display = 'flex';
+
+        // Check if already scrollable
+        const checkScroll = () => {
+            if (scrollArea.scrollHeight - scrollArea.scrollTop <= scrollArea.clientHeight + 25) {
+                btnAcknowledge.disabled = false;
+                btnAcknowledge.style.opacity = '1';
+                btnAcknowledge.style.cursor = 'pointer';
+                btnAcknowledge.textContent = 'Acknowledge & Proceed';
+            }
+        };
+
+        scrollArea.addEventListener('scroll', checkScroll);
+        // Initial check in case it's not actually scrollable (large screen)
+        setTimeout(checkScroll, 100);
+
+        btnAcknowledge.addEventListener('click', function() {
+            localStorage.setItem(welcomeKey, 'true');
+            welcomeModal.style.display = 'none';
+            kycModal.style.display = 'flex';
+        });
+    } else {
+        // Welcome already shown, just show KYC
+        kycModal.style.display = 'flex';
+    }
+});
+</script>
 {% endif %}
 
 <!-- Withdrawal Modal -->

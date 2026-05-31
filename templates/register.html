@@ -213,8 +213,8 @@
 {% block sidebar %}{% endblock %}
 
 {% block content %}
-<div class="auth-container">
-    <div class="register-card">
+<div class="auth-container" style="display: flex; gap: 40px; justify-content: center; align-items: flex-start; flex-wrap: wrap;">
+    <div class="register-card" style="flex: 1; max-width: 600px;">
         <div class="onboarding-progress">
             <div class="progress-fill" id="progressFill"></div>
         </div>
@@ -284,7 +284,7 @@
                         </div>
                         <div class="form-group">
                             <label>Age</label>
-                            <input type="number" name="age" required min="18" placeholder="21+ required">
+                            <input type="number" name="age" required min="30" placeholder="30+ required">
                         </div>
                         <div class="form-group">
                             <label>Gender Identity</label>
@@ -419,6 +419,23 @@
 
             </div>
         </form>
+    </div>
+
+    <!-- Membership Protocol & Trust Badge -->
+    <div class="register-trust-badge" style="flex: 0 1 380px; background: rgba(13, 13, 13, 0.85); border: 1px solid var(--border-color); border-radius: 20px; padding: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: sticky; top: 100px;">
+        <div style="width: 60px; height: 60px; background: rgba(212, 175, 55, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); margin-bottom: 25px;">
+            <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+        </div>
+        <h3 style="font-size: 1.4rem; color: var(--text-main); margin-bottom: 15px; font-weight: 800; font-family: 'Outfit', sans-serif;">Primer's Zest Protocol</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;">
+            Members-only experiences: curated travel, private social events, themed weekends, and performance opportunities.
+        </p>
+        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;">
+            All events are hosted with clear consent protocols and privacy protections. Full event details are available to verified members.
+        </p>
+        <div style="padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 0.75rem; color: var(--primary); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Strictly 30+ Only</div>
+        </div>
     </div>
 </div>
 

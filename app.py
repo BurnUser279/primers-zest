@@ -1336,6 +1336,15 @@ def register():
             mobile = request.form.get('mobile', '').strip()
             username = request.form.get('username', '').strip()
             
+            try:
+                age = int(request.form.get('age', 0))
+                if age < 30:
+                    flash("You must be at least 30 years old to join Primer's Zest.", "error")
+                    return redirect(url_for('register', invite=invite_token))
+            except ValueError:
+                flash("Invalid age provided.", "error")
+                return redirect(url_for('register', invite=invite_token))
+            
             c.execute("SELECT id FROM members WHERE email = %s OR mobile = %s OR username = %s", (email, mobile, username))
             if c.fetchone():
                 conn.close()
