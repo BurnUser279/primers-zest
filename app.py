@@ -253,10 +253,16 @@ def init_membership_cards():
             conn.rollback()
             
         # Clean up any duplicates caused by previous race conditions or script errors
+        # Keep ONLY the 8 canonical tiers, and keep the MAX(id) (newest) if there are duplicates
         c.execute("""
             DELETE FROM membership_cards 
             WHERE id NOT IN (
-                SELECT MIN(id) FROM membership_cards GROUP BY tier_name
+                SELECT MAX(id) FROM membership_cards 
+                WHERE tier_name IN (
+                    'Bronze Card', 'Silver Card', 'Gold Executive Card', 'Platinum Card',
+                    'Bronze Ring', 'Silver Ring', 'Gold Executive Ring', 'Platinum Ring'
+                )
+                GROUP BY tier_name
             )
         """)
         conn.commit()
