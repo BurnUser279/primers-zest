@@ -676,6 +676,7 @@ def check_account_status():
             c = get_cursor(conn, db_type)
             c.execute("SELECT is_active, membership_tier FROM members WHERE id = %s", (session['member_id'],))
             row = c.fetchone()
+            conn.close()
             if row:
                 if int(row[0]) == 0:
                     return redirect(url_for('member_appeal'))
@@ -4587,8 +4588,7 @@ def vip_lounge():
             session['membership_tier'] = member_data[1]
             if not is_admin and member_data[1] != 'VIP':
                 conn.close()
-                flash("This section is strictly for VIP members. Your VIP status may have been revoked or expired.", "error")
-                return redirect(url_for('member_dashboard'))
+                return render_template('vip_denied.html')
                 
             can_write = (member_data[1] == 'VIP') or is_admin
             # Phase 3: guard is now INSIDE the member_data check — prevents NoneType crash

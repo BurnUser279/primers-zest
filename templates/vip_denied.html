@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+
+{% block title %}Access Denied - Primer's Zest{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: center; align-items: center; min-height: 70vh;">
+    <div style="background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(15px); border: 1px solid #ff4444; border-radius: 24px; padding: 60px; max-width: 600px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.6), 0 0 40px rgba(255, 68, 68, 0.1);">
+        <div style="width: 80px; height: 80px; background: rgba(255, 68, 68, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 30px;">
+            <svg width="40" height="40" fill="none" stroke="#ff4444" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        </div>
+        <h2 style="color: #ffffff; font-size: 2.2rem; font-weight: 900; margin-bottom: 20px; font-family: 'Outfit', sans-serif;">VIP ACCESS REVOKED</h2>
+        <p style="color: #94a3b8; font-size: 1.15rem; line-height: 1.6; margin-bottom: 40px;">
+            This section is strictly reserved for verified VIP members. Your VIP status has either expired or been permanently revoked by the administration.
+        </p>
+        <a href="/dashboard" class="btn" style="background: #ffffff; color: #0f172a; padding: 16px 40px; font-weight: 800; border-radius: 12px; text-decoration: none; display: inline-block; font-size: 1.1rem; transition: all 0.3s ease;">
+            Return to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}
