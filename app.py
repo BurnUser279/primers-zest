@@ -4572,9 +4572,9 @@ def vip_lounge():
         c.execute("SELECT kyc_status FROM members WHERE id = %s", (member_id,))
         _kyc_row = c.fetchone()
         conn.close()
-        if not _kyc_row or _kyc_row[0] not in ('Pending', 'Verified'):
-            flash("This section is available only to verified members. Please complete your KYC verification to unlock access.", "error")
-            return redirect(url_for('member_verify_identity'))
+        if not _kyc_row or _kyc_row[0] != 'Verified':
+            kyc_status = _kyc_row[0] if _kyc_row else 'Unverified'
+            return render_template('kyc_required.html', kyc_status=kyc_status, feature_name="the VIP Lounge")
     
     conn, db_type = get_db_connection()
     c = get_cursor(conn, db_type)
@@ -4957,10 +4957,10 @@ def stars_roster():
     c = get_cursor(conn, db_type)
     c.execute("SELECT kyc_status FROM members WHERE id = %s", (session['member_id'],))
     _kyc_row = c.fetchone()
-    if not _kyc_row or _kyc_row[0] not in ('Pending', 'Verified'):
+    if not _kyc_row or _kyc_row[0] != 'Verified':
+        kyc_status = _kyc_row[0] if _kyc_row else 'Unverified'
         conn.close()
-        flash("This section is available only to verified members. Please complete your KYC verification to unlock access.", "error")
-        return redirect(url_for('member_verify_identity'))
+        return render_template('kyc_required.html', kyc_status=kyc_status, feature_name="the Elite Stars Roster")
     
     c.execute("SELECT setting_value FROM site_settings WHERE setting_key = 'star_booking_writeup'")
     # Phase 3: assign fetchone() to variable first — calling it twice consumed the row leaving None
@@ -5000,10 +5000,10 @@ def request_star(star_id):
     c = get_cursor(conn, db_type)
     c.execute("SELECT kyc_status FROM members WHERE id = %s", (session['member_id'],))
     _kyc_row = c.fetchone()
-    if not _kyc_row or _kyc_row[0] not in ('Pending', 'Verified'):
+    if not _kyc_row or _kyc_row[0] != 'Verified':
+        kyc_status = _kyc_row[0] if _kyc_row else 'Unverified'
         conn.close()
-        flash("This section is available only to verified members. Please complete your KYC verification to unlock access.", "error")
-        return redirect(url_for('member_verify_identity'))
+        return render_template('kyc_required.html', kyc_status=kyc_status, feature_name="Star Booking")
     conn.close()
     
     conn, db_type = get_db_connection()
@@ -5576,7 +5576,7 @@ def get_polls():
         c.execute("SELECT kyc_status FROM members WHERE id = %s", (session['member_id'],))
         _kyc_row = c.fetchone()
         conn.close()
-        if not _kyc_row or _kyc_row[0] not in ('Pending', 'Verified'):
+        if not _kyc_row or _kyc_row[0] != 'Verified':
             return jsonify({'error': 'verification_required', 'message': 'Available only to verified members.'}), 403
     conn, db_type = get_db_connection()
     c = get_cursor(conn, db_type)
