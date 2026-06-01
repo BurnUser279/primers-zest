@@ -674,10 +674,12 @@ def check_account_status():
         try:
             conn, db_type = get_db_connection()
             c = get_cursor(conn, db_type)
-            c.execute("SELECT is_active FROM members WHERE id = %s", (session['member_id'],))
+            c.execute("SELECT is_active, membership_tier FROM members WHERE id = %s", (session['member_id'],))
             row = c.fetchone()
-            if row and int(row[0]) == 0:
-                return redirect(url_for('member_appeal'))
+            if row:
+                if int(row[0]) == 0:
+                    return redirect(url_for('member_appeal'))
+                session['membership_tier'] = row[1]
         except Exception as e:
             print(f"Account Status Check Error: {e}")
 
@@ -1694,6 +1696,7 @@ def member_dashboard():
     current_tier = status_row[0] if status_row else 'Regular'
     admin_reply = status_row[1] if status_row else None
     user_proof = status_row[2] if status_row else None
+    session['membership_tier'] = current_tier  # Sync session so global layout reflects tier revocation
     c.execute("SELECT plan_name, price, features, id FROM subscription_plans ORDER BY id")
     plans = c.fetchall()
     
@@ -4581,8 +4584,13 @@ def vip_lounge():
         c.execute("SELECT fullname, membership_tier, vip_since FROM members WHERE id = %s", (member_id,))
         member_data = c.fetchone()
         if member_data:
-            can_write = (member_data[1] == 'VIP') or is_admin
             session['membership_tier'] = member_data[1]
+            if not is_admin and member_data[1] != 'VIP':
+                conn.close()
+                flash("This section is strictly for VIP members. Your VIP status may have been revoked or expired.", "error")
+                return redirect(url_for('member_dashboard'))
+                
+            can_write = (member_data[1] == 'VIP') or is_admin
             # Phase 3: guard is now INSIDE the member_data check — prevents NoneType crash
             if member_data[2] is None:
                 c.execute("UPDATE members SET vip_since = CURRENT_TIMESTAMP WHERE id = %s", (member_id,))
