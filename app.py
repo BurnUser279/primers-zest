@@ -4574,7 +4574,7 @@ def vip_lounge():
         conn.close()
         if not _kyc_row or _kyc_row[0] not in ('Pending', 'Verified'):
             flash("This section is available only to verified members. Please complete your KYC verification to unlock access.", "error")
-            return redirect(url_for('verify_identity'))
+            return redirect(url_for('member_verify_identity'))
     
     conn, db_type = get_db_connection()
     c = get_cursor(conn, db_type)
@@ -4960,7 +4960,7 @@ def stars_roster():
     if not _kyc_row or _kyc_row[0] not in ('Pending', 'Verified'):
         conn.close()
         flash("This section is available only to verified members. Please complete your KYC verification to unlock access.", "error")
-        return redirect(url_for('verify_identity'))
+        return redirect(url_for('member_verify_identity'))
     
     c.execute("SELECT setting_value FROM site_settings WHERE setting_key = 'star_booking_writeup'")
     # Phase 3: assign fetchone() to variable first — calling it twice consumed the row leaving None
@@ -5003,7 +5003,7 @@ def request_star(star_id):
     if not _kyc_row or _kyc_row[0] not in ('Pending', 'Verified'):
         conn.close()
         flash("This section is available only to verified members. Please complete your KYC verification to unlock access.", "error")
-        return redirect(url_for('verify_identity'))
+        return redirect(url_for('member_verify_identity'))
     conn.close()
     
     conn, db_type = get_db_connection()
